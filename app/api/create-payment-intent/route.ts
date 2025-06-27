@@ -1,28 +1,16 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from 'next/server';
+
+// This endpoint will be replaced by x402 Pay integration
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount = 50 } = await request.json() // $0.50 in cents
-
-    // In a real implementation, you would use Stripe here
-    // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
-    //
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount,
-    //   currency: 'usd',
-    //   metadata: {
-    //     service: 'image-styling'
-    //   }
-    // })
-
-    // For demo purposes, return a mock response
+    // Placeholder for x402 Pay integration
     return NextResponse.json({
       success: true,
-      clientSecret: "pi_mock_client_secret",
-      paymentIntentId: "pi_mock_payment_intent",
-    })
+      message: 'This endpoint will be replaced by x402 Pay integration.'
+    });
   } catch (error) {
-    console.error("Payment intent creation failed:", error)
-    return NextResponse.json({ success: false, error: "Payment setup failed" }, { status: 500 })
+    console.error('Payment intent creation failed:', error);
+    return NextResponse.json({ success: false, error: 'Payment setup failed' }, { status: 500 });
   }
 }

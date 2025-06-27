@@ -10,7 +10,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "StyleCraft AI - Neobrutalist Image Transformer",
+  title: "SNAPDRAFT AI - Neobrutalist Image Transformer",
   description: "Transform your images with AI-powered artistic styles using our bold, neobrutalist interface",
     generator: 'v0.dev'
 }

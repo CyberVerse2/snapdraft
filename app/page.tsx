@@ -102,7 +102,7 @@ export default function Home() {
       <div className="bg-black text-white border-b-8 border-black">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tight mb-4">STYLECRAFT</h1>
+            <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tight mb-4">SNAPDRAFT</h1>
             <div className="bg-lime-400 text-black px-6 py-3 inline-block border-4 border-black font-black text-xl uppercase tracking-wide">
               AI IMAGE TRANSFORMER
             </div>
@@ -203,10 +203,8 @@ export default function Home() {
       <div className="bg-black text-white border-t-8 border-black mt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <div className="bg-cyan-400 text-black px-6 py-3 inline-block border-4 border-white font-black text-xl uppercase mb-4">
-              MADE WITH BRUTAL LOVE
-            </div>
-            <p className="font-bold uppercase tracking-wide">© 2024 STYLECRAFT AI</p>
+            
+            <p className="font-bold uppercase tracking-wide">© 2025 SNAPDRAFT AI</p>
           </div>
         </div>
       </div>

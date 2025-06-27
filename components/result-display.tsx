@@ -48,7 +48,7 @@ export function ResultDisplay({ originalImage, styledImage, selectedStyle, onRes
   }
 
   const handleTwitterShare = () => {
-    const text = `Check out my AI-styled image created with StyleCraft AI! 🎨✨ #AIArt #StyleCraft #Neobrutalism`
+    const text = `Check out my AI-styled image created with SNAPDRAFT AI! 🎨✨ #AIArt #SNAPDRAFT #Neobrutalism`
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
     window.open(url, "_blank")
   }
@@ -157,7 +157,7 @@ export function ResultDisplay({ originalImage, styledImage, selectedStyle, onRes
               #AIART
             </div>
             <div className="bg-white text-black px-4 py-2 border-4 border-black font-black text-lg uppercase">
-              #STYLECRAFT
+              #SNAPDRAFT
             </div>
             <div className="bg-white text-black px-4 py-2 border-4 border-black font-black text-lg uppercase">
               #NEOBRUTALISM
