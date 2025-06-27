@@ -41,15 +41,16 @@ export function PaymentForm({
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const { login, logout, ready, authenticated, user } = usePrivy();
-  const wallet = user?.wallet || user?.wallets?.[0];
+  const wallet = user?.wallet;
   const walletAddress = wallet?.address;
+  console.log('Privy wallet object:', wallet);
 
   // Handle real x402 payment using official Quickstart for Buyers flow
   const handleX402Pay = async () => {
     setIsProcessing(true);
     setError(null);
     try {
-      if (!walletAddress || !wallet?.walletClient) {
+      if (!walletAddress || !wallet) {
         setIsProcessing(false);
         setError('Please connect your wallet first.');
         return;
@@ -78,14 +79,28 @@ export function PaymentForm({
         'amount:',
         amount
       );
-
-      // Dynamic import of ethers for Next.js client compatibility
+      // Use window.ethereum for injected wallets
       const { ethers } = await import('ethers');
-
-      // Use ethers.js to call USDC contract transfer (ethers v6+)
-      const provider = new ethers.BrowserProvider(wallet.walletClient);
+      if (!(window.ethereum as any)) {
+        setIsProcessing(false);
+        setError('No injected wallet found. Please install MetaMask or another wallet.');
+        return;
+      }
       const BASE_CHAIN_ID = 8453; // Base mainnet
       const BASE_CHAIN_ID_HEX = '0x2105'; // 8453 in hex
+      if ((window.ethereum as any).networkVersion !== '8453') {
+        try {
+          await (window.ethereum as any).request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: BASE_CHAIN_ID_HEX }]
+          });
+        } catch (switchError) {
+          setIsProcessing(false);
+          setError('Please switch your wallet to the Base network to continue.');
+          return;
+        }
+      }
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const networkInfo = await provider.getNetwork();
       console.log('Current network:', networkInfo);
       if (Number(networkInfo.chainId) !== BASE_CHAIN_ID) {
@@ -257,7 +272,7 @@ export function PaymentForm({
                 <div className="bg-yellow-200 border-4 border-black p-4 text-center font-bold uppercase">
                   Payment required. Please complete payment using x402 Pay.
                 </div>
-                {!authenticated || !walletAddress ? (
+                {!walletAddress ? (
                   <button
                     onClick={login}
                     disabled={isProcessing || !ready}
@@ -271,11 +286,13 @@ export function PaymentForm({
                     disabled={isProcessing}
                     className="w-full bg-green-500 text-white py-4 border-4 border-black font-black text-lg uppercase hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isProcessing ? 'PROCESSING PAYMENT...' : 'PAY $0.50 USDC'}
+                    {isProcessing ? 'PROCESSING...' : 'PAY $0.50 (USDC)'}
                   </button>
                 )}
-                {authenticated && walletAddress && (
-                  <div className="text-xs text-gray-700 mt-2">Connected: {walletAddress}</div>
+                {walletAddress && (
+                  <div className="mt-2 text-xs text-gray-700 text-center">
+                    Connected: {walletAddress}
+                  </div>
                 )}
                 {txHash && <div className="text-xs text-green-700 mt-2">Tx: {txHash}</div>}
               </div>

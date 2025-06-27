@@ -1,30 +1,66 @@
-# Next.js image app
+Here is a **clean, no-fluff `README.md` for SnapDraft AI**:
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+---
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/cyberverse2s-projects/v0-next-js-image-app)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/M3GZWBKhlCw)
+# SnapDraft AI
 
-## Overview
+**Pay-per-prompt AI image generation with one-click simplicity.**
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+SnapDraft lets you generate a high-quality AI image by paying a **one-time 0.35 USDC fee**, with **no subscriptions or accounts required**. Type your prompt, pay with your wallet, get your PNG in seconds—ready for social posts, prototypes, or collectibles.
 
-## Deployment
+---
 
-Your project is live at:
+## Features
 
-**[https://vercel.com/cyberverse2s-projects/v0-next-js-image-app](https://vercel.com/cyberverse2s-projects/v0-next-js-image-app)**
+* 🖼️ **Single-use, high-quality AI image generation**
+* ⚡ **Fast**: generates and pins to IPFS in \~15 seconds
+* 💳 **No cards, no subscriptions**: pay once with USDC
+* 🌍 **Accessible globally** using x402 micropayments
+* 🔒 **Verifiable**: each image has prompt + seed metadata pinned
 
-## Build your app
+---
 
-Continue building your app on:
+## How it works
 
-**[https://v0.dev/chat/projects/M3GZWBKhlCw](https://v0.dev/chat/projects/M3GZWBKhlCw)**
+1. Enter your image prompt on SnapDraft.
+2. Pay the one-time fee via your crypto wallet.
+3. SnapDraft spins up GPU compute, generates your image, and pins it to IPFS.
+4. Download your PNG and use it anywhere you want.
 
-## How It Works
+---
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Example use cases
+
+* Social media banners and ad creatives
+* Blog post hero images
+* Pitch deck illustrations
+* NFT collectible drafts
+* Placeholder art for prototypes
+* One-off custom images without committing to a subscription
+
+---
+
+## Tech stack
+
+* **x402** for one-time USDC payments
+* **CDP Smart Wallet** for seamless, gas-sponsored transactions
+* **Stable Cascade** (on Akash GPU) for image generation
+* **Pinata** for IPFS pinning
+
+---
+
+## Roadmap
+
+* Add style presets for consistent branding
+* Add image size options (512/1024/2048)
+* Support batch prompt generation with dynamic pricing
+
+---
+
+## License
+
+MIT
+
+---
+
+If you want, I can generate a **short badge header**, API usage section, or contributor instructions next to finalize before you publish. Let me know.
