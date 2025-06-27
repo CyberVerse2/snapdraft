@@ -28,23 +28,6 @@ const styleNames = {
   'pixel-art': 'PIXEL ART'
 };
 
-// Helper: Send payment transaction
-async function sendPayment({ to, value, data }: { to: string; value: string; data?: string }) {
-  if (!window.ethereum) throw new Error('No wallet found.');
-  // Value should be in hex wei
-  const tx = await window.ethereum.request({
-    method: 'eth_sendTransaction',
-    params: [
-      {
-        to,
-        value,
-        data: data || undefined
-      }
-    ]
-  });
-  return tx; // tx hash
-}
-
 export function PaymentForm({
   originalImage,
   selectedStyle,
@@ -57,7 +40,8 @@ export function PaymentForm({
   const [x402PaymentRequirements, setX402PaymentRequirements] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const { login, logout, ready, authenticated, user, wallet } = usePrivy();
+  const { login, logout, ready, authenticated, user } = usePrivy();
+  const wallet = user?.wallet || user?.wallets?.[0];
   const walletAddress = wallet?.address;
 
   // Handle real x402 payment using official Quickstart for Buyers flow
