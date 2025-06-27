@@ -4,6 +4,8 @@ import { useState } from 'react';
 import type { StyleType } from '@/app/page';
 import { CreditCard, Shield, Zap } from 'lucide-react';
 import Image from 'next/image';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount } from 'wagmi';
 
 declare global {
   interface Window {
@@ -33,16 +35,6 @@ const styleNames = {
   'pixel-art': 'PIXEL ART'
 };
 
-// Helper: Connect to any EIP-1193 wallet (MetaMask, Coinbase Wallet, etc.)
-async function connectWallet() {
-  if (typeof window === 'undefined' || !window.ethereum) {
-    throw new Error('No wallet found. Please install MetaMask or Coinbase Wallet.');
-  }
-  await window.ethereum.request({ method: 'eth_requestAccounts' });
-  const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-  return accounts[0];
-}
-
 // Helper: Send payment transaction
 async function sendPayment({ to, value, data }: { to: string; value: string; data?: string }) {
   if (!window.ethereum) throw new Error('No wallet found.');
@@ -71,19 +63,8 @@ export function PaymentForm({
   const [showX402Pay, setShowX402Pay] = useState(false);
   const [x402PaymentRequirements, setX402PaymentRequirements] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
-
-  // Connect wallet and store address
-  const handleConnectWallet = async () => {
-    setError(null);
-    try {
-      const address = await connectWallet();
-      setWalletAddress(address);
-    } catch (err: any) {
-      setError(err.message || 'Failed to connect wallet');
-    }
-  };
+  const { address: walletAddress, isConnected } = useAccount();
 
   // Handle real x402 payment using official Quickstart for Buyers flow
   const handleX402Pay = async () => {
@@ -125,17 +106,68 @@ export function PaymentForm({
 
       // Use ethers.js to call USDC contract transfer (ethers v6+)
       const provider = new ethers.BrowserProvider(window.ethereum);
+      const BASE_CHAIN_ID = 8453; // Base mainnet
+      const BASE_CHAIN_ID_HEX = '0x2105'; // 8453 in hex
+      const networkInfo = await provider.getNetwork();
+      console.log('Current network:', networkInfo);
+      if (Number(networkInfo.chainId) !== BASE_CHAIN_ID) {
+        // Prompt wallet to switch to Base
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: BASE_CHAIN_ID_HEX }]
+          });
+          // Recreate provider and signer after switching
+          const providerAfterSwitch = new ethers.BrowserProvider(window.ethereum);
+          const signer = await providerAfterSwitch.getSigner();
+          const usdcAbi = ['function transfer(address to, uint256 amount) public returns (bool)'];
+          const usdc = new ethers.Contract(asset, usdcAbi, signer);
+          console.log('Calling USDC transfer on Base after switch...');
+          const tx = await usdc.transfer(payToAddress, amount);
+          const receipt = await tx.wait();
+          const txHash = receipt.hash;
+          setTxHash(txHash);
+          console.log('USDC transfer txHash:', txHash);
+          // Construct the X-PAYMENT payload
+          const paymentProof = {
+            txHash,
+            from: walletAddress,
+            to: payToAddress,
+            value: amount,
+            asset
+          };
+          const paymentPayload = {
+            x402Version: 1,
+            scheme: scheme || 'exact',
+            network: network || 'base',
+            payload: paymentProof
+          };
+          console.log('Constructed X-PAYMENT payload:', paymentPayload);
+          const xPaymentHeader = btoa(JSON.stringify(paymentPayload));
+          console.log('X-PAYMENT header (base64):', xPaymentHeader);
+          setShowX402Pay(false);
+          await handleGenerateImage(xPaymentHeader);
+          console.log('--- x402 Payment Flow End ---');
+          setIsProcessing(false);
+          return;
+        } catch (switchError) {
+          setIsProcessing(false);
+          setError('Please switch your wallet to the Base network to continue.');
+          console.error('Network switch error:', switchError);
+          return;
+        }
+      }
+      // If already on Base, proceed as normal
       const signer = await provider.getSigner();
       const usdcAbi = ['function transfer(address to, uint256 amount) public returns (bool)'];
       const usdc = new ethers.Contract(asset, usdcAbi, signer);
-      console.log('Calling USDC transfer...');
+      console.log('Calling USDC transfer on Base...');
       const tx = await usdc.transfer(payToAddress, amount);
       const receipt = await tx.wait();
       const txHash = receipt.hash;
       setTxHash(txHash);
       console.log('USDC transfer txHash:', txHash);
-
-      // Construct the X-PAYMENT payload according to x402 spec and official docs
+      // Construct the X-PAYMENT payload
       const paymentProof = {
         txHash,
         from: walletAddress,
@@ -150,7 +182,6 @@ export function PaymentForm({
         payload: paymentProof
       };
       console.log('Constructed X-PAYMENT payload:', paymentPayload);
-      // Encode payload as base64 for X-PAYMENT header
       const xPaymentHeader = btoa(JSON.stringify(paymentPayload));
       console.log('X-PAYMENT header (base64):', xPaymentHeader);
       setShowX402Pay(false);
@@ -291,13 +322,7 @@ export function PaymentForm({
                   Payment required. Please complete payment using x402 Pay.
                 </div>
                 {!walletAddress ? (
-                  <button
-                    onClick={handleConnectWallet}
-                    disabled={isProcessing}
-                    className="w-full bg-blue-500 text-white py-4 border-4 border-black font-black text-lg uppercase hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isProcessing ? 'CONNECTING...' : 'CONNECT WALLET'}
-                  </button>
+                  <ConnectButton />
                 ) : (
                   <button
                     onClick={handleX402Pay}
