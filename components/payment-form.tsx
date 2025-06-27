@@ -4,14 +4,7 @@ import { useState } from 'react';
 import type { StyleType } from '@/app/page';
 import { CreditCard, Shield, Zap } from 'lucide-react';
 import Image from 'next/image';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount } from 'wagmi';
-
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
+import { usePrivy } from '@privy-io/react-auth';
 
 interface PaymentFormProps {
   originalImage: string;
@@ -64,14 +57,15 @@ export function PaymentForm({
   const [x402PaymentRequirements, setX402PaymentRequirements] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const { address: walletAddress, isConnected } = useAccount();
+  const { login, logout, ready, authenticated, user, wallet } = usePrivy();
+  const walletAddress = wallet?.address;
 
   // Handle real x402 payment using official Quickstart for Buyers flow
   const handleX402Pay = async () => {
     setIsProcessing(true);
     setError(null);
     try {
-      if (!walletAddress) {
+      if (!walletAddress || !wallet?.walletClient) {
         setIsProcessing(false);
         setError('Please connect your wallet first.');
         return;
@@ -105,57 +99,15 @@ export function PaymentForm({
       const { ethers } = await import('ethers');
 
       // Use ethers.js to call USDC contract transfer (ethers v6+)
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(wallet.walletClient);
       const BASE_CHAIN_ID = 8453; // Base mainnet
       const BASE_CHAIN_ID_HEX = '0x2105'; // 8453 in hex
       const networkInfo = await provider.getNetwork();
       console.log('Current network:', networkInfo);
       if (Number(networkInfo.chainId) !== BASE_CHAIN_ID) {
-        // Prompt wallet to switch to Base
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: BASE_CHAIN_ID_HEX }]
-          });
-          // Recreate provider and signer after switching
-          const providerAfterSwitch = new ethers.BrowserProvider(window.ethereum);
-          const signer = await providerAfterSwitch.getSigner();
-          const usdcAbi = ['function transfer(address to, uint256 amount) public returns (bool)'];
-          const usdc = new ethers.Contract(asset, usdcAbi, signer);
-          console.log('Calling USDC transfer on Base after switch...');
-          const tx = await usdc.transfer(payToAddress, amount);
-          const receipt = await tx.wait();
-          const txHash = receipt.hash;
-          setTxHash(txHash);
-          console.log('USDC transfer txHash:', txHash);
-          // Construct the X-PAYMENT payload
-          const paymentProof = {
-            txHash,
-            from: walletAddress,
-            to: payToAddress,
-            value: amount,
-            asset
-          };
-          const paymentPayload = {
-            x402Version: 1,
-            scheme: scheme || 'exact',
-            network: network || 'base',
-            payload: paymentProof
-          };
-          console.log('Constructed X-PAYMENT payload:', paymentPayload);
-          const xPaymentHeader = btoa(JSON.stringify(paymentPayload));
-          console.log('X-PAYMENT header (base64):', xPaymentHeader);
-          setShowX402Pay(false);
-          await handleGenerateImage(xPaymentHeader);
-          console.log('--- x402 Payment Flow End ---');
-          setIsProcessing(false);
-          return;
-        } catch (switchError) {
-          setIsProcessing(false);
-          setError('Please switch your wallet to the Base network to continue.');
-          console.error('Network switch error:', switchError);
-          return;
-        }
+        setIsProcessing(false);
+        setError('Please switch your wallet to the Base network to continue.');
+        return;
       }
       // If already on Base, proceed as normal
       const signer = await provider.getSigner();
@@ -321,8 +273,14 @@ export function PaymentForm({
                 <div className="bg-yellow-200 border-4 border-black p-4 text-center font-bold uppercase">
                   Payment required. Please complete payment using x402 Pay.
                 </div>
-                {!walletAddress ? (
-                  <ConnectButton />
+                {!authenticated || !walletAddress ? (
+                  <button
+                    onClick={login}
+                    disabled={isProcessing || !ready}
+                    className="w-full bg-blue-500 text-white py-4 border-4 border-black font-black text-lg uppercase hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isProcessing ? 'CONNECTING...' : 'CONNECT WALLET'}
+                  </button>
                 ) : (
                   <button
                     onClick={handleX402Pay}
@@ -332,7 +290,7 @@ export function PaymentForm({
                     {isProcessing ? 'PROCESSING PAYMENT...' : 'PAY $0.50 USDC'}
                   </button>
                 )}
-                {walletAddress && (
+                {authenticated && walletAddress && (
                   <div className="text-xs text-gray-700 mt-2">Connected: {walletAddress}</div>
                 )}
                 {txHash && <div className="text-xs text-green-700 mt-2">Tx: {txHash}</div>}

@@ -1,6 +1,6 @@
 'use client';
-import WalletProvider from '../components/wallet-provider';
+import PrivyProviderWrapper from '../components/privy-provider';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  return <WalletProvider>{children}</WalletProvider>;
+  return <PrivyProviderWrapper>{children}</PrivyProviderWrapper>;
 }
