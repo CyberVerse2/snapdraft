@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { StyleType } from '@/app/page';
 import { CreditCard, Shield, Zap } from 'lucide-react';
 import Image from 'next/image';
+import { ethers } from 'ethers';
 
 declare global {
   interface Window {
@@ -85,7 +86,7 @@ export function PaymentForm({
     }
   };
 
-  // Handle real x402 payment
+  // Handle real x402 payment using official Quickstart for Buyers flow
   const handleX402Pay = async () => {
     setIsProcessing(true);
     setError(null);
@@ -95,18 +96,73 @@ export function PaymentForm({
         setError('Please connect your wallet first.');
         return;
       }
-      // Hardcode pay-to address for now
-      const payToAddress = '0xd09e70c83185e9b5a2abd365146b58ef0ebb8b7b';
-      // Convert $0.50 USDC to wei (assume 6 decimals for USDC)
-      const value = '0x7a120'; // 500000 in hex
-      // Send payment (for real USDC, would need contract call; here, just send ETH for demo)
-      const tx = await sendPayment({ to: payToAddress, value });
-      setTxHash(tx);
-      // TODO: Generate real X-PAYMENT header per x402 spec (use tx hash for now)
+      // Parse payment requirements from 402 response
+      console.log('--- x402 Payment Flow Start ---');
+      console.log('x402PaymentRequirements:', x402PaymentRequirements);
+      const req = x402PaymentRequirements?.accepts?.[0];
+      console.log('Parsed payment requirements (req):', req);
+      if (!req || !req.payTo)
+        throw new Error('Payment requirements missing or payTo address not found.');
+      const payToAddress = req.payTo;
+      const network = req.network;
+      const asset = req.asset;
+      const scheme = req.scheme;
+      const amount = req.maxAmountRequired;
+      console.log(
+        'Using payToAddress:',
+        payToAddress,
+        'network:',
+        network,
+        'asset:',
+        asset,
+        'scheme:',
+        scheme,
+        'amount:',
+        amount
+      );
+
+      let txHash = '';
+      let paymentProof: any = {};
+
+      // If scheme is 'exact' and asset is USDC, call USDC contract transfer
+      if (scheme === 'exact' && asset) {
+        // Use ethers.js to call USDC contract transfer
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const usdcAbi = ['function transfer(address to, uint256 amount) public returns (bool)'];
+        const usdc = new ethers.Contract(asset, usdcAbi, signer);
+        // amount is in atomic units (e.g., 6 decimals for USDC)
+        const tx = await usdc.transfer(payToAddress, amount);
+        const receipt = await tx.wait();
+        txHash = receipt.transactionHash;
+        paymentProof = { txHash, from: walletAddress, to: payToAddress, value: amount };
+        console.log('USDC transfer txHash:', txHash);
+      } else {
+        // Fallback: send ETH for demo
+        const value = '0x7a120'; // 500000 in hex (for demo)
+        const tx = await sendPayment({ to: payToAddress, value });
+        txHash = tx;
+        paymentProof = { txHash, from: walletAddress, to: payToAddress, value };
+        console.log('ETH transfer txHash:', txHash);
+      }
+
+      // Construct the X-PAYMENT payload according to x402 spec and official docs
+      const paymentPayload = {
+        x402Version: 1,
+        scheme: scheme || 'exact',
+        network: network || 'base',
+        payload: paymentProof
+      };
+      console.log('Constructed X-PAYMENT payload:', paymentPayload);
+      // Encode payload as base64 for X-PAYMENT header
+      const xPaymentHeader = btoa(JSON.stringify(paymentPayload));
+      console.log('X-PAYMENT header (base64):', xPaymentHeader);
       setShowX402Pay(false);
-      await handleGenerateImage(tx); // Use tx hash as fake header for now
+      await handleGenerateImage(xPaymentHeader);
+      console.log('--- x402 Payment Flow End ---');
     } catch (err: any) {
       setError(err.message || 'Payment failed');
+      console.error('x402 Payment Error:', err);
     }
     setIsProcessing(false);
   };
