@@ -4,7 +4,6 @@ import { useState } from 'react';
 import type { StyleType } from '@/app/page';
 import { CreditCard, Shield, Zap } from 'lucide-react';
 import Image from 'next/image';
-import { ethers } from 'ethers';
 
 declare global {
   interface Window {
@@ -121,32 +120,29 @@ export function PaymentForm({
         amount
       );
 
-      let txHash = '';
-      let paymentProof: any = {};
+      // Dynamic import of ethers for Next.js client compatibility
+      const { ethers } = await import('ethers');
 
-      // If scheme is 'exact' and asset is USDC, call USDC contract transfer
-      if (scheme === 'exact' && asset) {
-        // Use ethers.js to call USDC contract transfer
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const usdcAbi = ['function transfer(address to, uint256 amount) public returns (bool)'];
-        const usdc = new ethers.Contract(asset, usdcAbi, signer);
-        // amount is in atomic units (e.g., 6 decimals for USDC)
-        const tx = await usdc.transfer(payToAddress, amount);
-        const receipt = await tx.wait();
-        txHash = receipt.transactionHash;
-        paymentProof = { txHash, from: walletAddress, to: payToAddress, value: amount };
-        console.log('USDC transfer txHash:', txHash);
-      } else {
-        // Fallback: send ETH for demo
-        const value = '0x7a120'; // 500000 in hex (for demo)
-        const tx = await sendPayment({ to: payToAddress, value });
-        txHash = tx;
-        paymentProof = { txHash, from: walletAddress, to: payToAddress, value };
-        console.log('ETH transfer txHash:', txHash);
-      }
+      // Use ethers.js to call USDC contract transfer (ethers v6+)
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const usdcAbi = ['function transfer(address to, uint256 amount) public returns (bool)'];
+      const usdc = new ethers.Contract(asset, usdcAbi, signer);
+      console.log('Calling USDC transfer...');
+      const tx = await usdc.transfer(payToAddress, amount);
+      const receipt = await tx.wait();
+      const txHash = receipt.hash;
+      setTxHash(txHash);
+      console.log('USDC transfer txHash:', txHash);
 
       // Construct the X-PAYMENT payload according to x402 spec and official docs
+      const paymentProof = {
+        txHash,
+        from: walletAddress,
+        to: payToAddress,
+        value: amount,
+        asset
+      };
       const paymentPayload = {
         x402Version: 1,
         scheme: scheme || 'exact',
