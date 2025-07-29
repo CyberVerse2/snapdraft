@@ -127,7 +127,7 @@ export function PaymentForm({
               <div className="bg-green-400 text-black p-4 border-4 border-black">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="h-5 w-5" />
-                  <span className="font-black text-lg uppercase">SECURE PAYMENT</span>
+                  <span className="font-black text-lg uppercase">POWERED BY BASE PAY</span>
                 </div>
                 <p className="font-bold uppercase text-sm">YOUR TRANSACTION IS SAFE AND SECURE</p>
               </div>
