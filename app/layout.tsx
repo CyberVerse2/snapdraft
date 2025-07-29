@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: 'SNAPDRAFT AI - Neobrutalist Image Transformer',
   description:
     'Transform your images with AI-powered artistic styles using our bold, neobrutalist interface',
-  generator: 'v0.dev'
+    generator: 'v0.dev'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
