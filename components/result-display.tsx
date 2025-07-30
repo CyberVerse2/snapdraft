@@ -115,7 +115,7 @@ export function ResultDisplay({
               src={styledImage || '/placeholder.svg'}
               alt="Styled"
               fill
-              className="object-contain cursor-zoom-in"
+              className="object-cover cursor-zoom-in"
               onContextMenu={(e) => e.preventDefault()}
               onDragStart={(e) => e.preventDefault()}
               onClick={() => styledImage && setZoomImage(styledImage)}

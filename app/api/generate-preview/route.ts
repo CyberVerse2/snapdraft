@@ -1,6 +1,6 @@
 import { fal } from '@fal-ai/client';
 import { type NextRequest, NextResponse } from 'next/server';
-import { getStylePrompt } from '@/lib/style-prompts';
+import { styles } from '@/lib/styles';
 import { randomUUID } from 'crypto';
 
 const previewProgressStore: Record<string, number> = {};
@@ -14,9 +14,11 @@ export async function POST(request: NextRequest) {
     const requestId = randomUUID();
     let latestProgress = 0;
 
+    const prompt = styles.find((s) => s.id === style)?.prompt || styles[0].prompt;
+
     const result = await fal.subscribe('fal-ai/flux-pro/kontext', {
       input: {
-        prompt: getStylePrompt(style),
+        prompt,
         guidance_scale: 3.5,
         num_images: 1,
         output_format: 'jpeg',
