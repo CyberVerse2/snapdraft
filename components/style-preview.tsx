@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { StyleType } from '@/app/page';
 import { ArrowLeft, ArrowRight, RefreshCw, Eye } from 'lucide-react';
 import Image from 'next/image';
@@ -38,6 +38,9 @@ export function StylePreview({
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showComparison, setShowComparison] = useState(false);
+  const [previewProgress, setPreviewProgress] = useState<number>(0);
+  const [previewRequestId, setPreviewRequestId] = useState<string | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     generatePreview();
@@ -46,6 +49,8 @@ export function StylePreview({
   const generatePreview = async () => {
     setIsGeneratingPreview(true);
     setPreviewImage(null);
+    setPreviewProgress(0);
+    setPreviewRequestId(null);
     try {
       const res = await fetch('/api/generate-preview', {
         method: 'POST',
@@ -54,6 +59,7 @@ export function StylePreview({
       });
       if (!res.ok) throw new Error('Failed to generate preview');
       const data = await res.json();
+      setPreviewRequestId(data.requestId);
       const previewUrl = data.previewImageUrl;
       setPreviewImage(previewUrl);
       onPreviewGenerated(previewUrl);
@@ -64,6 +70,24 @@ export function StylePreview({
       setIsGeneratingPreview(false);
     }
   };
+
+  // Poll for preview progress
+  useEffect(() => {
+    if (previewRequestId) {
+      progressIntervalRef.current = setInterval(async () => {
+        const res = await fetch(`/api/generate-preview?id=${previewRequestId}`);
+        const data = await res.json();
+        setPreviewProgress(data.progress);
+        if (data.progress >= 100) {
+          if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+          setPreviewRequestId(null);
+        }
+      }, 1000);
+      return () => {
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      };
+    }
+  }, [previewRequestId]);
 
   const regeneratePreview = () => {
     setPreviewImage(null);
@@ -94,13 +118,19 @@ export function StylePreview({
         </div>
 
         <div className="p-8">
-          {isGeneratingPreview ? (
+          {isGeneratingPreview || previewRequestId ? (
             <div className="flex flex-col items-center justify-center py-16 space-y-6">
               <div className="relative">
-                <div className="animate-spin rounded-full h-24 w-24 border-8 border-black border-t-yellow-400"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
-                    AI
+                <div
+                  className="rounded-full h-24 w-24 border-8 border-black"
+                  style={{
+                    background: `conic-gradient(#fde047 ${previewProgress}%, #fff 0)`
+                  }}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
+                      {previewProgress}%
+                    </div>
                   </div>
                 </div>
               </div>
@@ -144,12 +174,12 @@ export function StylePreview({
                     <div className="bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase mb-4">
                       {styleNames[selectedStyle]} PREVIEW
                     </div>
-                    <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
+                    <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000] overflow-hidden">
                       <Image
                         src={previewImage || '/placeholder.svg'}
                         alt="Preview"
                         fill
-                        className="object-cover"
+                        className="object-contain"
                       />
                       <div className="absolute top-4 right-4 bg-yellow-400 text-black px-2 py-1 border-2 border-black font-black text-xs uppercase">
                         PREVIEW
@@ -162,12 +192,12 @@ export function StylePreview({
                   <div className="bg-red-500 text-white px-6 py-3 border-4 border-black font-black text-xl uppercase mb-6">
                     {styleNames[selectedStyle]} PREVIEW
                   </div>
-                  <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
+                  <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000] overflow-hidden">
                     <Image
                       src={previewImage || '/placeholder.svg'}
                       alt="Preview"
                       fill
-                      className="object-cover"
+                      className="object-contain"
                     />
                     <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
                       PREVIEW QUALITY

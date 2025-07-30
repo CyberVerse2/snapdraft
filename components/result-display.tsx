@@ -56,7 +56,7 @@ export function ResultDisplay({
   };
 
   const handleTwitterShare = () => {
-    const text = `Check out my AI-styled image created with SNAPDRAFT AI!\n\nOriginal: ${originalImage}\nUpscaled: ${styledImage}`;
+    const text = `Check out my AI-styled image created with SNAPDRAFT AI!\n\n${styledImage}`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -100,7 +100,7 @@ export function ResultDisplay({
               src={originalImage || '/placeholder.svg'}
               alt="Original"
               fill
-              className="object-cover"
+              className="object-contain"
             />
           </div>
         </div>
@@ -114,7 +114,7 @@ export function ResultDisplay({
               src={styledImage || '/placeholder.svg'}
               alt="Styled"
               fill
-              className="object-cover"
+              className="object-contain"
             />
             <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
               HIGH QUALITY
