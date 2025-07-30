@@ -66,6 +66,7 @@ export const styles: StyleDefinition[] = [
     color: 'bg-gray-400',
     category: 'artistic',
     popular: false,
-    prompt: 'pencil sketch style, hand-drawn lines, artistic shading, black and white'
+    prompt:
+      'Transform this image into a detailed pencil sketch. Use fine, clean graphite lines to outline forms with light shading and hatching for depth and texture. Focus on contours, proportions, and expression over color. The background should remain minimal or softly shaded to maintain a hand-drawn, studio sketchbook aesthetic. Emphasize the artistic, unfinished quality of an observational drawing.'
   }
 ];
