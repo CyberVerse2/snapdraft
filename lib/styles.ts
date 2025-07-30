@@ -46,7 +46,8 @@ export const styles: StyleDefinition[] = [
     color: 'bg-blue-400',
     category: 'artistic',
     popular: false,
-    prompt: 'watercolor painting style, soft brushstrokes, artistic, flowing colors'
+    prompt:
+      'Transform this image into a delicate watercolor and ink illustration. Use soft pastel tones, fluid washes of color, and loose, expressive brushwork. Outline subjects with fine, elegant pencil or ink strokes, blending realism with stylized exaggeration. Apply subtle gradients and splashes of color in the background to evoke a dreamy, romantic atmosphere. Emphasize glowing skin tones, luminous highlights, and hand-drawn texture across the composition.'
   },
   {
     id: 'oil-painting',
@@ -55,7 +56,8 @@ export const styles: StyleDefinition[] = [
     color: 'bg-orange-400',
     category: 'artistic',
     popular: false,
-    prompt: 'oil painting style, rich textured brushstrokes, classical painting techniques'
+    prompt:
+      'Transform this image into an expressive oil painting. Use visible, textured brushstrokes and a slightly impressionistic style. Render lighting with warm tones and painterly gradients. Apply rich, layered textures to mimic thick oil on canvas. Preserve the subject and composition while evoking the emotion and artistry of a hand-painted scene.'
   },
   {
     id: 'sketch',
@@ -65,15 +67,5 @@ export const styles: StyleDefinition[] = [
     category: 'artistic',
     popular: false,
     prompt: 'pencil sketch style, hand-drawn lines, artistic shading, black and white'
-  },
-
-  {
-    id: 'cyberpunk',
-    name: 'CYBERPUNK',
-    description: 'NEON FUTURE',
-    color: 'bg-cyan-400',
-    category: 'digital',
-    popular: false,
-    prompt: 'cyberpunk style, neon lights, futuristic, dark atmosphere'
   }
 ];
