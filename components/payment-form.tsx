@@ -132,14 +132,10 @@ export function PaymentForm({
           if (pollingRef.current) clearInterval(pollingRef.current);
           setPolling(false);
           setIsProcessing(false);
-          if (selectedStyle === 'minecraft') {
-            handleGenerateImage();
-          } else {
-            if (previewImage) {
-              onStyledImageGenerated(previewImage);
-            }
-            onPaymentSuccess();
+          if (previewImage) {
+            onStyledImageGenerated(previewImage);
           }
+          onPaymentSuccess();
         }
       }, 3000);
       return () => {
