@@ -15,7 +15,8 @@ export type StyleType =
   | 'watercolor'
   | 'sketch'
   | 'oil-painting'
-  | 'pixel-art';
+  | 'pixel-art'
+  | 'minecraft';
 
 export interface AppState {
   step: 'upload' | 'style' | 'preview' | 'payment' | 'result';

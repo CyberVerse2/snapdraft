@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
 import { randomUUID } from 'crypto';
+import { styles } from '@/lib/styles';
 
 fal.config({
   credentials: process.env.FAL_API_KEY
@@ -15,32 +16,64 @@ export async function POST(request: NextRequest) {
     const requestId = randomUUID();
     let latestProgress = 0;
 
-    // Use Fal AI to upscale the styled image
-    const result = await fal.subscribe('fal-ai/clarity-upscaler', {
-      input: {
-        image_url: imageUrl
-      },
-      logs: true,
-      onQueueUpdate: (update) => {
-        console.log('Fal AI update:', JSON.stringify(update, null, 2));
-        if (update.status === 'IN_PROGRESS' && update.logs) {
-          for (const log of update.logs) {
-            console.log('Fal AI log:', log.message);
-            const match = log.message.match(/(\d+)%\|/);
-            if (match) {
-              const percent = parseInt(match[1], 10);
-              console.log('Parsed progress:', percent);
-              latestProgress = percent;
-              progressStore[requestId] = latestProgress;
+    let result;
+    if (style === 'minecraft') {
+      // Use upscaler model for minecraft
+      result = await fal.subscribe('fal-ai/clarity-upscaler', {
+        input: {
+          image_url: imageUrl
+        },
+        logs: true,
+        onQueueUpdate: (update) => {
+          console.log('Fal AI update:', JSON.stringify(update, null, 2));
+          if (update.status === 'IN_PROGRESS' && update.logs) {
+            for (const log of update.logs) {
+              console.log('Fal AI log:', log.message);
+              const match = log.message.match(/(\d+)%\|/);
+              if (match) {
+                const percent = parseInt(match[1], 10);
+                console.log('Parsed progress:', percent);
+                latestProgress = percent;
+                progressStore[requestId] = latestProgress;
+              }
             }
           }
         }
-      }
-    });
+      });
+    } else {
+      // Use default model for all other styles
+      const prompt = styles.find((s) => s.id === style)?.prompt || styles[0].prompt;
+      result = await fal.subscribe('fal-ai/flux-pro/kontext', {
+        input: {
+          prompt,
+          guidance_scale: 3.5,
+          num_images: 1,
+          output_format: 'jpeg',
+          safety_tolerance: '2',
+          image_url: imageUrl
+        },
+        logs: true,
+        onQueueUpdate: (update) => {
+          console.log('Fal AI update:', JSON.stringify(update, null, 2));
+          if (update.status === 'IN_PROGRESS' && update.logs) {
+            for (const log of update.logs) {
+              console.log('Fal AI log:', log.message);
+              const match = log.message.match(/(\d+)%\|/);
+              if (match) {
+                const percent = parseInt(match[1], 10);
+                console.log('Parsed progress:', percent);
+                latestProgress = percent;
+                progressStore[requestId] = latestProgress;
+              }
+            }
+          }
+        }
+      });
+    }
 
     console.log('Fal AI result:', JSON.stringify(result, null, 2));
-    // Fal AI returns a result object with .data.images[0].url
-    const styledImageUrl = result?.data?.image.url;
+    // Fal AI returns a result object with .data.images[0].url or .data.image.url
+    const styledImageUrl = result?.data?.image?.url || result?.data?.images?.[0]?.url;
     if (!styledImageUrl) {
       throw new Error('Fal AI did not return an image URL');
     }
