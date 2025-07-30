@@ -46,7 +46,7 @@ This will allow users to pay with crypto and enable a new AI-powered image style
 # Executor's Feedback or Assistance Requests
 
 - Stripe-specific UI and logic have been removed from PaymentForm and the payment intent API route. The app is now ready for x402 Pay integration in the next step.
-- x402-next middleware has been created to protect /api/generate-image with a $0.50 paywall using the provided CDP Wallet address. Next: update PaymentForm and backend to work with x402 payment flow.
+- x402-next middleware has been created to protect /api/generate-image with a $0.25 paywall using the provided CDP Wallet address. Next: update PaymentForm and backend to work with x402 payment flow.
 - PaymentForm now posts to /api/generate-image, handles HTTP 402, and displays a placeholder x402 Pay UI. Next: set up and test CDP Wallet for payment collection.
 
 # Lessons

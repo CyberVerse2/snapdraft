@@ -41,6 +41,7 @@ export function StylePreview({
   const [previewProgress, setPreviewProgress] = useState<number>(0);
   const [previewRequestId, setPreviewRequestId] = useState<string | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   useEffect(() => {
     generatePreview();
@@ -204,9 +205,10 @@ export function StylePreview({
                         src={previewImage || '/placeholder.svg'}
                         alt="Preview"
                         fill
-                        className="object-cover"
+                        className="object-cover cursor-zoom-in"
                         onContextMenu={(e) => e.preventDefault()}
                         onDragStart={(e) => e.preventDefault()}
+                        onClick={() => previewImage && setZoomImage(previewImage)}
                       />
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
                         <span className="text-3xl md:text-5xl font-black uppercase text-white opacity-60 bg-black bg-opacity-40 px-6 py-2 rounded-lg">
@@ -242,6 +244,29 @@ export function StylePreview({
                       PREVIEW QUALITY
                     </div>
                   </div>
+                </div>
+              )}
+
+              {zoomImage && (
+                <div
+                  className="fixed inset-0 z-60 bg-black bg-opacity-90 flex items-center justify-center"
+                  onClick={() => setZoomImage(null)}
+                >
+                  <img
+                    src={zoomImage}
+                    alt="Zoomed Preview"
+                    className="max-w-full max-h-full rounded-lg shadow-lg cursor-zoom-out"
+                    style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    onClick={() => setZoomImage(null)}
+                    className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600 rounded-lg"
+                  >
+                    CLOSE
+                  </button>
                 </div>
               )}
 
@@ -295,7 +320,7 @@ export function StylePreview({
                 className="bg-red-500 text-white px-8 py-4 border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all"
               >
                 <ArrowRight className="h-6 w-6 mr-2 inline" />
-                GET FULL QUALITY ($0.50)
+                GET FULL QUALITY ($0.25)
               </button>
             </div>
           </div>

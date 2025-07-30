@@ -35,6 +35,7 @@ export function ResultDisplay({
   onReset
 }: ResultDisplayProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -81,10 +82,10 @@ export function ResultDisplay({
     <div className="space-y-8">
       {/* Success Header */}
       <div className="text-center">
-        <div className="bg-green-400 text-black px-8 py-4 border-4 border-black font-black text-3xl uppercase inline-block shadow-[8px_8px_0px_0px_#000000] mb-4">
+        <div className="bg-green-400 text-black px-8 py-4 border-4 border-black font-black text-3xl uppercase inline-block shadow-[8px_8px_0px_0px_#000000] scale-75">
           ✨ GENERATION COMPLETE! ✨
         </div>
-        <div className="bg-black text-white px-6 py-3 border-4 border-white font-black text-xl uppercase inline-block">
+        <div className="bg-black text-white px-8 py-4 border-4 border-black font-black text-3xl uppercase inline-block shadow-[8px_8px_0px_0px_#000000] scale-75">
           {(styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE') + ' STYLE'}
         </div>
       </div>
@@ -107,14 +108,17 @@ export function ResultDisplay({
 
         <div className="text-center">
           <div className="bg-red-500 text-white px-4 py-3 border-4 border-black font-black text-xl uppercase mb-4">
-            {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE'} STYLED
+            {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE'}
           </div>
           <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
             <Image
               src={styledImage || '/placeholder.svg'}
               alt="Styled"
               fill
-              className="object-cover"
+              className="object-contain cursor-zoom-in"
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+              onClick={() => styledImage && setZoomImage(styledImage)}
             />
             <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
               HIGH QUALITY
@@ -122,6 +126,29 @@ export function ResultDisplay({
           </div>
         </div>
       </div>
+
+      {zoomImage && (
+        <div
+          className="fixed inset-0 z-60 bg-black bg-opacity-90 flex items-center justify-center"
+          onClick={() => setZoomImage(null)}
+        >
+          <img
+            src={zoomImage}
+            alt="Zoomed Result"
+            className="max-w-full max-h-full rounded-lg shadow-lg cursor-zoom-out"
+            style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setZoomImage(null)}
+            className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600 rounded-lg"
+          >
+            CLOSE
+          </button>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4 justify-center">

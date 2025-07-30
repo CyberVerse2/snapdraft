@@ -87,7 +87,7 @@ export function PaymentForm({
     setError(null);
     try {
       const result = await pay({
-        amount: '0.5', // USD – SDK quotes equivalent USDC
+        amount: '0.25', // USD – SDK quotes equivalent USDC
         to: '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B' // Replace with your recipient address
         // testnet: true // set to false or omit for Mainnet
       });
@@ -225,7 +225,7 @@ export function PaymentForm({
                 <div className="flex justify-between items-center">
                   <span className="font-black text-2xl uppercase">TOTAL:</span>
                   <span className="bg-red-500 text-white px-6 py-3 border-4 border-black font-black text-2xl">
-                    $0.50
+                    $0.25
                   </span>
                 </div>
               </div>
@@ -274,7 +274,7 @@ export function PaymentForm({
                 ? 'PROCESSING PAYMENT...'
                 : isGenerating
                 ? 'GENERATING IMAGE...'
-                : 'PAY $0.50 & GENERATE'}
+                : 'PAY $0.25 & GENERATE'}
             </button>
 
             {error && (

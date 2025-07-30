@@ -4,76 +4,12 @@ import { useState } from 'react';
 import type { StyleType } from '@/app/page';
 import { Palette, Sparkles, Zap } from 'lucide-react';
 import Image from 'next/image';
-import { stylePrompts } from '@/lib/style-prompts';
+import { styles } from '@/lib/styles';
 
 interface StyleSelectionProps {
   originalImage: string;
   onStyleSelect: (style: StyleType) => void;
 }
-
-const stylesList = [
-  // Artistic
-  {
-    id: 'minecraft',
-    name: 'MINECRAFT',
-    description: 'RETRO PIXEL ART',
-    color: 'bg-green-500',
-    category: 'digital',
-    popular: true
-  },
-  {
-    id: 'ghibli',
-    name: 'GHIBLI',
-    description: 'DREAMY ANIMATION',
-    color: 'bg-green-400',
-    category: 'artistic',
-    popular: true
-  },
-  {
-    id: 'anime',
-    name: 'ANIME',
-    description: 'JAPANESE STYLE',
-    color: 'bg-pink-400',
-    category: 'artistic',
-  },
-  {
-    id: 'watercolor',
-    name: 'WATERCOLOR',
-    description: 'SOFT PAINTING',
-    color: 'bg-blue-400',
-    category: 'artistic'
-  },
-  {
-    id: 'oil-painting',
-    name: 'OIL PAINT',
-    description: 'CLASSIC ART',
-    color: 'bg-orange-400',
-    category: 'artistic'
-  },
-  {
-    id: 'sketch',
-    name: 'SKETCH',
-    description: 'PENCIL DRAWN',
-    color: 'bg-gray-400',
-    category: 'artistic'
-  },
-  // Modern
-  {
-    id: 'neobrutalism',
-    name: 'BRUTAL',
-    description: 'RAW & BOLD',
-    color: 'bg-red-500',
-    category: 'modern'
-  },
-  // Digital
-  {
-    id: 'cyberpunk',
-    name: 'CYBERPUNK',
-    description: 'NEON FUTURE',
-    color: 'bg-cyan-400',
-    category: 'digital'
-  }
-];
 
 const CATEGORIES = [
   { key: 'artistic', label: 'ARTISTIC' },
@@ -88,7 +24,7 @@ export function StyleSelection({ originalImage, onStyleSelect }: StyleSelectionP
   const [page, setPage] = useState(1);
 
   // Filter and paginate styles
-  const filteredStyles = filter ? stylesList.filter((s) => s.category === filter) : stylesList;
+  const filteredStyles = filter ? styles.filter((s) => s.category === filter) : styles;
   const totalPages = Math.ceil(filteredStyles.length / STYLES_PER_PAGE);
   const paginatedStyles = filteredStyles.slice(
     (page - 1) * STYLES_PER_PAGE,

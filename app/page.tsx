@@ -1,7 +1,7 @@
 'use client';
 
 import { pay, getPaymentStatus } from '@base-org/account';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ImageUpload } from '@/components/image-upload';
 import { StyleSelection } from '@/components/style-selection';
 import { PaymentForm } from '@/components/payment-form';
@@ -13,11 +13,6 @@ export type StyleType =
   | 'anime'
   | 'cyberpunk'
   | 'watercolor'
-  | 'neobrutalism'
-  | 'material-design'
-  | 'minimalist'
-  | 'art-deco'
-  | 'vaporwave'
   | 'sketch'
   | 'oil-painting'
   | 'pixel-art';
@@ -31,6 +26,27 @@ export interface AppState {
   paymentCompleted: boolean;
 }
 
+export interface GalleryEntry {
+  url: string;
+  style: StyleType | null;
+  ts: number;
+}
+
+function getGallery(): GalleryEntry[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem('snapdraft_gallery') || '[]');
+  } catch {
+    return [];
+  }
+}
+function saveToGallery(entry: GalleryEntry) {
+  if (typeof window === 'undefined') return;
+  const gallery = getGallery();
+  gallery.unshift(entry);
+  localStorage.setItem('snapdraft_gallery', JSON.stringify(gallery.slice(0, 50)));
+}
+
 export default function Home() {
   const [state, setState] = useState<AppState>({
     step: 'upload',
@@ -40,6 +56,22 @@ export default function Home() {
     styledImage: null,
     paymentCompleted: false
   });
+  const [showGallery, setShowGallery] = useState(false);
+  const [gallery, setGallery] = useState<GalleryEntry[]>([]);
+  const [selectedGalleryIndex, setSelectedGalleryIndex] = useState<number | null>(null);
+  const [favorites, setFavorites] = useState<{ [key: number]: boolean }>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      return JSON.parse(localStorage.getItem('snapdraft_favorites') || '{}');
+    } catch {
+      return {};
+    }
+  });
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (showGallery) setGallery(getGallery());
+  }, [showGallery]);
 
   const handleImageUpload = (imageUrl: string) => {
     setState((prev) => ({
@@ -84,6 +116,12 @@ export default function Home() {
       ...prev,
       styledImage: imageUrl
     }));
+    // Save to gallery
+    saveToGallery({
+      url: imageUrl,
+      style: state.selectedStyle,
+      ts: Date.now()
+    });
   };
 
   const resetApp = () => {
@@ -109,22 +147,179 @@ export default function Home() {
     }
   };
 
+  function toggleFavorite(ts: number) {
+    const newFavs = { ...favorites, [ts]: !favorites[ts] };
+    setFavorites(newFavs);
+    localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Neobrutalist Header */}
-      <div className="bg-black text-white border-b-8 border-black">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tight mb-4">
-              SNAPDRAFT
-            </h1>
-            <div className="bg-lime-400 text-black px-6 py-3 inline-block border-4 border-black font-black text-xl uppercase tracking-wide">
-              AI IMAGE TRANSFORMER
-            </div>
-            <div className="mt-6 bg-red-500 text-white px-4 py-2 inline-block border-4 border-black font-bold text-lg uppercase">
-              $0.50 PER IMAGE
-            </div>
+      {/* Gallery Modal */}
+      {showGallery && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
+          <div className="bg-white border-8 border-black p-4 md:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto relative rounded-xl">
+            <button
+              onClick={() => setShowGallery(false)}
+              className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600 rounded-lg"
+            >
+              CLOSE
+            </button>
+            <h2 className="text-2xl md:text-3xl font-black uppercase mb-4 md:mb-6 text-center">
+              My Gallery
+            </h2>
+            {gallery.length === 0 ? (
+              <div className="text-center text-lg font-bold">No images yet.</div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                {gallery.map((img, i) => (
+                  <div
+                    key={i}
+                    className={`border-4 border-black bg-gray-100 p-1 md:p-2 flex flex-col items-center relative rounded-lg ${
+                      favorites[img.ts] ? 'ring-4 ring-yellow-400' : ''
+                    }`}
+                  >
+                    <button
+                      onClick={() => toggleFavorite(img.ts)}
+                      className={`absolute top-2 right-2 z-10 text-2xl md:text-3xl ${
+                        favorites[img.ts] ? 'text-yellow-400' : 'text-gray-400'
+                      } bg-white bg-opacity-80 rounded-full p-1 md:p-2 focus:outline-none`}
+                      aria-label={favorites[img.ts] ? 'Unstar' : 'Star'}
+                      tabIndex={0}
+                    >
+                      ★
+                    </button>
+                    <img
+                      src={img.url}
+                      alt="Gallery"
+                      className="w-full aspect-square object-contain rounded-md cursor-zoom-in"
+                      draggable={false}
+                      onContextMenu={(e) => e.preventDefault()}
+                      onClick={() => setZoomImage(img.url)}
+                    />
+                    <div className="mt-2 text-xs font-bold uppercase">{img.style}</div>
+                    <div className="text-xs text-gray-500">{new Date(img.ts).toLocaleString()}</div>
+                    <button
+                      onClick={() => setSelectedGalleryIndex(i)}
+                      className="mt-1 text-xs bg-blue-500 text-white px-2 py-1 border-2 border-black font-bold rounded hover:bg-blue-600"
+                    >
+                      Actions
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+          {/* Image Lightbox Modal (Zoom) */}
+          {zoomImage && (
+            <div
+              className="fixed inset-0 z-60 bg-black bg-opacity-90 flex items-center justify-center"
+              onClick={() => setZoomImage(null)}
+            >
+              <img
+                src={zoomImage}
+                alt="Zoomed"
+                className="max-w-full max-h-full rounded-lg shadow-lg cursor-zoom-out"
+                style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={() => setZoomImage(null)}
+                className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600 rounded-lg"
+              >
+                CLOSE
+              </button>
+            </div>
+          )}
+          {/* Image Lightbox Modal */}
+          {selectedGalleryIndex !== null && gallery[selectedGalleryIndex] && (
+            <div className="fixed inset-0 z-60 bg-black bg-opacity-80 flex items-center justify-center">
+              <div className="bg-white border-8 border-black p-6 max-w-lg w-full relative flex flex-col items-center rounded-xl">
+                <button
+                  onClick={() => setSelectedGalleryIndex(null)}
+                  className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600 rounded-lg"
+                >
+                  CLOSE
+                </button>
+                <img
+                  src={gallery[selectedGalleryIndex].url}
+                  alt="Gallery Full"
+                  className="w-full max-h-[60vh] object-contain mb-4 rounded-lg"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onClick={() => setZoomImage(gallery[selectedGalleryIndex].url)}
+                  style={{ cursor: 'zoom-in' }}
+                />
+                <div className="flex gap-4 mb-4">
+                  <button
+                    onClick={async () => {
+                      const response = await fetch(gallery[selectedGalleryIndex].url);
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `snapdraft-image-${gallery[selectedGalleryIndex].style}-${gallery[selectedGalleryIndex].ts}.png`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                    }}
+                    className="bg-green-500 text-white px-6 py-2 border-4 border-black font-black text-lg uppercase hover:bg-green-600"
+                  >
+                    Download
+                  </button>
+                  <button
+                    onClick={() => {
+                      const text = `Check out my AI-styled image created with SNAPDRAFT AI!\n\n${gallery[selectedGalleryIndex].url}`;
+                      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                        text
+                      )}`;
+                      window.open(url, '_blank');
+                    }}
+                    className="bg-blue-500 text-white px-6 py-2 border-4 border-black font-black text-lg uppercase hover:bg-blue-600"
+                  >
+                    Share
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newGallery = gallery.filter((_, idx) => idx !== selectedGalleryIndex);
+                      localStorage.setItem('snapdraft_gallery', JSON.stringify(newGallery));
+                      setGallery(newGallery);
+                      setSelectedGalleryIndex(null);
+                    }}
+                    className="bg-red-500 text-white px-6 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+                <div className="text-xs font-bold uppercase">
+                  {gallery[selectedGalleryIndex].style}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {new Date(gallery[selectedGalleryIndex].ts).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {/* Neobrutalist Header */}
+      <div className="bg-black text-white border-b-8 border-black px-4 py-8 flex flex-col items-center">
+        <h1 className="text-6xl md:text-7xl font-black uppercase tracking-tight mb-4 text-center">
+          SNAPDRAFT
+        </h1>
+        <div className="flex items-center gap-x-4 mt-2 justify-center">
+          <div className="bg-lime-400 text-black px-6 py-3 inline-block border-4 border-black font-black text-xl uppercase tracking-wide">
+            AI IMAGE TRANSFORMER
+          </div>
+          <button
+            onClick={() => setShowGallery(true)}
+            className="bg-blue-500 text-white px-6 py-3 border-4 border-black font-black text-lg uppercase hover:bg-blue-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all"
+          >
+            My Gallery
+          </button>
         </div>
       </div>
 
