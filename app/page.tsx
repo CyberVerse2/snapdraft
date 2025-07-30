@@ -1,5 +1,6 @@
 'use client';
 
+import { pay, getPaymentStatus } from '@base-org/account';
 import { useState } from 'react';
 import { ImageUpload } from '@/components/image-upload';
 import { StyleSelection } from '@/components/style-selection';
@@ -39,6 +40,7 @@ export default function Home() {
     styledImage: null,
     paymentCompleted: false
   });
+
 
   const handleImageUpload = (imageUrl: string) => {
     setState((prev) => ({
@@ -95,6 +97,8 @@ export default function Home() {
       paymentCompleted: false
     });
   };
+
+
 
   const setStep = (newStep: AppState['step']) => {
     const currentStepIndex = ['upload', 'style', 'preview', 'payment', 'result'].indexOf(

@@ -1,65 +1,74 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import type { StyleType } from "@/app/page"
-import { ArrowLeft, ArrowRight, RefreshCw, Eye } from "lucide-react"
-import Image from "next/image"
+import { useState, useEffect } from 'react';
+import type { StyleType } from '@/app/page';
+import { ArrowLeft, ArrowRight, RefreshCw, Eye } from 'lucide-react';
+import Image from 'next/image';
 
 interface StylePreviewProps {
-  originalImage: string
-  selectedStyle: StyleType
-  onPreviewGenerated: (previewUrl: string) => void
-  onProceedToPayment: () => void
-  onBackToStyles: () => void
+  originalImage: string;
+  selectedStyle: StyleType;
+  onPreviewGenerated: (previewUrl: string) => void;
+  onProceedToPayment: () => void;
+  onBackToStyles: () => void;
 }
 
 const styleNames = {
-  ghibli: "GHIBLI",
-  anime: "ANIME",
-  cyberpunk: "CYBERPUNK",
-  watercolor: "WATERCOLOR",
-  neobrutalism: "BRUTAL",
-  "material-design": "MATERIAL",
-  minimalist: "MINIMAL",
-  "art-deco": "ART DECO",
-  vaporwave: "VAPORWAVE",
-  sketch: "SKETCH",
-  "oil-painting": "OIL PAINT",
-  "pixel-art": "PIXEL ART",
-}
+  ghibli: 'GHIBLI',
+  anime: 'ANIME',
+  cyberpunk: 'CYBERPUNK',
+  watercolor: 'WATERCOLOR',
+  neobrutalism: 'BRUTAL',
+  'material-design': 'MATERIAL',
+  minimalist: 'MINIMAL',
+  'art-deco': 'ART DECO',
+  vaporwave: 'VAPORWAVE',
+  sketch: 'SKETCH',
+  'oil-painting': 'OIL PAINT',
+  'pixel-art': 'PIXEL ART'
+};
 
 export function StylePreview({
   originalImage,
   selectedStyle,
   onPreviewGenerated,
   onProceedToPayment,
-  onBackToStyles,
+  onBackToStyles
 }: StylePreviewProps) {
-  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const [showComparison, setShowComparison] = useState(false)
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => {
-    generatePreview()
-  }, [selectedStyle])
+    generatePreview();
+  }, [selectedStyle]);
 
   const generatePreview = async () => {
-    setIsGeneratingPreview(true)
-
-    // Simulate preview generation
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    const mockPreviewUrl = `/placeholder.svg?height=400&width=400&text=${selectedStyle}-preview`
-    setPreviewImage(mockPreviewUrl)
-    onPreviewGenerated(mockPreviewUrl)
-
-    setIsGeneratingPreview(false)
-  }
+    setIsGeneratingPreview(true);
+    setPreviewImage(null);
+    try {
+      const res = await fetch('/api/generate-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: originalImage, style: selectedStyle })
+      });
+      if (!res.ok) throw new Error('Failed to generate preview');
+      const data = await res.json();
+      const previewUrl = data.previewImageUrl;
+      setPreviewImage(previewUrl);
+      onPreviewGenerated(previewUrl);
+    } catch (err) {
+      setPreviewImage(null);
+      onPreviewGenerated('');
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  };
 
   const regeneratePreview = () => {
-    setPreviewImage(null)
-    generatePreview()
-  }
+    setPreviewImage(null);
+    generatePreview();
+  };
 
   return (
     <div className="space-y-8">
@@ -90,7 +99,9 @@ export function StylePreview({
               <div className="relative">
                 <div className="animate-spin rounded-full h-24 w-24 border-8 border-black border-t-yellow-400"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">AI</div>
+                  <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
+                    AI
+                  </div>
                 </div>
               </div>
               <div className="text-center">
@@ -108,7 +119,7 @@ export function StylePreview({
                   onClick={() => setShowComparison(!showComparison)}
                   className="bg-blue-500 text-white px-6 py-3 border-4 border-black font-black text-lg uppercase hover:bg-blue-600 transition-colors"
                 >
-                  {showComparison ? "HIDE" : "SHOW"} COMPARISON
+                  {showComparison ? 'HIDE' : 'SHOW'} COMPARISON
                 </button>
               </div>
 
@@ -120,7 +131,12 @@ export function StylePreview({
                       ORIGINAL
                     </div>
                     <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-                      <Image src={originalImage || "/placeholder.svg"} alt="Original" fill className="object-cover" />
+                      <Image
+                        src={originalImage || '/placeholder.svg'}
+                        alt="Original"
+                        fill
+                        className="object-cover"
+                      />
                     </div>
                   </div>
 
@@ -129,7 +145,12 @@ export function StylePreview({
                       {styleNames[selectedStyle]} PREVIEW
                     </div>
                     <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-                      <Image src={previewImage || "/placeholder.svg"} alt="Preview" fill className="object-cover" />
+                      <Image
+                        src={previewImage || '/placeholder.svg'}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
                       <div className="absolute top-4 right-4 bg-yellow-400 text-black px-2 py-1 border-2 border-black font-black text-xs uppercase">
                         PREVIEW
                       </div>
@@ -142,7 +163,12 @@ export function StylePreview({
                     {styleNames[selectedStyle]} PREVIEW
                   </div>
                   <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-                    <Image src={previewImage || "/placeholder.svg"} alt="Preview" fill className="object-cover" />
+                    <Image
+                      src={previewImage || '/placeholder.svg'}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
                     <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
                       PREVIEW QUALITY
                     </div>
@@ -176,9 +202,15 @@ export function StylePreview({
             <div className="space-y-4">
               <p className="font-black text-xl uppercase">LOVE IT? GET THE FULL QUALITY!</p>
               <div className="flex flex-wrap justify-center gap-4 text-lg font-bold uppercase">
-                <span className="bg-white text-black px-4 py-2 border-4 border-black">✨ 4X RESOLUTION</span>
-                <span className="bg-white text-black px-4 py-2 border-4 border-black">🎨 ENHANCED DETAILS</span>
-                <span className="bg-white text-black px-4 py-2 border-4 border-black">💎 PREMIUM QUALITY</span>
+                <span className="bg-white text-black px-4 py-2 border-4 border-black">
+                  ✨ 4X RESOLUTION
+                </span>
+                <span className="bg-white text-black px-4 py-2 border-4 border-black">
+                  🎨 ENHANCED DETAILS
+                </span>
+                <span className="bg-white text-black px-4 py-2 border-4 border-black">
+                  💎 PREMIUM QUALITY
+                </span>
               </div>
             </div>
 
@@ -201,5 +233,5 @@ export function StylePreview({
         </div>
       )}
     </div>
-  )
+  );
 }
