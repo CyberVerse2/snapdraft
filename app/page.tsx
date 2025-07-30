@@ -41,7 +41,6 @@ export default function Home() {
     paymentCompleted: false
   });
 
-
   const handleImageUpload = (imageUrl: string) => {
     setState((prev) => ({
       ...prev,
@@ -97,8 +96,6 @@ export default function Home() {
       paymentCompleted: false
     });
   };
-
-
 
   const setStep = (newStep: AppState['step']) => {
     const currentStepIndex = ['upload', 'style', 'preview', 'payment', 'result'].indexOf(
@@ -207,6 +204,7 @@ export default function Home() {
                 <PaymentForm
                   originalImage={state.originalImage}
                   selectedStyle={state.selectedStyle}
+                  previewImage={state.previewImage}
                   onPaymentSuccess={handlePaymentSuccess}
                   onStyledImageGenerated={handleStyledImageGenerated}
                 />

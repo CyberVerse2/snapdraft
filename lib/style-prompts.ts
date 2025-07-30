@@ -11,7 +11,9 @@ export const stylePrompts = {
   vaporwave: 'vaporwave aesthetic, retro-futuristic, pink and cyan colors, grid patterns',
   sketch: 'pencil sketch style, hand-drawn lines, artistic shading, black and white',
   'oil-painting': 'oil painting style, rich textured brushstrokes, classical painting techniques',
-  'pixel-art': 'pixel art style, 8-bit retro gaming, blocky pixels, limited color palette'
+  'pixel-art': 'pixel art style, 8-bit retro gaming, blocky pixels, limited color palette',
+  minecraft:
+    'Convert this image to the style of Minecraft. Render all subjects and backgrounds using blocky, pixelated shapes with sharp edges and low-resolution textures. Transform people, objects, and scenery into simplified, cube-like forms, just like Minecraft characters and environments. Use bright, flat colors. The overall scene should look like it was built from Minecraft blocks, with a playful, 3D voxel appearance.'
 };
 
 export function getStylePrompt(style: string): string {

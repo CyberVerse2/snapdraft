@@ -9,6 +9,7 @@ import { getPaymentStatus, pay } from '@base-org/account';
 interface PaymentFormProps {
   originalImage: string;
   selectedStyle: StyleType;
+  previewImage?: string | null;
   onPaymentSuccess: () => void;
   onStyledImageGenerated: (imageUrl: string) => void;
 }
@@ -25,12 +26,14 @@ const styleNames = {
   vaporwave: 'VAPORWAVE',
   sketch: 'SKETCH',
   'oil-painting': 'OIL PAINT',
-  'pixel-art': 'PIXEL ART'
+  'pixel-art': 'PIXEL ART',
+  minecraft: 'MINECRAFT'
 };
 
 export function PaymentForm({
   originalImage,
   selectedStyle,
+  previewImage,
   onPaymentSuccess,
   onStyledImageGenerated
 }: PaymentFormProps) {
@@ -154,8 +157,8 @@ export function PaymentForm({
           <div className="p-6 space-y-6">
             <div className="relative w-full h-48 border-8 border-black shadow-[4px_4px_0px_0px_#000000]">
               <Image
-                src={originalImage || '/placeholder.svg'}
-                alt="Original"
+                src={previewImage || originalImage || '/placeholder.svg'}
+                alt="Order Preview"
                 fill
                 className="object-cover"
               />
@@ -163,9 +166,9 @@ export function PaymentForm({
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="font-bold text-lg uppercase">STYLE:</span>
-                <div className="bg-yellow-400 text-black px-4 py-2 border-4 border-black font-black text-lg uppercase">
-                  {styleNames[selectedStyle]}
+                <span className="font-black text-xl uppercase">STYLE:</span>
+                <div className="bg-yellow-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase">
+                  {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
                 </div>
               </div>
 
