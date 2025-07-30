@@ -25,17 +25,23 @@ export async function POST(request: NextRequest) {
       },
       logs: true,
       onQueueUpdate: (update) => {
+        console.log('Fal AI update:', JSON.stringify(update, null, 2));
         if (update.status === 'IN_PROGRESS' && update.logs) {
           for (const log of update.logs) {
+            console.log('Fal AI log:', log.message);
             const match = log.message.match(/(\d+)%\|/);
             if (match) {
-              latestProgress = parseInt(match[1], 10);
+              const percent = parseInt(match[1], 10);
+              console.log('Parsed preview progress:', percent);
+              latestProgress = percent;
               previewProgressStore[requestId] = latestProgress;
             }
           }
         }
       }
     });
+
+    console.log('Fal AI result:', JSON.stringify(result, null, 2));
 
     const previewImageUrl = result.data.images[0].url;
     previewProgressStore[requestId] = 100;

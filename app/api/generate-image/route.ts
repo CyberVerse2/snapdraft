@@ -22,11 +22,15 @@ export async function POST(request: NextRequest) {
       },
       logs: true,
       onQueueUpdate: (update) => {
+        console.log('Fal AI update:', JSON.stringify(update, null, 2));
         if (update.status === 'IN_PROGRESS' && update.logs) {
           for (const log of update.logs) {
+            console.log('Fal AI log:', log.message);
             const match = log.message.match(/(\d+)%\|/);
             if (match) {
-              latestProgress = parseInt(match[1], 10);
+              const percent = parseInt(match[1], 10);
+              console.log('Parsed progress:', percent);
+              latestProgress = percent;
               progressStore[requestId] = latestProgress;
             }
           }
@@ -34,8 +38,8 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    console.log('Fal AI result:', JSON.stringify(result, null, 2));
     // Fal AI returns a result object with .data.images[0].url
-    console.log(result.data)
     const styledImageUrl = result?.data?.image.url;
     if (!styledImageUrl) {
       throw new Error('Fal AI did not return an image URL');
