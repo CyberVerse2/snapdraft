@@ -50,6 +50,7 @@ export function PaymentForm({
   const [generationRequestId, setGenerationRequestId] = useState<string | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const styledImageUrlRef = useRef<string | null>(null);
+  const [lastRealProgress, setLastRealProgress] = useState(Date.now());
 
   const handleGenerateImage = async () => {
     setIsProcessing(true);
@@ -146,7 +147,10 @@ export function PaymentForm({
       progressIntervalRef.current = setInterval(async () => {
         const res = await fetch(`/api/generate-image?id=${generationRequestId}`);
         const data = await res.json();
-        setGenerationProgress(data.progress);
+        if (typeof data.progress === 'number' && data.progress > generationProgress) {
+          setGenerationProgress(data.progress);
+          setLastRealProgress(Date.now());
+        }
         if (data.progress >= 100) {
           if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
           setGenerationRequestId(null);
@@ -157,12 +161,39 @@ export function PaymentForm({
           }
           onPaymentSuccess();
         }
-      }, 1000);
+      }, 200);
       return () => {
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       };
     }
-  }, [generationRequestId]);
+  }, [generationRequestId, generationProgress]);
+
+  // Simulate progress if no real progress for 2 seconds
+  useEffect(() => {
+    let fakeProgressInterval: NodeJS.Timeout | null = null;
+    if (generationRequestId && generationProgress < 100) {
+      fakeProgressInterval = setInterval(() => {
+        if (Date.now() - lastRealProgress > 2000) {
+          setGenerationProgress((prev) => {
+            if (prev < 95) {
+              return prev + Math.max(2, Math.round((100 - prev) * 0.13));
+            }
+            return prev;
+          });
+        }
+      }, 200);
+    }
+    return () => {
+      if (fakeProgressInterval) clearInterval(fakeProgressInterval);
+    };
+  }, [generationRequestId, generationProgress, lastRealProgress]);
+
+  // When upscaling is done, jump to 100%
+  useEffect(() => {
+    if (!generationRequestId && !isProcessing && isGenerating && generationProgress < 100) {
+      setGenerationProgress(100);
+    }
+  }, [generationRequestId, isProcessing, isGenerating, generationProgress]);
 
   return (
     <div className="space-y-8">
@@ -273,18 +304,6 @@ export function PaymentForm({
               </div>
             </div>
           </div>
-        </div>
-      )}
-      {/* Generation Progress Bar */}
-      {generationRequestId && (
-        <div className="w-full bg-gray-200 border-4 border-black mt-4">
-          <div
-            className="bg-yellow-400 text-black font-black text-center text-lg transition-all"
-            style={{ width: `${generationProgress}%`, minWidth: '2rem' }}
-          >
-            {generationProgress}%
-          </div>
-          <div className="text-center font-bold text-lg mt-2 uppercase">UPSCALING IMAGE...</div>
         </div>
       )}
     </div>

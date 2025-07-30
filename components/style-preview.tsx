@@ -89,6 +89,31 @@ export function StylePreview({
     }
   }, [previewRequestId]);
 
+  // Simulate progress if real progress is not available
+  useEffect(() => {
+    let fakeProgressInterval: NodeJS.Timeout | null = null;
+    if ((isGeneratingPreview || previewRequestId) && previewProgress < 100) {
+      fakeProgressInterval = setInterval(() => {
+        setPreviewProgress((prev) => {
+          if (prev < 95) {
+            return prev + Math.max(1, Math.round((100 - prev) * 0.07));
+          }
+          return prev;
+        });
+      }, 400);
+    }
+    return () => {
+      if (fakeProgressInterval) clearInterval(fakeProgressInterval);
+    };
+  }, [isGeneratingPreview, previewRequestId, previewProgress]);
+
+  // When preview is done, jump to 100%
+  useEffect(() => {
+    if (!isGeneratingPreview && !previewRequestId && previewImage && previewProgress < 100) {
+      setPreviewProgress(100);
+    }
+  }, [isGeneratingPreview, previewRequestId, previewImage]);
+
   const regeneratePreview = () => {
     setPreviewImage(null);
     generatePreview();
@@ -179,8 +204,15 @@ export function StylePreview({
                         src={previewImage || '/placeholder.svg'}
                         alt="Preview"
                         fill
-                        className="object-contain"
+                        className="object-cover"
+                        onContextMenu={(e) => e.preventDefault()}
+                        onDragStart={(e) => e.preventDefault()}
                       />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                        <span className="text-3xl md:text-5xl font-black uppercase text-white opacity-60 bg-black bg-opacity-40 px-6 py-2 rounded-lg">
+                          SNAPDRAFT PREVIEW
+                        </span>
+                      </div>
                       <div className="absolute top-4 right-4 bg-yellow-400 text-black px-2 py-1 border-2 border-black font-black text-xs uppercase">
                         PREVIEW
                       </div>
@@ -197,8 +229,15 @@ export function StylePreview({
                       src={previewImage || '/placeholder.svg'}
                       alt="Preview"
                       fill
-                      className="object-contain"
+                      className="object-cover"
+                      onContextMenu={(e) => e.preventDefault()}
+                      onDragStart={(e) => e.preventDefault()}
                     />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                      <span className="text-3xl md:text-5xl font-black uppercase text-white opacity-60 bg-black bg-opacity-40 px-6 py-2 rounded-lg">
+                        SNAPDRAFT PREVIEW
+                      </span>
+                    </div>
                     <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
                       PREVIEW QUALITY
                     </div>

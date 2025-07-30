@@ -100,7 +100,7 @@ export function ResultDisplay({
               src={originalImage || '/placeholder.svg'}
               alt="Original"
               fill
-              className="object-contain"
+              className="object-cover"
             />
           </div>
         </div>
@@ -114,7 +114,7 @@ export function ResultDisplay({
               src={styledImage || '/placeholder.svg'}
               alt="Styled"
               fill
-              className="object-contain"
+              className="object-cover"
             />
             <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
               HIGH QUALITY
