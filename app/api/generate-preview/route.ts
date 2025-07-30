@@ -16,32 +16,61 @@ export async function POST(request: NextRequest) {
 
     const prompt = styles.find((s) => s.id === style)?.prompt || styles[0].prompt;
 
-    const result = await fal.subscribe('fal-ai/flux-pro/kontext', {
-      input: {
-        prompt,
-        guidance_scale: 3.5,
-        num_images: 1,
-        output_format: 'jpeg',
-        safety_tolerance: '2',
-        image_url: imageUrl
-      },
-      logs: true,
-      onQueueUpdate: (update) => {
-        console.log('Fal AI update:', JSON.stringify(update, null, 2));
-        if (update.status === 'IN_PROGRESS' && update.logs) {
-          for (const log of update.logs) {
-            console.log('Fal AI log:', log.message);
-            const match = log.message.match(/(\d+)%\|/);
-            if (match) {
-              const percent = parseInt(match[1], 10);
-              console.log('Parsed preview progress:', percent);
-              latestProgress = percent;
-              previewProgressStore[requestId] = latestProgress;
+    let result;
+    if (style === 'anime' || style === 'ghibli') {
+      result = await fal.subscribe('fal-ai/flux-kontext-lora', {
+        input: {
+          prompt,
+          guidance_scale: 3.5,
+          num_images: 1,
+          output_format: 'jpeg',
+          image_url: imageUrl
+        },
+        logs: true,
+        onQueueUpdate: (update) => {
+          console.log('Fal AI update:', JSON.stringify(update, null, 2));
+          if (update.status === 'IN_PROGRESS' && update.logs) {
+            for (const log of update.logs) {
+              console.log('Fal AI log:', log.message);
+              const match = log.message.match(/(\d+)%\|/);
+              if (match) {
+                const percent = parseInt(match[1], 10);
+                console.log('Parsed preview progress:', percent);
+                latestProgress = percent;
+                previewProgressStore[requestId] = latestProgress;
+              }
             }
           }
         }
-      }
-    });
+      });
+    } else {
+      result = await fal.subscribe('fal-ai/flux-pro/kontext', {
+        input: {
+          prompt,
+          guidance_scale: 3.5,
+          num_images: 1,
+          output_format: 'jpeg',
+          safety_tolerance: '2',
+          image_url: imageUrl
+        },
+        logs: true,
+        onQueueUpdate: (update) => {
+          console.log('Fal AI update:', JSON.stringify(update, null, 2));
+          if (update.status === 'IN_PROGRESS' && update.logs) {
+            for (const log of update.logs) {
+              console.log('Fal AI log:', log.message);
+              const match = log.message.match(/(\d+)%\|/);
+              if (match) {
+                const percent = parseInt(match[1], 10);
+                console.log('Parsed preview progress:', percent);
+                latestProgress = percent;
+                previewProgressStore[requestId] = latestProgress;
+              }
+            }
+          }
+        }
+      });
+    }
 
     console.log('Fal AI result:', JSON.stringify(result, null, 2));
 
