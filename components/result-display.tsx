@@ -85,9 +85,7 @@ export function ResultDisplay({
         <div className="bg-green-400 text-black px-8 py-4 border-4 border-black font-black text-3xl uppercase inline-block shadow-[8px_8px_0px_0px_#000000] scale-75">
           ✨ GENERATION COMPLETE! ✨
         </div>
-        <div className="bg-black text-white px-8 py-4 border-4 border-black font-black text-3xl uppercase inline-block shadow-[8px_8px_0px_0px_#000000] scale-75">
-          {(styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE') + ' STYLE'}
-        </div>
+        
       </div>
 
       {/* Image Comparison */}

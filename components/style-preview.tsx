@@ -18,14 +18,11 @@ const styleNames = {
   anime: 'ANIME',
   cyberpunk: 'CYBERPUNK',
   watercolor: 'WATERCOLOR',
-  neobrutalism: 'BRUTAL',
-  'material-design': 'MATERIAL',
-  minimalist: 'MINIMAL',
   'art-deco': 'ART DECO',
-  vaporwave: 'VAPORWAVE',
   sketch: 'SKETCH',
   'oil-painting': 'OIL PAINT',
-  'pixel-art': 'PIXEL ART'
+  'pixel-art': 'PIXEL ART',
+  minecraft: 'MINECRAFT'
 };
 
 export function StylePreview({
