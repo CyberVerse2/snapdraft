@@ -46,40 +46,34 @@ export function PaymentForm({
   const [theme, setTheme] = useState('light');
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<number>(0);
+  const [generationRequestId, setGenerationRequestId] = useState<string | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const styledImageUrlRef = useRef<string | null>(null);
 
   const handleGenerateImage = async () => {
     setIsProcessing(true);
     setError(null);
+    setGenerationProgress(0);
+    setGenerationRequestId(null);
+    styledImageUrlRef.current = null;
     try {
-      // This will now directly call the image generation endpoint.
-      // We will add actual payment and image generation logic later.
       const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ imageUrl: originalImage, style: selectedStyle })
+        body: JSON.stringify({ imageUrl: previewImage || originalImage, style: selectedStyle })
       });
-
-      if (!res.ok) {
-        // For now, let's assume the happy path and simulate success
-        // throw new Error('Image generation failed');
-        console.warn('Image generation API call failed, but simulating success for now.');
+      const data = await res.json();
+      if (!res.ok || !data.styledImageUrl) {
+        throw new Error(data.error || 'Image generation failed');
       }
-
-      // const data = await res.json();
-      const data = {
-        styledImageUrl:
-          'https://replicate.delivery/pbxt/J1dxpCjJg1fUAS8GgzCak2TqO2p3g6L5D5vGN9j23i5YyHElA/output.png'
-      }; // Placeholder
-
-      setIsProcessing(false);
-      setIsGenerating(true);
-      onPaymentSuccess();
-      // Simulate image generation delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsGenerating(false);
-      onStyledImageGenerated(data.styledImageUrl);
+      if (data.requestId) {
+        setGenerationRequestId(data.requestId);
+      }
+      styledImageUrlRef.current = data.styledImageUrl;
+      // Wait for progress to reach 100% before proceeding
     } catch (err: any) {
       setIsProcessing(false);
       setError(err.message || 'An error occurred');
@@ -145,6 +139,30 @@ export function PaymentForm({
       };
     }
   }, [polling]);
+
+  // Poll for generation progress
+  useEffect(() => {
+    if (generationRequestId) {
+      progressIntervalRef.current = setInterval(async () => {
+        const res = await fetch(`/api/generate-image?id=${generationRequestId}`);
+        const data = await res.json();
+        setGenerationProgress(data.progress);
+        if (data.progress >= 100) {
+          if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+          setGenerationRequestId(null);
+          setIsProcessing(false);
+          setIsGenerating(true);
+          if (styledImageUrlRef.current) {
+            onStyledImageGenerated(styledImageUrlRef.current);
+          }
+          onPaymentSuccess();
+        }
+      }, 1000);
+      return () => {
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      };
+    }
+  }, [generationRequestId]);
 
   return (
     <div className="space-y-8">
@@ -216,14 +234,12 @@ export function PaymentForm({
             {/* Payment Button */}
             <button
               onClick={handlePayment}
-              disabled={isProcessing || isGenerating}
+              disabled={isProcessing || isGenerating || polling || !!generationRequestId}
               className="w-full bg-red-500 text-white py-6 border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isProcessing && (
-                <div className="animate-spin rounded-full h-6 w-6 border-b-4 border-white mr-3 inline-block"></div>
-              )}
-              {isGenerating && <div className="animate-pulse mr-3 inline">🎨</div>}
-              {isProcessing
+              {generationRequestId
+                ? 'UPSCALING IMAGE...'
+                : isProcessing || polling
                 ? 'PROCESSING PAYMENT...'
                 : isGenerating
                 ? 'GENERATING IMAGE...'
@@ -257,6 +273,18 @@ export function PaymentForm({
               </div>
             </div>
           </div>
+        </div>
+      )}
+      {/* Generation Progress Bar */}
+      {generationRequestId && (
+        <div className="w-full bg-gray-200 border-4 border-black mt-4">
+          <div
+            className="bg-yellow-400 text-black font-black text-center text-lg transition-all"
+            style={{ width: `${generationProgress}%`, minWidth: '2rem' }}
+          >
+            {generationProgress}%
+          </div>
+          <div className="text-center font-bold text-lg mt-2 uppercase">UPSCALING IMAGE...</div>
         </div>
       )}
     </div>

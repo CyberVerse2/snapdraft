@@ -1,39 +1,62 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
-import { getStylePrompt } from '@/lib/style-prompts';
+import { randomUUID } from 'crypto';
+
+fal.config({
+  credentials: process.env.FAL_API_KEY
+});
+
+// In-memory progress store (for dev/demo only)
+const progressStore: Record<string, number> = {};
 
 export async function POST(request: NextRequest) {
   try {
     const { imageUrl, style } = await request.json();
+    const requestId = randomUUID();
+    let latestProgress = 0;
 
-    // Use Fal AI to generate the styled image
-    const result = await fal.subscribe('fal-ai/fast-sdxl', {
+    // Use Fal AI to upscale the styled image
+    const result = await fal.subscribe('fal-ai/clarity-upscaler', {
       input: {
-        image_url: imageUrl,
-        prompt: getStylePrompt(style),
-        strength: 0.8,
-        num_inference_steps: 25
+        image_url: imageUrl
       },
       logs: true,
       onQueueUpdate: (update) => {
-        if (update.status === 'IN_PROGRESS') {
-          update.logs?.map((log) => log.message).forEach(console.log);
+        if (update.status === 'IN_PROGRESS' && update.logs) {
+          for (const log of update.logs) {
+            const match = log.message.match(/(\d+)%\|/);
+            if (match) {
+              latestProgress = parseInt(match[1], 10);
+              progressStore[requestId] = latestProgress;
+            }
+          }
         }
       }
     });
 
     // Fal AI returns a result object with .data.images[0].url
-    const styledImageUrl = result?.data?.images?.[0]?.url;
+    console.log(result.data)
+    const styledImageUrl = result?.data?.image.url;
     if (!styledImageUrl) {
       throw new Error('Fal AI did not return an image URL');
     }
+    // Mark as complete
+    progressStore[requestId] = 100;
 
     return NextResponse.json({
       success: true,
-      styledImageUrl
+      styledImageUrl,
+      requestId
     });
   } catch (error) {
     console.error('Image generation failed:', error);
     return NextResponse.json({ success: false, error: 'Image generation failed' }, { status: 500 });
   }
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  const progress = id && progressStore[id] ? progressStore[id] : 0;
+  return NextResponse.json({ progress });
 }
