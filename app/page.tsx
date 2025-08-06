@@ -8,6 +8,8 @@ import { PaymentForm } from '@/components/payment-form';
 import { ResultDisplay } from '@/components/result-display';
 import { StylePreview } from '@/components/style-preview';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useAccount, useConnect, useReadContract } from 'wagmi';
+import { erc20Abi } from 'viem';
 
 export type StyleType =
   | 'ghibli'
@@ -50,6 +52,9 @@ function saveToGallery(entry: GalleryEntry) {
 }
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
+const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // Base USDC
+const USDC_DECIMALS = 6;
+const CREDITS_PER_USDC = 100; // 1 USDC = 100 credits (1 credit = $0.01)
 
 export default function Home() {
   const { setFrameReady, isFrameReady } = useMiniKit();
@@ -80,14 +85,24 @@ export default function Home() {
   });
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   // Credits state
-  const [credits, setCredits] = useState(() => {
-    if (typeof window === 'undefined') return 100;
-    const stored = localStorage.getItem('snapdraft_credits');
-    return stored ? parseInt(stored, 10) : 100;
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const usdcReadArgs = address ? ([address as `0x${string}`] as const) : undefined;
+  const { data: usdcBalanceRaw, isLoading: isBalanceLoading } = useReadContract({
+    address: USDC_ADDRESS,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: usdcReadArgs
   });
-  const [galleryPage, setGalleryPage] = useState(false);
+  let credits = 0;
+  if (usdcBalanceRaw && typeof usdcBalanceRaw === 'bigint') {
+    credits = (Number(usdcBalanceRaw) / 10 ** USDC_DECIMALS) * CREDITS_PER_USDC;
+    credits = Math.floor(credits);
+  }
+
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [galleryPage, setGalleryPage] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('snapdraft_credits', credits.toString());
@@ -134,7 +149,6 @@ export default function Home() {
       step: 'result'
     }));
     // Deduct 25 credits per image
-    setCredits((prev) => Math.max(0, prev - 25));
   };
 
   const handleStyledImageGenerated = (imageUrl: string) => {
@@ -264,7 +278,7 @@ export default function Home() {
           className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 transition-all"
           onClick={() => setShowCreditsModal(true)}
         >
-        {!credits && 0} Credits
+          {isConnected ? (isBalanceLoading ? '...' : credits) : 0} Credits
         </div>
       </header>
       {/* Main Content: Direct, centered, mobile-first layout */}
