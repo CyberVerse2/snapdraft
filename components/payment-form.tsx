@@ -9,7 +9,7 @@ import { ethers } from 'ethers';
 import { useAccount, useConnect, useWriteContract } from 'wagmi';
 import { erc20Abi } from 'viem';
 
-const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // Replace with Base USDC if needed
+const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'; // Replace with Base USDC if needed
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
 const CREDITS_PRICE = 10; // 10 credits
 const USDC_DECIMALS = 6;
