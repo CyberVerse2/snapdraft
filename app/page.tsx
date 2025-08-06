@@ -69,6 +69,16 @@ export default function Home() {
     }
   });
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  // Credits state
+  const [credits, setCredits] = useState(() => {
+    if (typeof window === 'undefined') return 100;
+    const stored = localStorage.getItem('snapdraft_credits');
+    return stored ? parseInt(stored, 10) : 100;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('snapdraft_credits', credits.toString());
+  }, [credits]);
 
   useEffect(() => {
     if (showGallery) setGallery(getGallery());
@@ -110,6 +120,8 @@ export default function Home() {
       paymentCompleted: true,
       step: 'result'
     }));
+    // Deduct 25 credits per image
+    setCredits((prev) => Math.max(0, prev - 25));
   };
 
   const handleStyledImageGenerated = (imageUrl: string) => {
@@ -154,25 +166,46 @@ export default function Home() {
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
 
+  const styles = [
+    { id: 'ghibli', name: 'Ghibli', description: 'Anime-style fantasy art', popular: true },
+    { id: 'anime', name: 'Anime', description: 'Japanese anime style', popular: true },
+    {
+      id: 'cyberpunk',
+      name: 'Cyberpunk',
+      description: 'Futuristic urban landscape',
+      popular: true
+    },
+    { id: 'watercolor', name: 'Watercolor', description: 'Soft, painterly style', popular: true },
+    { id: 'sketch', name: 'Sketch', description: 'Pencil drawing style', popular: true },
+    {
+      id: 'oil-painting',
+      name: 'Oil Painting',
+      description: 'Rich, textured oil painting',
+      popular: true
+    },
+    { id: 'pixel-art', name: 'Pixel Art', description: 'Retro, blocky style', popular: true },
+    { id: 'minecraft', name: 'Minecraft', description: 'Minecraft-like blocky art', popular: true }
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Gallery Modal */}
       {showGallery && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
-          <div className="bg-white border-8 border-black p-4 md:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto relative rounded-xl">
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-2">
+          <div className="bg-white border-8 border-black p-2 sm:p-4 md:p-8 max-w-3xl w-full max-h-[80vh] md:max-h-[90vh] overflow-y-auto relative rounded-xl">
             <button
               onClick={() => setShowGallery(false)}
-              className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600 rounded-lg"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-red-500 text-white px-3 py-2 sm:px-4 sm:py-2 border-4 border-black font-black text-base sm:text-lg uppercase hover:bg-red-600 rounded-lg"
             >
               CLOSE
             </button>
-            <h2 className="text-2xl md:text-3xl font-black uppercase mb-4 md:mb-6 text-center">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase mb-2 sm:mb-4 md:mb-6 text-center">
               My Gallery
             </h2>
             {gallery.length === 0 ? (
-              <div className="text-center text-lg font-bold">No images yet.</div>
+              <div className="text-center text-base sm:text-lg font-bold">No images yet.</div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4">
                 {gallery.map((img, i) => (
                   <div
                     key={i}
@@ -182,7 +215,7 @@ export default function Home() {
                   >
                     <button
                       onClick={() => toggleFavorite(img.ts)}
-                      className={`absolute top-2 right-2 z-10 text-2xl md:text-3xl ${
+                      className={`absolute top-1 right-1 sm:top-2 sm:right-2 z-10 text-xl sm:text-2xl md:text-3xl ${
                         favorites[img.ts] ? 'text-yellow-400' : 'text-gray-400'
                       } bg-white bg-opacity-80 rounded-full p-1 md:p-2 focus:outline-none`}
                       aria-label={favorites[img.ts] ? 'Unstar' : 'Star'}
@@ -306,28 +339,22 @@ export default function Home() {
           )}
         </div>
       )}
-      {/* Neobrutalist Header */}
-      <div className="bg-black text-white border-b-8 border-black px-4 py-8 flex flex-col items-center">
-        <h1 className="text-6xl md:text-7xl font-black uppercase tracking-tight mb-4 text-center">
-          SNAPDRAFT
+      {/* Sticky Header: SNAP (left), Credits (right) */}
+      <header className="sticky top-0 z-40 bg-black text-white border-b-8 border-black px-2 sm:px-4 py-4 flex flex-row items-center justify-between w-full">
+        <h1 className="text-2xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
+          SNAP
         </h1>
-        <div className="flex items-center gap-x-4 mt-2 justify-center">
-          <div className="bg-lime-400 text-black px-6 py-3 inline-block border-4 border-black font-black text-xl uppercase tracking-wide">
-            AI IMAGE TRANSFORMER
-          </div>
-          <button
-            onClick={() => setShowGallery(true)}
-            className="bg-blue-500 text-white px-6 py-3 border-4 border-black font-black text-lg uppercase hover:bg-blue-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all"
-          >
-            My Gallery
-          </button>
+        <div className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px]">
+          Credits: {credits}
         </div>
-      </div>
+      </header>
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-12 pb-24">
+        {' '}
+        {/* Add pb-24 for bottom nav space */}
         {/* Progress Indicator */}
-        <div className="mb-12">
-          <div className="flex justify-center space-x-4">
+        <div className="mb-6 sm:mb-12 overflow-x-auto">
+          <div className="flex justify-center space-x-2 sm:space-x-4 min-w-[340px]">
             {['UPLOAD', 'STYLE', 'PREVIEW', 'PAY', 'RESULT'].map((step, index) => {
               const currentStepIndex = ['upload', 'style', 'preview', 'payment', 'result'].indexOf(
                 state.step
@@ -341,7 +368,7 @@ export default function Home() {
                   key={step}
                   onClick={() => setStep(stepName)}
                   disabled={!isActive}
-                  className={`px-4 py-2 border-4 border-black font-black text-sm uppercase ${
+                  className={`px-2 sm:px-4 py-1 sm:py-2 border-4 border-black font-black text-xs sm:text-sm uppercase ${
                     isCurrent
                       ? 'bg-yellow-400 text-black'
                       : isActive
@@ -355,78 +382,111 @@ export default function Home() {
             })}
           </div>
         </div>
-
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_#000000]">
-            <div className="bg-black text-white p-6 border-b-8 border-black">
-              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-center">
-                {state.step === 'upload' && 'UPLOAD YOUR IMAGE'}
-                {state.step === 'style' && 'CHOOSE YOUR STYLE'}
-                {state.step === 'preview' && 'PREVIEW YOUR STYLE'}
-                {state.step === 'payment' && 'COMPLETE PAYMENT'}
-                {state.step === 'result' && 'YOUR STYLED IMAGE'}
-              </h2>
-              <p className="text-center mt-2 text-lg font-bold uppercase tracking-wide">
-                {state.step === 'upload' && "DROP IT LIKE IT'S HOT"}
-                {state.step === 'style' && 'PICK YOUR POISON'}
-                {state.step === 'preview' && 'SEE BEFORE YOU BUY'}
-                {state.step === 'payment' && 'SECURE & FAST'}
-                {state.step === 'result' && 'DOWNLOAD & SHARE'}
-              </p>
+        {/* Main Content: Mobile-first, step-by-step card UI */}
+        <div className="w-full max-w-md mx-auto flex flex-col gap-6 pb-24">
+          {/* Step 1: Upload */}
+          {state.step === 'upload' && (
+            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
+              <h2 className="text-xl font-black uppercase mb-2 text-center">Upload Image</h2>
+              <ImageUpload onImageUpload={handleImageUpload} />
+              <button
+                className="mt-4 bg-blue-500 text-white px-6 py-3 border-4 border-black font-black text-lg uppercase rounded-xl w-full max-w-xs hover:bg-blue-600"
+                onClick={() => handleImageUpload('/sample.jpg')}
+              >
+                Use Sample Image
+              </button>
             </div>
-
-            <div className="p-8">
-              {state.step === 'upload' && <ImageUpload onImageUpload={handleImageUpload} />}
-
-              {state.step === 'style' && state.originalImage && (
-                <StyleSelection
-                  originalImage={state.originalImage}
-                  onStyleSelect={handleStyleSelect}
-                />
-              )}
-
-              {state.step === 'preview' && state.originalImage && state.selectedStyle && (
-                <StylePreview
-                  originalImage={state.originalImage}
-                  selectedStyle={state.selectedStyle}
-                  onPreviewGenerated={handlePreviewGenerated}
-                  onProceedToPayment={handleProceedToPayment}
-                  onBackToStyles={() => setState((prev) => ({ ...prev, step: 'style' }))}
-                />
-              )}
-
-              {state.step === 'payment' && state.originalImage && state.selectedStyle && (
-                <PaymentForm
-                  originalImage={state.originalImage}
-                  selectedStyle={state.selectedStyle}
-                  previewImage={state.previewImage}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  onStyledImageGenerated={handleStyledImageGenerated}
-                />
-              )}
-
-              {state.step === 'result' && state.styledImage && (
-                <ResultDisplay
-                  originalImage={state.originalImage!}
-                  styledImage={state.styledImage}
-                  selectedStyle={state.selectedStyle!}
-                  onReset={resetApp}
-                />
-              )}
+          )}
+          {/* Step 2: Style Selection (swipeable) */}
+          {state.step === 'style' && (
+            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
+              <h2 className="text-xl font-black uppercase mb-2 text-center">Choose Style</h2>
+              <div className="w-full overflow-x-auto flex flex-row gap-4 pb-2 snap-x snap-mandatory">
+                {styles.map((style) => (
+                  <button
+                    key={style.id}
+                    className={`min-w-[140px] max-w-[180px] snap-center flex-shrink-0 bg-gray-100 border-4 border-black rounded-xl p-3 flex flex-col items-center justify-center gap-2 shadow-md ${
+                      state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
+                    }`}
+                    onClick={() => handleStyleSelect(style.id as StyleType)}
+                  >
+                    <span className="text-lg font-black uppercase">{style.name}</span>
+                    <span className="text-xs text-gray-500">{style.description}</span>
+                    {style.popular && (
+                      <span className="text-xs bg-yellow-300 text-black px-2 py-1 rounded font-bold mt-1">
+                        POPULAR
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+          {/* Step 3: Preview */}
+          {state.step === 'preview' && (
+            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
+              <h2 className="text-xl font-black uppercase mb-2 text-center">Preview</h2>
+              <StylePreview
+                originalImage={state.originalImage || ''}
+                selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
+                onPreviewGenerated={handlePreviewGenerated}
+                onProceedToPayment={handleProceedToPayment}
+                onBackToStyles={() => setStep('style')}
+              />
+              <button
+                className="mt-4 bg-gray-200 text-black px-6 py-3 border-4 border-black font-black text-lg uppercase rounded-xl w-full max-w-xs hover:bg-gray-300"
+                onClick={() => setStep('style')}
+              >
+                Try Another Style
+              </button>
+            </div>
+          )}
+          {/* Step 4: Payment */}
+          {state.step === 'payment' && (
+            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
+              <h2 className="text-xl font-black uppercase mb-2 text-center">Payment</h2>
+              <PaymentForm
+                originalImage={state.originalImage || ''}
+                selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
+                previewImage={state.previewImage || ''}
+                onPaymentSuccess={handlePaymentSuccess}
+                onStyledImageGenerated={handleStyledImageGenerated}
+              />
+            </div>
+          )}
+          {/* Step 5: Result */}
+          {state.step === 'result' && (
+            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
+              <h2 className="text-xl font-black uppercase mb-2 text-center">Result</h2>
+              <ResultDisplay
+                originalImage={state.originalImage || ''}
+                styledImage={state.styledImage || ''}
+                selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
+                onReset={() => setStep('upload')}
+              />
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Neobrutalist Footer */}
-      <div className="bg-black text-white border-t-8 border-black mt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <p className="font-bold uppercase tracking-wide">© 2025 SNAPDRAFT AI</p>
-          </div>
-        </div>
-      </div>
+      {/* Sticky Bottom Navigation Bar (mobile-first) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-8 border-black flex flex-row justify-around items-center h-16 sm:h-20 w-full">
+        <button
+          onClick={() => setStep('upload')}
+          className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
+            state.step === 'upload' ? 'bg-yellow-400 text-black' : 'bg-black text-white'
+          }`}
+        >
+          <span className="material-icons text-2xl sm:text-3xl mb-1">home</span>
+        </button>
+        <button
+          onClick={() => setShowGallery(true)}
+          className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
+            showGallery ? 'bg-yellow-400 text-black' : 'bg-black text-white'
+          }`}
+        >
+          <span className="material-icons text-2xl sm:text-3xl mb-1">Gallery</span>
+        </button>
+      </nav>
     </div>
   );
 }
