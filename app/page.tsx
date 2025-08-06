@@ -247,16 +247,13 @@ export default function Home() {
         )}
         {/* Step 3: Payment (now directly after style selection) */}
         {state.step === 'payment' && (
-          <div className="0.25">
-            <h2 className="text-xl font-black uppercase mb-2 text-center">Payment</h2>
-            <PaymentForm
-              originalImage={state.originalImage || ''}
-              selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
-              previewImage={state.previewImage || ''}
-              onPaymentSuccess={handlePaymentSuccess}
-              onStyledImageGenerated={handleStyledImageGenerated}
-            />
-          </div>
+          <PaymentForm
+            originalImage={state.originalImage || ''}
+            selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
+            previewImage={state.previewImage || ''}
+            onPaymentSuccess={handlePaymentSuccess}
+            onStyledImageGenerated={handleStyledImageGenerated}
+          />
         )}
         {/* Step 4: Result */}
         {state.step === 'result' && (

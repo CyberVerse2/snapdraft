@@ -53,70 +53,68 @@ export function ImageUpload({ onImageUpload, hideButton }: ImageUploadProps) {
 
   return (
     <div className="flex flex-col w-full items-stretch">
-      {/* Upload Area */}
+      {/* Upload Area (no card container) */}
       <div className="flex-1 flex flex-col items-center justify-center min-w-0">
-        <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000000] flex flex-col items-center justify-center w-full h-full py-8">
-          <div
-            {...getRootProps()}
-            className={`cursor-pointer transition-all min-h-[56px] ${
-              isDragActive
-                ? 'bg-yellow-400 shadow-[8px_8px_0px_0px_#000000]'
-                : ' hover:bg-yellow-200 hover:shadow-[8px_8px_0px_0px_#000000]'
-            } w-full`}
-          >
-            <div className="flex flex-col items-center justify-center py-8">
-              <input {...getInputProps()} />
+        <div
+          {...getRootProps()}
+          className={`cursor-pointer transition-all min-h-[56px] ${
+            isDragActive
+              ? 'bg-yellow-400 shadow-[8px_8px_0px_0px_#000000]'
+              : ' hover:bg-yellow-200 hover:shadow-[8px_8px_0px_0px_#000000]'
+          } w-full`}
+        >
+          <div className="flex flex-col items-center justify-center py-8">
+            <input {...getInputProps()} />
 
-              {preview ? (
-                <div className="text-center space-y-6">
-                  <div className="relative w-80 h-80 mx-auto border-4 border-black shadow-[8px_8px_0px_0px_#000000]">
-                    <Image
-                      src={preview || '/placeholder.svg'}
-                      alt="Preview"
-                      fill
-                      className="object-cover cursor-zoom-in"
-                      style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
-                    />
-                  </div>
-                  <div className="bg-green-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase">
-                    IMAGE LOCKED & LOADED!
-                  </div>
+            {preview ? (
+              <div className="text-center space-y-6">
+                <div className="relative w-80 h-80 mx-auto border-4 border-black shadow-[8px_8px_0px_0px_#000000]">
+                  <Image
+                    src={preview || '/placeholder.svg'}
+                    alt="Preview"
+                    fill
+                    className="object-cover cursor-zoom-in"
+                    style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
+                  />
                 </div>
-              ) : (
-                <div className="text-center space-y-6">
-                  <div className="w-24 h-24 mx-auto bg-black flex items-center justify-center border-4 border-black">
-                    {isUploading ? (
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white"></div>
-                    ) : (
-                      <Upload className="h-12 w-12 text-white" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="bg-black text-white px-6 py-4 border-4 border-black font-black text-2xl uppercase mb-4">
-                      {isDragActive ? 'DROP IT NOW!' : 'UPLOAD IMAGE'}
-                    </div>
-                    <p className="text-lg font-bold uppercase tracking-wide">
-                      PNG, JPG, WEBP • MAX 10MB
-                    </p>
-                  </div>
-                  {!hideButton && (
-                    <button className="bg-red-500 text-white px-8 py-4 min-h-[56px] border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all">
-                      <ImageIcon className="w-6 h-6 mr-3 inline" />
-                      CHOOSE FILE
-                    </button>
+                <div className="bg-green-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase">
+                  IMAGE LOCKED & LOADED!
+                </div>
+              </div>
+            ) : (
+              <div className="text-center space-y-6">
+                <div className="w-24 h-24 mx-auto bg-black flex items-center justify-center border-4 border-black">
+                  {isUploading ? (
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white"></div>
+                  ) : (
+                    <Upload className="h-12 w-12 text-white" />
                   )}
                 </div>
-              )}
+                <div>
+                  <div className="bg-black text-white px-6 py-4 border-4 border-black font-black text-2xl uppercase mb-4">
+                    {isDragActive ? 'DROP IT NOW!' : 'UPLOAD IMAGE'}
+                  </div>
+                  <p className="text-lg font-bold uppercase tracking-wide">
+                    PNG, JPG, WEBP • MAX 10MB
+                  </p>
+                </div>
+                {!hideButton && (
+                  <button className="bg-red-500 text-white px-8 py-4 min-h-[56px] border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all">
+                    <ImageIcon className="w-6 h-6 mr-3 inline" />
+                    CHOOSE FILE
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        {preview && (
+          <div className="text-center mt-6">
+            <div className="bg-lime-400 text-black px-6 py-3 border-4 border-black font-black text-lg uppercase inline-block">
+              READY FOR STYLING!
             </div>
           </div>
-          {preview && (
-            <div className="text-center mt-6">
-              <div className="bg-lime-400 text-black px-6 py-3 border-4 border-black font-black text-lg uppercase inline-block">
-                READY FOR STYLING!
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

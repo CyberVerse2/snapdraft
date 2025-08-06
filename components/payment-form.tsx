@@ -199,78 +199,54 @@ export function PaymentForm({
   }, [generationRequestId, isProcessing, isGenerating, generationProgress]);
 
   return (
-    <div className="space-y-8">
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* Order Summary */}
-        <div className="bg-white border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-
-          <div className="p-6 space-y-6">
-            <div className="relative w-full h-48 border-8 border-black shadow-[4px_4px_0px_0px_#000000]">
-              <Image
-                src={previewImage || originalImage || '/placeholder.svg'}
-                alt="Order Preview"
-                fill
-                className="object-cover"
-              />
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="p-0 w-full max-w-md flex flex-col items-center">
+        <div className="p-6 space-y-6 w-full">
+          <div className="relative w-full h-48 border-8 border-black shadow-[4px_4px_0px_0px_#000000] rounded-xl overflow-hidden">
+            <Image
+              src={previewImage || originalImage || '/placeholder.svg'}
+              alt="Order Preview"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="font-black text-xl uppercase">STYLE:</span>
+              <div className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
+                {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
+              </div>
             </div>
-
-            <div className="space-y-4">
+            <div className="border-t-4 border-black pt-4">
               <div className="flex justify-between items-center">
-                <span className="font-black text-xl uppercase">STYLE:</span>
-                <div className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase">
-                  {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
-                </div>
+                <span className="font-black text-2xl uppercase">TOTAL:</span>
+                <span className="bg-red-500 text-white px-3 py-1 border-4 border-black font-black text-2xl">
+                  10 CREDITS
+                </span>
               </div>
-
-              <div className="border-t-4 border-black pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="font-black text-2xl uppercase">TOTAL:</span>
-                  <span className="bg-red-500 text-white px-3 py-1 border-4 border-black font-black text-2xl">
-                    10 CREDITS
-                  </span>
-                </div>
-              </div>
-              {/* Payment Button */}
-              <button
-                onClick={handlePayment}
-                disabled={isProcessing || isGenerating || polling || !!generationRequestId}
-                className="w-full bg-red-500 text-white py-2 border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {generationRequestId
-                  ? 'UPSCALING IMAGE...'
-                  : isProcessing || polling
-                  ? 'PROCESSING PAYMENT...'
-                  : isGenerating
-                  ? 'GENERATING IMAGE...'
-                  : 'PAY 10 credits'}
-              </button>
-
-              {error && (
-                <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700">
-                  {error}
-                </div>
-              )}
             </div>
+            {/* Payment Button */}
+            <button
+              onClick={handlePayment}
+              disabled={isProcessing || isGenerating || polling || !!generationRequestId}
+              className="w-full bg-red-500 text-white py-2 border-4 border-black font-black text-xl uppercase rounded-xl hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generationRequestId
+                ? 'UPSCALING IMAGE...'
+                : isProcessing || polling
+                ? 'PROCESSING PAYMENT...'
+                : isGenerating
+                ? 'GENERATING IMAGE...'
+                : 'PAY 10 credits'}
+            </button>
+            {error && (
+              <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700">
+                {error}
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Generation Status */}
-      {isGenerating && (
-        <div className="bg-yellow-400 border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-          <div className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-8 border-black border-t-red-500"></div>
-              <div>
-                <div className="bg-black text-white px-4 py-2 border-4 border-white font-black text-xl uppercase mb-2">
-                  🎨 CREATING MASTERPIECE...
-                </div>
-                <p className="font-bold text-lg uppercase">THIS USUALLY TAKES 30-60 SECONDS</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
