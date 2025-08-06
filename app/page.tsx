@@ -49,6 +49,8 @@ function saveToGallery(entry: GalleryEntry) {
   localStorage.setItem('snapdraft_gallery', JSON.stringify(gallery.slice(0, 50)));
 }
 
+const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
+
 export default function Home() {
   const { setFrameReady, isFrameReady } = useMiniKit();
   // The setFrameReady() function is called when your mini-app is ready to be shown
@@ -68,7 +70,7 @@ export default function Home() {
   const [showGallery, setShowGallery] = useState(false);
   const [gallery, setGallery] = useState<GalleryEntry[]>([]);
   const [selectedGalleryIndex, setSelectedGalleryIndex] = useState<number | null>(null);
-  const [favorites, setFavorites] = useState<{ [key: number]: boolean }>(() => {
+  const [favorites, setFavorites] = useState<Record<string, boolean>>(() => {
     if (typeof window === 'undefined') return {};
     try {
       return JSON.parse(localStorage.getItem('snapdraft_favorites') || '{}');
@@ -84,6 +86,8 @@ export default function Home() {
     return stored ? parseInt(stored, 10) : 100;
   });
   const [galleryPage, setGalleryPage] = useState(false);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('snapdraft_credits', credits.toString());
@@ -196,15 +200,71 @@ export default function Home() {
     { id: 'minecraft', name: 'Minecraft', description: 'Minecraft-like blocky art', popular: true }
   ];
 
+  // Add favorite logic for result
+  const resultKey = state.styledImage ? `${state.styledImage}_${state.selectedStyle}` : null;
+  const isResultFavorite = resultKey ? !!favorites[resultKey] : false;
+  function handleResultFavorite() {
+    if (!resultKey) return;
+    const newFavs = { ...favorites, [resultKey]: !favorites[resultKey] };
+    setFavorites(newFavs);
+    localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
+      {/* Credits Modal */}
+      {showCreditsModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-4"
+          onClick={() => setShowCreditsModal(false)}
+        >
+          <div
+            className="bg-white border-8 border-black rounded-xl max-w-md w-full p-6 flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Title */}
+            <h2 className="text-2xl font-black uppercase mb-6 text-center">Top Up Credits</h2>
+            {/* Address and Copy Button in one row */}
+            <div className="mb-4 w-full flex items-center justify-center gap-2">
+              <div className="bg-gray-100 border-2 border-black rounded-lg px-4 py-2 font-mono text-sm break-all inline-block">
+                {RECIPIENT_ADDRESS.slice(0, 6)}...{RECIPIENT_ADDRESS.slice(-5)}
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(RECIPIENT_ADDRESS);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                className="bg-yellow-400 text-black px-3 py-1 border-2 border-black font-bold rounded hover:bg-yellow-300 transition-all"
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <div className="text-center text-base font-bold mt-2 mb-6">
+              1 credit = $0.01 USDC
+              <br />
+              Send USDC to this address to top up your credits.
+            </div>
+            {/* Close button: centered below text */}
+            <button
+              onClick={() => setShowCreditsModal(false)}
+              className="mt-4 bg-red-500 text-white px-6 py-2 border-4 border-black font-black text-base uppercase hover:bg-red-600 rounded-lg"
+            >
+              CLOSE
+            </button>
+          </div>
+        </div>
+      )}
       {/* Sticky Header: SNAP (left), Credits (right) */}
       <header className="sticky top-0 z-40 bg-black text-white border-b-4 border-black h-16 flex flex-row items-center justify-between w-full px-2 sm:px-4 py-2">
         <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
           SNAP
         </h1>
-        <div className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px]">
-          Credits: {credits}
+        <div
+          className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 transition-all"
+          onClick={() => setShowCreditsModal(true)}
+        >
+        {!credits && 0} Credits
         </div>
       </header>
       {/* Main Content: Direct, centered, mobile-first layout */}
@@ -260,6 +320,8 @@ export default function Home() {
               styledImage={state.styledImage || ''}
               selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
               onReset={() => setStep('upload')}
+              isFavorite={isResultFavorite}
+              onFavorite={handleResultFavorite}
             />
           </div>
         )}

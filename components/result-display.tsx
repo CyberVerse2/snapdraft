@@ -10,6 +10,8 @@ interface ResultDisplayProps {
   styledImage: string;
   selectedStyle: StyleType;
   onReset: () => void;
+  isFavorite: boolean;
+  onFavorite: () => void;
 }
 
 const styleNames = {
@@ -32,10 +34,17 @@ export function ResultDisplay({
   originalImage,
   styledImage,
   selectedStyle,
-  onReset
+  onReset,
+  isFavorite,
+  onFavorite
 }: ResultDisplayProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const styleLabel = showOriginal
+    ? 'ORIGINAL'
+    : styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE';
+  const imageToShow = showOriginal ? originalImage : styledImage;
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -79,106 +88,59 @@ export function ResultDisplay({
   };
 
   return (
-    <div className="space-y-8">
-      {/* Success Header */}
-      <div className="text-center">
-        <div className="bg-green-400 text-black px-8 py-4 border-4 border-black font-black text-3xl uppercase inline-block shadow-[8px_8px_0px_0px_#000000] scale-75">
-          ✨ GENERATION COMPLETE! ✨
-        </div>
-        
+    <div className="flex flex-col items-center w-full max-w-md mx-auto px-4">
+      {/* Generation Complete Banner */}
+      <div className="w-full max-w-md mx-auto bg-green-400 text-black px-8 py-4 border-4 border-black font-black text-xl uppercase text-center mt-4 mb-6 rounded-lg">
+        GENERATION COMPLETE
       </div>
-
-      {/* Image Comparison */}
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="text-center">
-          <div className="bg-gray-400 text-black px-4 py-3 border-4 border-black font-black text-xl uppercase mb-4">
-            ORIGINAL
-          </div>
-          <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-            <Image
-              src={originalImage || '/placeholder.svg'}
-              alt="Original"
-              fill
-              className="object-cover"
-            />
-          </div>
-        </div>
-
-        <div className="text-center">
-          <div className="bg-red-500 text-white px-4 py-3 border-4 border-black font-black text-xl uppercase mb-4">
-            {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE'}
-          </div>
-          <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-            <Image
-              src={styledImage || '/placeholder.svg'}
-              alt="Styled"
-              fill
-              className="object-cover cursor-zoom-in"
-              onContextMenu={(e) => e.preventDefault()}
-              onDragStart={(e) => e.preventDefault()}
-              onClick={() => styledImage && setZoomImage(styledImage)}
-            />
-            <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
-              HIGH QUALITY
-            </div>
-          </div>
-        </div>
+      {/* Generated Image (toggle on click) */}
+      <div
+        className="w-full max-w-md mx-auto h-80 border-8 border-black shadow-[8px_8px_0px_0px_#000000] mb-4 cursor-pointer overflow-hidden"
+        onClick={() => setShowOriginal((v) => !v)}
+      >
+        <Image
+          src={imageToShow || '/placeholder.svg'}
+          alt={showOriginal ? 'Original Image' : 'Styled Result'}
+          width={320}
+          height={400}
+          className="object-cover w-full h-full"
+        />
       </div>
-
-      {zoomImage && (
-        <div
-          className="fixed inset-0 z-60 bg-black bg-opacity-90 flex items-center justify-center"
-          onClick={() => setZoomImage(null)}
-        >
-          <img
-            src={zoomImage}
-            alt="Zoomed Result"
-            className="max-w-full max-h-full rounded-lg shadow-lg cursor-zoom-out"
-            style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
-            draggable={false}
-            onContextMenu={(e) => e.preventDefault()}
-            onClick={(e) => e.stopPropagation()}
-          />
-          <button
-            onClick={() => setZoomImage(null)}
-            className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600 rounded-lg"
-          >
-            CLOSE
-          </button>
-        </div>
-      )}
-
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-4 justify-center">
+      {/* Style Badge */}
+      <div className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg mb-4">
+        {styleLabel}
+      </div>
+      {/* Action Buttons: Download, Share, Favorite in one row */}
+      <div className="flex flex-row gap-2 w-full mt-6 items-center">
         <button
           onClick={handleDownload}
-          disabled={isDownloading}
-          className="bg-green-500 text-white px-8 py-4 border-4 border-black font-black text-lg uppercase hover:bg-green-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50"
+          className="flex-[2] bg-green-500 text-white py-4 border-4 border-black font-black text-lg uppercase rounded-xl hover:bg-green-600 shadow-[4px_4px_0px_0px_#000000] transition-all"
         >
-          {isDownloading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2 inline-block"></div>
-          ) : (
-            <Download className="w-5 h-5 mr-2 inline" />
-          )}
-          DOWNLOAD
+          Download
         </button>
-
         <button
           onClick={handleTwitterShare}
-          className="bg-blue-500 text-white px-8 py-4 border-4 border-black font-black text-lg uppercase hover:bg-blue-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all"
+          className="flex-1 bg-blue-500 text-white py-4 border-4 border-black font-black text-lg uppercase rounded-xl hover:bg-blue-600 shadow-[4px_4px_0px_0px_#000000] transition-all"
         >
-          <X className="w-5 h-5 mr-2 inline" />
-          TWITTER
+          Share
         </button>
-
         <button
-          onClick={onReset}
-          className="bg-gray-500 text-white px-8 py-4 border-4 border-black font-black text-lg uppercase hover:bg-gray-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all"
+          onClick={onFavorite}
+          className={`flex-[0.7] py-4 text-lg ${
+            isFavorite ? 'text-yellow-400' : 'text-gray-400'
+          } bg-white border-4 border-black rounded-xl shadow-[2px_2px_0px_0px_#000000] transition-all hover:bg-yellow-100`}
+          aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
         >
-          <RefreshCw className="w-5 h-5 mr-2 inline" />
-          CREATE ANOTHER
+          ★
         </button>
       </div>
+      {/* Try Another Button */}
+      <button
+        onClick={onReset}
+        className="w-full bg-black text-white py-4 border-4 border-black font-black text-xl uppercase rounded-xl mt-8 mb-24 hover:bg-gray-900 shadow-[4px_4px_0px_0px_#000000] transition-all"
+      >
+        Try Another
+      </button>
     </div>
   );
 }
