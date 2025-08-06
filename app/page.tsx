@@ -97,7 +97,7 @@ export default function Home() {
     setState((prev) => ({
       ...prev,
       selectedStyle: style,
-      step: 'preview'
+      step: 'payment'
     }));
   };
 
@@ -189,9 +189,9 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white">
       {/* Sticky Header: SNAP (left), Credits (right) */}
-      <header className="sticky top-0 z-40 bg-black text-white border-b-8 border-black px-2 sm:px-4 py-4 flex flex-row items-center justify-between w-full">
+      <header className="sticky top-0 z-40 bg-black text-white border-b-4 border-black h-16 flex flex-row items-center justify-between w-full px-2 sm:px-4 py-2">
         <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
           SNAP
         </h1>
@@ -199,6 +199,98 @@ export default function Home() {
           Credits: {credits}
         </div>
       </header>
+      {/* Main Content: Centered upload UI for upload step */}
+      <main
+        className={
+          state.step === 'upload' && !galleryPage
+            ? 'flex-1 flex items-center justify-center'
+            : 'w-full max-w-md mx-auto flex flex-col gap-6 pb-24 px-4 min-h-screen'
+        }
+      >
+        {state.step === 'upload' && !galleryPage && (
+          <ImageUpload onImageUpload={handleImageUpload} />
+        )}
+        {/* Step 2: Style Selection (swipeable) */}
+        {state.step === 'style' && (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 w-full max-w-md flex flex-col items-center">
+              <h2 className="text-xl font-black uppercase mb-2 text-center">Choose Style</h2>
+              <div className="w-full overflow-x-auto flex flex-row gap-4 pb-2 snap-x snap-mandatory">
+                {styles.map((style) => (
+                  <button
+                    key={style.id}
+                    className={`min-w-[140px] max-w-[180px] snap-center flex-shrink-0 bg-gray-100 border-4 border-black rounded-xl p-3 flex flex-col items-center justify-center gap-2 shadow-md ${
+                      state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
+                    } min-h-[56px] hover:bg-yellow-200 transition-all`}
+                    onClick={() => handleStyleSelect(style.id as StyleType)}
+                  >
+                    <span className="text-lg font-black uppercase">{style.name}</span>
+                    <span className="text-xs text-gray-500">{style.description}</span>
+                    {style.popular && (
+                      <span className="text-xs bg-yellow-300 text-black px-2 py-1 rounded font-bold mt-1">
+                        POPULAR
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Step 3: Payment (now directly after style selection) */}
+        {state.step === 'payment' && (
+          <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
+            <h2 className="text-xl font-black uppercase mb-2 text-center">Payment</h2>
+            <PaymentForm
+              originalImage={state.originalImage || ''}
+              selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
+              previewImage={state.previewImage || ''}
+              onPaymentSuccess={handlePaymentSuccess}
+              onStyledImageGenerated={handleStyledImageGenerated}
+            />
+          </div>
+        )}
+        {/* Step 4: Result */}
+        {state.step === 'result' && (
+          <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
+            <h2 className="text-xl font-black uppercase mb-2 text-center">Result</h2>
+            <ResultDisplay
+              originalImage={state.originalImage || ''}
+              styledImage={state.styledImage || ''}
+              selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
+              onReset={() => setStep('upload')}
+            />
+          </div>
+        )}
+      </main>
+      {/* Sticky Bottom Navigation Bar (mobile-first) with icons and credits */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-4 border-black flex flex-row justify-around items-center h-16 w-full">
+        <button
+          onClick={() => {
+            setGalleryPage(false);
+            setStep('upload');
+          }}
+          className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
+            !galleryPage ? 'bg-yellow-400 text-black' : 'bg-black text-white'
+          } min-h-[56px]`}
+        >
+          <span className="material-icons text-2xl mb-1">home</span>
+          Home
+        </button>
+        <button
+          onClick={() => setGalleryPage(true)}
+          className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
+            galleryPage ? 'bg-yellow-400 text-black' : 'bg-black text-white'
+          } min-h-[56px]`}
+        >
+          <span className="material-icons text-2xl mb-1">grid_on</span>
+          Gallery
+        </button>
+        <div className="flex-1 flex flex-col items-center justify-center h-full bg-black text-yellow-400 font-black uppercase text-xs sm:text-base min-h-[56px]">
+          <span className="material-icons text-2xl mb-1">monetization_on</span>
+          {`Credits: ${credits}`}
+        </div>
+      </nav>
       {/* Gallery Page (full page, not modal) */}
       {galleryPage ? (
         <div className="min-h-[80vh] bg-white border-8 border-black p-2 sm:p-4 max-w-md mx-auto w-full flex flex-col relative rounded-xl">
@@ -307,87 +399,7 @@ export default function Home() {
             </div>
           )}
         </div>
-      ) : (
-        // Main flow (cards)
-        <div className="w-full max-w-md mx-auto flex flex-col gap-6 pb-24">
-          {/* Step 1: Upload */}
-          {state.step === 'upload' && (
-            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
-              <h2 className="text-xl font-black uppercase mb-2 text-center">Upload Image</h2>
-              <ImageUpload onImageUpload={handleImageUpload} />
-            </div>
-          )}
-          {/* Step 2: Style Selection (swipeable) */}
-          {state.step === 'style' && (
-            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
-              <h2 className="text-xl font-black uppercase mb-2 text-center">Choose Style</h2>
-              <div className="w-full overflow-x-auto flex flex-row gap-4 pb-2 snap-x snap-mandatory">
-                {styles.map((style) => (
-                  <button
-                    key={style.id}
-                    className={`min-w-[140px] max-w-[180px] snap-center flex-shrink-0 bg-gray-100 border-4 border-black rounded-xl p-3 flex flex-col items-center justify-center gap-2 shadow-md ${
-                      state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
-                    }`}
-                    onClick={() => handleStyleSelect(style.id as StyleType)}
-                  >
-                    <span className="text-lg font-black uppercase">{style.name}</span>
-                    <span className="text-xs text-gray-500">{style.description}</span>
-                    {style.popular && (
-                      <span className="text-xs bg-yellow-300 text-black px-2 py-1 rounded font-bold mt-1">
-                        POPULAR
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Step 3: Preview */}
-          {state.step === 'preview' && (
-            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
-              <h2 className="text-xl font-black uppercase mb-2 text-center">Preview</h2>
-              <StylePreview
-                originalImage={state.originalImage || ''}
-                selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
-                onPreviewGenerated={handlePreviewGenerated}
-                onProceedToPayment={handleProceedToPayment}
-                onBackToStyles={() => setStep('style')}
-              />
-              <button
-                className="mt-4 bg-gray-200 text-black px-6 py-3 border-4 border-black font-black text-lg uppercase rounded-xl w-full max-w-xs hover:bg-gray-300"
-                onClick={() => setStep('style')}
-              >
-                Try Another Style
-              </button>
-            </div>
-          )}
-          {/* Step 4: Payment */}
-          {state.step === 'payment' && (
-            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
-              <h2 className="text-xl font-black uppercase mb-2 text-center">Payment</h2>
-              <PaymentForm
-                originalImage={state.originalImage || ''}
-                selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
-                previewImage={state.previewImage || ''}
-                onPaymentSuccess={handlePaymentSuccess}
-                onStyledImageGenerated={handleStyledImageGenerated}
-              />
-            </div>
-          )}
-          {/* Step 5: Result */}
-          {state.step === 'result' && (
-            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 flex flex-col items-center">
-              <h2 className="text-xl font-black uppercase mb-2 text-center">Result</h2>
-              <ResultDisplay
-                originalImage={state.originalImage || ''}
-                styledImage={state.styledImage || ''}
-                selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
-                onReset={() => setStep('upload')}
-              />
-            </div>
-          )}
-        </div>
-      )}
+      ) : null}
       {/* Sticky Bottom Navigation Bar (mobile-first) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-8 border-black flex flex-row justify-around items-center h-16 sm:h-20 w-full">
         <button
