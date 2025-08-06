@@ -6,41 +6,13 @@ import { CreditCard, Shield, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { getPaymentStatus, pay } from '@base-org/account';
 import { ethers } from 'ethers';
+import { useAccount, useConnect, useWriteContract } from 'wagmi';
+import { erc20Abi } from 'viem';
 
 const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // Replace with Base USDC if needed
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
 const CREDITS_PRICE = 10; // 10 credits
 const USDC_DECIMALS = 6;
-
-async function handleErc20Payment(
-  setError: (e: string) => void,
-  setProcessing: (b: boolean) => void
-) {
-  try {
-    setProcessing(true);
-    setError('');
-    if (!window.ethereum) throw new Error('Wallet not found');
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const usdc = new ethers.Contract(
-      USDC_ADDRESS,
-      [
-        'function transfer(address to, uint256 amount) public returns (bool)',
-        'function decimals() view returns (uint8)'
-      ],
-      signer
-    );
-    const amount = ethers.parseUnits((CREDITS_PRICE * 0.01).toFixed(2), USDC_DECIMALS); // 10 credits = $0.10
-    const tx = await usdc.transfer(RECIPIENT_ADDRESS, amount);
-    await tx.wait();
-    setProcessing(false);
-    return true;
-  } catch (e: any) {
-    setError(e.message || 'ERC20 payment failed');
-    setProcessing(false);
-    return false;
-  }
-}
 
 interface PaymentFormProps {
   originalImage: string;
@@ -87,6 +59,37 @@ export function PaymentForm({
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const styledImageUrlRef = useRef<string | null>(null);
   const [lastRealProgress, setLastRealProgress] = useState(Date.now());
+
+  // Move Wagmi hooks here
+  const { isConnected, address } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { writeContractAsync } = useWriteContract();
+
+  async function handleErc20PaymentWagmi(
+    setError: (e: string) => void,
+    setProcessing: (b: boolean) => void
+  ) {
+    try {
+      setProcessing(true);
+      setError('');
+      if (!isConnected) {
+        await connect({ connector: connectors[0] });
+      }
+      const amount = BigInt(CREDITS_PRICE) * BigInt(10 ** USDC_DECIMALS); // 10 credits = $0.10
+      await writeContractAsync({
+        address: USDC_ADDRESS,
+        abi: erc20Abi,
+        functionName: 'transfer',
+        args: [RECIPIENT_ADDRESS, amount]
+      });
+      setProcessing(false);
+      return true;
+    } catch (e: any) {
+      setError(e.message || 'ERC20 payment failed');
+      setProcessing(false);
+      return false;
+    }
+  }
 
   const handleGenerateImage = async () => {
     setIsProcessing(true);
@@ -143,8 +146,8 @@ export function PaymentForm({
         setIsProcessing(false);
       }
     } else {
-      // Mobile: use ERC-20 transfer
-      const success = await handleErc20Payment(setError, setIsProcessing);
+      // Mobile: use Wagmi ERC-20 transfer
+      const success = await handleErc20PaymentWagmi(setError, setIsProcessing);
       if (success) {
         setPaymentStatus('Payment complete!');
         setIsProcessing(false);

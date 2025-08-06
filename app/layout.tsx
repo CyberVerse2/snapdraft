@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { MiniKitContextProvider } from '@/providers/MiniKitProvider';
+import { WagmiProvider } from '@/providers/WagmiConfig';
 
 export async function generateMetadata(): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL;
@@ -38,7 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <MiniKitContextProvider>{children}</MiniKitContextProvider>
+        <WagmiProvider>
+          <MiniKitContextProvider>{children}</MiniKitContextProvider>
+        </WagmiProvider>
       </body>
     </html>
   );
