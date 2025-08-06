@@ -52,7 +52,7 @@ function saveToGallery(entry: GalleryEntry) {
 }
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
-const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // Base USDC
+const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'; // Base Mainnet USDC
 const USDC_DECIMALS = 6;
 const CREDITS_PER_USDC = 100; // 1 USDC = 100 credits (1 credit = $0.01)
 
@@ -94,6 +94,12 @@ export default function Home() {
     functionName: 'balanceOf',
     args: usdcReadArgs
   });
+  if (address) {
+    console.log('Querying USDC balance for address:', address);
+  }
+  if (usdcBalanceRaw) {
+    console.log('Raw USDC balance:', usdcBalanceRaw.toString());
+  }
   let credits = 0;
   if (usdcBalanceRaw && typeof usdcBalanceRaw === 'bigint') {
     credits = (Number(usdcBalanceRaw) / 10 ** USDC_DECIMALS) * CREDITS_PER_USDC;
