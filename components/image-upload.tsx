@@ -51,8 +51,8 @@ export function ImageUpload({ onImageUpload }: ImageUploadProps) {
   });
 
   return (
-    <div className="flex flex-col md:flex-row w-full gap-8 items-stretch">
-      {/* Upload Area (left) */}
+    <div className="flex flex-col w-full items-stretch">
+      {/* Upload Area */}
       <div className="flex-1 flex flex-col items-center justify-center min-w-0">
         <div className="bg-white border-8 border-black shadow-[8px_8px_0px_0px_#000000] flex flex-col items-center justify-center w-full h-full py-12">
           <div
@@ -73,7 +73,8 @@ export function ImageUpload({ onImageUpload }: ImageUploadProps) {
                       src={preview || '/placeholder.svg'}
                       alt="Preview"
                       fill
-                      className="object-cover"
+                      className="object-cover cursor-zoom-in"
+                      style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
                     />
                   </div>
                   <div className="bg-green-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase">
@@ -99,7 +100,7 @@ export function ImageUpload({ onImageUpload }: ImageUploadProps) {
                     </p>
                   </div>
 
-                  <button className="bg-red-500 text-white px-8 py-4 border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all">
+                  <button className="bg-red-500 text-white px-8 py-4 min-h-[56px] border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all">
                     <ImageIcon className="w-6 h-6 mr-3 inline" />
                     CHOOSE FILE
                   </button>
@@ -114,41 +115,6 @@ export function ImageUpload({ onImageUpload }: ImageUploadProps) {
               </div>
             </div>
           )}
-        </div>
-      </div>
-      {/* Sample Image Area (right) */}
-      <div className="flex-1 flex flex-col items-center justify-center min-w-0">
-        <div className="bg-white border-8 border-black shadow-[8px_8px_0px_0px_#000000] flex flex-col items-center justify-center w-full h-full py-12">
-          <button
-            type="button"
-            onClick={() =>
-              onImageUpload(
-                'https://fortune.com/img-assets/wp-content/uploads/2024/05/JessePollack-Base-044.jpg?w=1440&q=90'
-              )
-            }
-            className="bg-blue-500 text-white px-10 py-5 border-4 border-black font-black text-xl uppercase hover:bg-blue-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all rounded-lg mb-8"
-          >
-            USE SAMPLE IMAGE
-          </button>
-          <div
-            className="w-48 h-48 border-4 border-black rounded-lg overflow-hidden cursor-pointer hover:shadow-[8px_8px_0px_0px_#000000] transition-all relative flex items-center justify-center mb-4"
-            onClick={() =>
-              onImageUpload(
-                'https://fortune.com/img-assets/wp-content/uploads/2024/05/JessePollack-Base-044.jpg?w=1440&q=90'
-              )
-            }
-            title="Click to use this sample image"
-          >
-            <Image
-              src="https://fortune.com/img-assets/wp-content/uploads/2024/05/JessePollack-Base-044.jpg?w=1440&q=90"
-              alt="Sample"
-              fill
-              className="object-cover"
-              sizes="192px"
-              style={{ objectFit: 'cover' }}
-            />
-          </div>
-          <div className="text-center font-bold text-lg mt-2">Sample Image</div>
         </div>
       </div>
     </div>
