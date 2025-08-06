@@ -203,9 +203,7 @@ export function PaymentForm({
       <div className="grid md:grid-cols-2 gap-8">
         {/* Order Summary */}
         <div className="bg-white border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-          <div className="bg-black text-white p-4 border-b-8 border-black">
-            <h3 className="text-2xl font-black uppercase text-center">ORDER SUMMARY</h3>
-          </div>
+
           <div className="p-6 space-y-6">
             <div className="relative w-full h-48 border-8 border-black shadow-[4px_4px_0px_0px_#000000]">
               <Image
@@ -219,7 +217,7 @@ export function PaymentForm({
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="font-black text-xl uppercase">STYLE:</span>
-                <div className="bg-yellow-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase">
+                <div className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase">
                   {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
                 </div>
               </div>
@@ -227,68 +225,32 @@ export function PaymentForm({
               <div className="border-t-4 border-black pt-4">
                 <div className="flex justify-between items-center">
                   <span className="font-black text-2xl uppercase">TOTAL:</span>
-                  <span className="bg-red-500 text-white px-6 py-3 border-4 border-black font-black text-2xl">
-                    $0.25
+                  <span className="bg-red-500 text-white px-3 py-1 border-4 border-black font-black text-2xl">
+                    10 CREDITS
                   </span>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+              {/* Payment Button */}
+              <button
+                onClick={handlePayment}
+                disabled={isProcessing || isGenerating || polling || !!generationRequestId}
+                className="w-full bg-red-500 text-white py-2 border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {generationRequestId
+                  ? 'UPSCALING IMAGE...'
+                  : isProcessing || polling
+                  ? 'PROCESSING PAYMENT...'
+                  : isGenerating
+                  ? 'GENERATING IMAGE...'
+                  : 'PAY 10 credits'}
+              </button>
 
-        {/* Payment Details */}
-        <div className="bg-white border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-          <div className="bg-black text-white p-4 border-b-8 border-black">
-            <h3 className="text-2xl font-black uppercase text-center">
-              <CreditCard className="h-6 w-6 mr-2 inline" />
-              PAYMENT
-            </h3>
-          </div>
-          <div className="p-6 space-y-6">
-            <div className="space-y-4">
-              <div className="bg-green-400 text-black p-4 border-4 border-black">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="h-5 w-5" />
-                  <span className="font-black text-lg uppercase">POWERED BY BASE PAY</span>
+              {error && (
+                <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700">
+                  {error}
                 </div>
-                <p className="font-bold uppercase text-sm">YOUR TRANSACTION IS SAFE AND SECURE</p>
-              </div>
-
-              <div className="bg-blue-400 text-black p-4 border-4 border-black">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="h-5 w-5" />
-                  <span className="font-black text-lg uppercase">INSTANT GENERATION</span>
-                </div>
-                <p className="font-bold uppercase text-sm">
-                  HIGH-QUALITY IMAGE READY IN 60 SECONDS
-                </p>
-              </div>
+              )}
             </div>
-
-            {/* Payment Button */}
-            <button
-              onClick={handlePayment}
-              disabled={isProcessing || isGenerating || polling || !!generationRequestId}
-              className="w-full bg-red-500 text-white py-6 border-4 border-black font-black text-xl uppercase hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {generationRequestId
-                ? 'UPSCALING IMAGE...'
-                : isProcessing || polling
-                ? 'PROCESSING PAYMENT...'
-                : isGenerating
-                ? 'GENERATING IMAGE...'
-                : 'PAY $0.25 & GENERATE'}
-            </button>
-
-            {error && (
-              <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700">
-                {error}
-              </div>
-            )}
-
-            <p className="text-center font-bold uppercase text-sm">
-              BY CLICKING YOU AGREE TO OUR TERMS
-            </p>
           </div>
         </div>
       </div>
