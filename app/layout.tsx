@@ -2,6 +2,7 @@ import type React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { MiniKitContextProvider } from '@/providers/MiniKitProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -13,14 +14,14 @@ export const metadata: Metadata = {
   title: 'SNAPDRAFT AI - Neobrutalist Image Transformer',
   description:
     'Transform your images with AI-powered artistic styles using our bold, neobrutalist interface',
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        {children}
+      <body>
+        <MiniKitContextProvider>{children}</MiniKitContextProvider>
       </body>
     </html>
   );

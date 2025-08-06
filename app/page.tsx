@@ -7,6 +7,7 @@ import { StyleSelection } from '@/components/style-selection';
 import { PaymentForm } from '@/components/payment-form';
 import { ResultDisplay } from '@/components/result-display';
 import { StylePreview } from '@/components/style-preview';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
 
 export type StyleType =
   | 'ghibli'
@@ -49,6 +50,13 @@ function saveToGallery(entry: GalleryEntry) {
 }
 
 export default function Home() {
+  const { setFrameReady, isFrameReady } = useMiniKit();
+  // The setFrameReady() function is called when your mini-app is ready to be shown
+  useEffect(() => {
+    if (!isFrameReady) {
+      setFrameReady();
+    }
+  }, [setFrameReady, isFrameReady]);
   const [state, setState] = useState<AppState>({
     step: 'upload',
     originalImage: null,
