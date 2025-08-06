@@ -199,53 +199,56 @@ export function PaymentForm({
   }, [generationRequestId, isProcessing, isGenerating, generationProgress]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="p-0 w-full max-w-md flex flex-col items-center">
-        <div className="p-6 space-y-6 w-full">
-          <div className="relative w-full h-48 border-8 border-black shadow-[4px_4px_0px_0px_#000000] rounded-xl overflow-hidden">
-            <Image
-              src={previewImage || originalImage || '/placeholder.svg'}
-              alt="Order Preview"
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="font-black text-xl uppercase">STYLE:</span>
-              <div className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
-                {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
-              </div>
-            </div>
-            <div className="border-t-4 border-black pt-4">
-              <div className="flex justify-between items-center">
-                <span className="font-black text-2xl uppercase">TOTAL:</span>
-                <span className="bg-red-500 text-white px-3 py-1 border-4 border-black font-black text-2xl">
-                  10 CREDITS
-                </span>
-              </div>
-            </div>
-            {/* Payment Button */}
-            <button
-              onClick={handlePayment}
-              disabled={isProcessing || isGenerating || polling || !!generationRequestId}
-              className="w-full bg-red-500 text-white py-2 border-4 border-black font-black text-xl uppercase rounded-xl hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {generationRequestId
-                ? 'UPSCALING IMAGE...'
-                : isProcessing || polling
-                ? 'PROCESSING PAYMENT...'
-                : isGenerating
-                ? 'GENERATING IMAGE...'
-                : 'PAY 10 credits'}
-            </button>
-            {error && (
-              <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700">
-                {error}
-              </div>
-            )}
-          </div>
+    <div className="flex-1 flex flex-col items-center justify-center w-full bg-white overflow-hidden">
+      {/* Large Preview Image at the top (large, spaced from header) */}
+      <div className="w-full max-w-md mx-auto border-8 border-black object-cover overflow-hidden max-h-80 mt-8 shadow-[8px_8px_0px_0px_#000000]">
+        <Image
+          src={previewImage || originalImage || '/placeholder.svg'}
+          alt="Order Preview"
+          width={320}
+          height={320}
+          className="object-cover w-full h-auto max-h-80"
+        />
+      </div>
+      {/* Style and Total distributed vertically */}
+      <div className="w-full max-w-md mx-auto flex flex-col gap-8 mt-8 px-4">
+        <div className="flex justify-between items-center w-full">
+          <span className="font-black text-xl uppercase">STYLE:</span>
+          <span className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
+            {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
+          </span>
         </div>
+        <div className="flex justify-between items-center w-full">
+          <span className="font-black text-2xl uppercase">TOTAL:</span>
+          <span className="bg-red-500 text-white px-3 py-1 border-4 border-black font-black text-2xl rounded-lg">
+            10 CREDITS
+          </span>
+        </div>
+      </div>
+      {/* Error/status message above pay button */}
+      {error && (
+        <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700 w-full max-w-md mx-auto mt-4">
+          {error}
+        </div>
+      )}
+      {/* Pay Button with horizontal padding, never touches screen edges */}
+      <div
+        className="fixed left-0 right-0 bottom-20 w-full max-w-md mx-auto px-4"
+        style={{ zIndex: 60 }}
+      >
+        <button
+          onClick={handlePayment}
+          disabled={isProcessing || isGenerating || polling || !!generationRequestId}
+          className="w-full bg-red-500 text-white py-4 border-4 border-black font-black text-xl uppercase rounded-xl hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {generationRequestId
+            ? 'UPSCALING IMAGE...'
+            : isProcessing || polling
+            ? 'PROCESSING PAYMENT...'
+            : isGenerating
+            ? 'GENERATING IMAGE...'
+            : 'PAY 10 credits'}
+        </button>
       </div>
     </div>
   );

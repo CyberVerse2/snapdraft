@@ -207,58 +207,54 @@ export default function Home() {
           Credits: {credits}
         </div>
       </header>
-      {/* Main Content: Centered upload UI for upload step */}
-      <main
-        className={
-          state.step === 'upload' && !galleryPage
-            ? 'flex-1 flex items-center justify-center'
-            : 'w-full max-w-md mx-auto flex flex-col gap-6 pb-24 px-4 min-h-screen'
-        }
-      >
+      {/* Main Content: Direct, centered, mobile-first layout */}
+      <main className="flex-1 flex flex-col items-center justify-center w-full px-4 pb-24">
+        {/* Upload Step */}
         {state.step === 'upload' && !galleryPage && (
-          <ImageUpload onImageUpload={handleImageUpload} />
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
+            <ImageUpload onImageUpload={handleImageUpload} />
+          </div>
         )}
-        {/* Step 2: Style Selection (swipeable) */}
+        {/* Style Selection Step */}
         {state.step === 'style' && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="bg-white border-4 border-black rounded-2xl shadow-lg p-4 w-full max-w-md flex flex-col items-center">
-              <h2 className="text-xl font-black uppercase mb-2 text-center">Choose Style</h2>
-              <div className="w-full overflow-x-auto flex flex-row gap-4 pb-2 snap-x snap-mandatory">
-                {styles.map((style) => (
-                  <button
-                    key={style.id}
-                    className={`min-w-[140px] max-w-[180px] snap-center flex-shrink-0 bg-gray-100 border-4 border-black rounded-xl p-3 flex flex-col items-center justify-center gap-2 shadow-md ${
-                      state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
-                    } min-h-[56px] hover:bg-yellow-200 transition-all`}
-                    onClick={() => handleStyleSelect(style.id as StyleType)}
-                  >
-                    <span className="text-lg font-black uppercase">{style.name}</span>
-                    <span className="text-xs text-gray-500">{style.description}</span>
-                    {style.popular && (
-                      <span className="text-xs bg-yellow-300 text-black px-2 py-1 rounded font-bold mt-1">
-                        POPULAR
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
+            <h2 className="text-2xl font-black uppercase text-center mb-2">Choose Style</h2>
+            <div className="w-full overflow-x-auto flex flex-row gap-4 pb-2 snap-x snap-mandatory">
+              {styles.map((style) => (
+                <button
+                  key={style.id}
+                  className={`min-w-[140px] max-w-[180px] snap-center flex-shrink-0 bg-gray-100 border-4 border-black rounded-xl p-3 flex flex-col items-center justify-center gap-2 shadow-md ${
+                    state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
+                  } min-h-[56px] hover:bg-yellow-200 transition-all`}
+                  onClick={() => handleStyleSelect(style.id as StyleType)}
+                >
+                  <span className="text-lg font-black uppercase">{style.name}</span>
+                  <span className="text-xs text-gray-500">{style.description}</span>
+                  {style.popular && (
+                    <span className="text-xs bg-yellow-300 text-black px-2 py-1 rounded font-bold mt-1">
+                      POPULAR
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         )}
-        {/* Step 3: Payment (now directly after style selection) */}
+        {/* Payment Step */}
         {state.step === 'payment' && (
-          <PaymentForm
-            originalImage={state.originalImage || ''}
-            selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
-            previewImage={state.previewImage || ''}
-            onPaymentSuccess={handlePaymentSuccess}
-            onStyledImageGenerated={handleStyledImageGenerated}
-          />
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
+            <PaymentForm
+              originalImage={state.originalImage || ''}
+              selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
+              previewImage={state.previewImage || ''}
+              onPaymentSuccess={handlePaymentSuccess}
+              onStyledImageGenerated={handleStyledImageGenerated}
+            />
+          </div>
         )}
-        {/* Step 4: Result */}
+        {/* Result Step */}
         {state.step === 'result' && (
-          <div className="0.25">
-            <h2 className="text-xl font-black uppercase mb-2 text-center">Result</h2>
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
             <ResultDisplay
               originalImage={state.originalImage || ''}
               styledImage={state.styledImage || ''}
@@ -268,8 +264,9 @@ export default function Home() {
           </div>
         )}
       </main>
-      {/* Sticky Bottom Navigation Bar (mobile-first) with icons and credits */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-4 border-black flex flex-row justify-around items-center h-16 w-full">
+      {/* Navigation remains as is */}
+      {/* Sticky Bottom Navigation Bar (mobile-first) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-8 border-black flex flex-row justify-around items-center h-16 sm:h-20 w-full">
         <button
           onClick={() => {
             setGalleryPage(false);
@@ -277,24 +274,18 @@ export default function Home() {
           }}
           className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
             !galleryPage ? 'bg-yellow-400 text-black' : 'bg-black text-white'
-          } min-h-[56px]`}
+          }`}
         >
-          <span className="material-icons text-2xl mb-1">home</span>
-          Home
+          <span className="material-icons text-2xl sm:text-3xl mb-1">home</span>
         </button>
         <button
           onClick={() => setGalleryPage(true)}
           className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
             galleryPage ? 'bg-yellow-400 text-black' : 'bg-black text-white'
-          } min-h-[56px]`}
+          }`}
         >
-          <span className="material-icons text-2xl mb-1">grid_on</span>
-          Gallery
+          <span className="material-icons text-2xl sm:text-3xl mb-1">Gallery</span>
         </button>
-        <div className="flex-1 flex flex-col items-center justify-center h-full bg-black text-yellow-400 font-black uppercase text-xs sm:text-base min-h-[56px]">
-          <span className="material-icons text-2xl mb-1">monetization_on</span>
-          {`Credits: ${credits}`}
-        </div>
       </nav>
       {/* Gallery Page (full page, not modal) */}
       {galleryPage ? (
@@ -405,28 +396,6 @@ export default function Home() {
           )}
         </div>
       ) : null}
-      {/* Sticky Bottom Navigation Bar (mobile-first) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-8 border-black flex flex-row justify-around items-center h-16 sm:h-20 w-full">
-        <button
-          onClick={() => {
-            setGalleryPage(false);
-            setStep('upload');
-          }}
-          className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
-            !galleryPage ? 'bg-yellow-400 text-black' : 'bg-black text-white'
-          }`}
-        >
-          <span className="material-icons text-2xl sm:text-3xl mb-1">home</span>
-        </button>
-        <button
-          onClick={() => setGalleryPage(true)}
-          className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
-            galleryPage ? 'bg-yellow-400 text-black' : 'bg-black text-white'
-          }`}
-        >
-          <span className="material-icons text-2xl sm:text-3xl mb-1">Gallery</span>
-        </button>
-      </nav>
     </div>
   );
 }
