@@ -199,43 +199,45 @@ export function PaymentForm({
   }, [generationRequestId, isProcessing, isGenerating, generationProgress]);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full bg-white overflow-hidden">
-      {/* Large Preview Image at the top (large, spaced from header) */}
-      <div className="w-full max-w-md mx-auto border-8 border-black object-cover overflow-hidden max-h-80 mt-8 shadow-[8px_8px_0px_0px_#000000]">
-        <Image
-          src={previewImage || originalImage || '/placeholder.svg'}
-          alt="Order Preview"
-          width={320}
-          height={320}
-          className="object-cover w-full h-auto max-h-80"
-        />
+    <>
+      {/* Pay section: fixed between header and nav, never scrolls the page */}
+      <div className="fixed left-0 right-0 top-16 bottom-20 z-40 overflow-y-auto bg-white">
+        <div className="w-full max-w-md mx-auto flex flex-col items-center px-4 pt-8 gap-8">
+          {/* Preview Image */}
+          <div className="w-full max-w-md mx-auto border-8 border-black object-cover overflow-hidden max-h-80 mt-2 shadow-[8px_8px_0px_0px_#000000]">
+            <Image
+              src={previewImage || originalImage || '/placeholder.svg'}
+              alt="Order Preview"
+              width={320}
+              height={320}
+              className="object-cover w-full h-auto max-h-80"
+            />
+          </div>
+          {/* Style and Total distributed vertically */}
+          <div className="w-full flex flex-col gap-6">
+            <div className="flex justify-between items-center w-full">
+              <span className="font-black text-xl uppercase">STYLE:</span>
+              <span className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
+                {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center w-full">
+              <span className="font-black text-2xl uppercase">TOTAL:</span>
+              <span className="bg-red-500 text-white px-3 py-1 border-4 border-black font-black text-2xl rounded-lg">
+                10 CREDITS
+              </span>
+            </div>
+          </div>
+          {/* Error/status message above pay button */}
+          {error && (
+            <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700 w-full max-w-md mx-auto mt-4">
+              {error}
+            </div>
+          )}
+        </div>
       </div>
-      {/* Style and Total distributed vertically */}
-      <div className="w-full max-w-md mx-auto flex flex-col gap-8 mt-8 px-4">
-        <div className="flex justify-between items-center w-full">
-          <span className="font-black text-xl uppercase">STYLE:</span>
-          <span className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
-            {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
-          </span>
-        </div>
-        <div className="flex justify-between items-center w-full">
-          <span className="font-black text-2xl uppercase">TOTAL:</span>
-          <span className="bg-red-500 text-white px-3 py-1 border-4 border-black font-black text-2xl rounded-lg">
-            10 CREDITS
-          </span>
-        </div>
-      </div>
-      {/* Error/status message above pay button */}
-      {error && (
-        <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700 w-full max-w-md mx-auto mt-4">
-          {error}
-        </div>
-      )}
-      {/* Pay Button with horizontal padding, never touches screen edges */}
-      <div
-        className="fixed left-0 right-0 bottom-20 w-full max-w-md mx-auto px-4"
-        style={{ zIndex: 60 }}
-      >
+      {/* Pay Button: always visible, sticky above nav */}
+      <div className="fixed left-0 right-0 bottom-20 w-full px-4 z-[70]">
         <button
           onClick={handlePayment}
           disabled={isProcessing || isGenerating || polling || !!generationRequestId}
@@ -250,6 +252,6 @@ export function PaymentForm({
             : 'PAY 10 credits'}
         </button>
       </div>
-    </div>
+    </>
   );
 }
