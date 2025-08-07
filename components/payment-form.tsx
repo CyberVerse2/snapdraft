@@ -79,7 +79,7 @@ export function PaymentForm({
       if (!isConnected) {
         await connect({ connector: connectors[0] });
       }
-      const amount = BigInt(CREDITS_PRICE) * BigInt(10 ** USDC_DECIMALS); // 10 credits = $0.10
+      const amount = BigInt(Math.floor((CREDITS_PRICE * 10 ** USDC_DECIMALS) / 100));
       console.log('total', amount);
       await writeContractAsync({
         address: USDC_ADDRESS,

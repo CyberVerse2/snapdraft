@@ -10,6 +10,7 @@ import { StylePreview } from '@/components/style-preview';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount, useConnect, useReadContract } from 'wagmi';
 import { erc20Abi } from 'viem';
+import Link from 'next/link';
 
 export type StyleType =
   | 'ghibli'
@@ -346,138 +347,23 @@ export default function Home() {
           </div>
         )}
       </main>
-      {/* Navigation remains as is */}
-      {/* Sticky Bottom Navigation Bar (mobile-first) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-8 border-black flex flex-row justify-around items-center h-16 sm:h-20 w-full">
-        <button
-          onClick={() => {
-            setGalleryPage(false);
-            setStep('upload');
-          }}
-          className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
-            !galleryPage ? 'bg-yellow-400 text-black' : 'bg-black text-white'
-          }`}
+      {/* Bottom Navigation */}
+      <footer className="fixed left-0 right-0 bottom-0 z-50 bg-black border-t-4 border-black h-20 flex flex-row items-center justify-between w-full px-2 sm:px-4">
+        <Link
+          href="/"
+          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
+          style={{ minWidth: 120 }}
         >
-          <span className="material-icons text-2xl sm:text-3xl mb-1">home</span>
-        </button>
-        <button
-          onClick={() => setGalleryPage(true)}
-          className={`flex-1 flex flex-col items-center justify-center h-full text-white font-black uppercase text-xs sm:text-base transition-all ${
-            galleryPage ? 'bg-yellow-400 text-black' : 'bg-black text-white'
-          }`}
+          HOME
+        </Link>
+        <Link
+          href="/gallery"
+          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
+          style={{ minWidth: 120 }}
         >
-          <span className="material-icons text-2xl sm:text-3xl mb-1">Gallery</span>
-        </button>
-      </nav>
-      {/* Gallery Page (full page, not modal) */}
-      {galleryPage ? (
-        <div className="min-h-[80vh] bg-white border-8 border-black p-2 sm:p-4 max-w-md mx-auto w-full flex flex-col relative rounded-xl">
-          <h2 className="text-xl sm:text-2xl font-black uppercase mb-4 text-center">My Gallery</h2>
-          {gallery.length === 0 ? (
-            <div className="text-center text-base font-bold">No images yet.</div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {gallery.map((img, i) => (
-                <div
-                  key={i}
-                  className={`border-4 border-black bg-gray-100 p-1 flex flex-col items-center relative rounded-lg ${
-                    favorites[img.ts] ? 'ring-4 ring-yellow-400' : ''
-                  }`}
-                >
-                  <button
-                    onClick={() => toggleFavorite(img.ts)}
-                    className={`absolute top-1 right-1 z-10 text-2xl ${
-                      favorites[img.ts] ? 'text-yellow-400' : 'text-gray-400'
-                    } bg-white bg-opacity-80 rounded-full p-2 focus:outline-none`}
-                    aria-label={favorites[img.ts] ? 'Unstar' : 'Star'}
-                  >
-                    ★
-                  </button>
-                  <img
-                    src={img.url}
-                    alt="Gallery"
-                    className="w-full aspect-square object-contain rounded-md cursor-zoom-in"
-                    draggable={false}
-                    onContextMenu={(e) => e.preventDefault()}
-                    onClick={() => setZoomImage(img.url)}
-                    style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
-                  />
-                  <div className="mt-2 text-xs font-bold uppercase truncate w-full text-center">
-                    {img.style}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate w-full text-center">
-                    {new Date(img.ts).toLocaleString()}
-                  </div>
-                  <div className="flex flex-row gap-2 mt-2 w-full justify-center">
-                    <button
-                      onClick={async () => {
-                        const response = await fetch(img.url);
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `snapdraft-image-${img.style}-${img.ts}.png`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                      }}
-                      className="bg-green-500 text-white px-3 py-2 border-4 border-black font-black text-xs uppercase rounded-lg flex-1 hover:bg-green-600"
-                    >
-                      Download
-                    </button>
-                    <button
-                      onClick={() => {
-                        const text = `Check out my AI-styled image created with SNAPDRAFT AI!\n\n${img.url}`;
-                        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                          text
-                        )}`;
-                        window.open(url, '_blank');
-                      }}
-                      className="bg-blue-500 text-white px-3 py-2 border-4 border-black font-black text-xs uppercase rounded-lg flex-1 hover:bg-blue-600"
-                    >
-                      Share
-                    </button>
-                    <button
-                      onClick={() => {
-                        const newGallery = gallery.filter((_, idx) => idx !== i);
-                        setGallery(newGallery);
-                        localStorage.setItem('snapdraft_gallery', JSON.stringify(newGallery));
-                      }}
-                      className="bg-red-500 text-white px-3 py-2 border-4 border-black font-black text-xs uppercase rounded-lg flex-1 hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Image Lightbox Modal (Zoom) */}
-          {zoomImage && (
-            <div
-              className="fixed inset-0 z-60 bg-black bg-opacity-90 flex items-center justify-center"
-              onClick={() => setZoomImage(null)}
-            >
-              <img
-                src={zoomImage}
-                alt="Zoomed"
-                className="max-w-full max-h-full rounded-lg shadow-lg cursor-zoom-out"
-                style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
-                draggable={false}
-                onContextMenu={(e) => e.preventDefault()}
-                onClick={(e) => e.stopPropagation()}
-              />
-              <button
-                onClick={() => setZoomImage(null)}
-                className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase hover:bg-red-600 rounded-lg"
-              >
-                CLOSE
-              </button>
-            </div>
-          )}
-        </div>
-      ) : null}
+          GALLERY
+        </Link>
+      </footer>
     </div>
   );
 }
