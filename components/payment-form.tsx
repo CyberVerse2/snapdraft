@@ -258,9 +258,9 @@ export function PaymentForm({
   }, [generationRequestId, isProcessing, isGenerating, generationProgress]);
 
   return (
-    <div className="flex flex-col w-full bg-yellow-100 z-50 overflow-y-auto">
+    <div className="fixed left-0 right-0 top-16 bottom-14 z-50 bg-yellow-100 overflow-y-auto">
       {/* Main content: center everything, no scroll */}
-      <div className="flex-1 flex flex-col items-center justify-start w-full max-w-md mx-auto px-4 pt-20 pb-24">
+      <div className="flex-1 flex flex-col items-center justify-start w-full max-w-md mx-auto px-4 pt-8 pb-24">
         {/* Preview Image */}
         <div className="w-full max-w-md mx-auto border-8 border-black object-cover overflow-hidden max-h-80 mt-2 shadow-[8px_8px_0px_0px_#000000]">
           <Image
