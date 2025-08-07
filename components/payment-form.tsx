@@ -20,6 +20,8 @@ interface PaymentFormProps {
   previewImage?: string | null;
   onPaymentSuccess: () => void;
   onStyledImageGenerated: (imageUrl: string) => void;
+  credits: number;
+  onShowTopUpModal: () => void;
 }
 
 const styleNames = {
@@ -43,7 +45,9 @@ export function PaymentForm({
   selectedStyle,
   previewImage,
   onPaymentSuccess,
-  onStyledImageGenerated
+  onStyledImageGenerated,
+  credits,
+  onShowTopUpModal
 }: PaymentFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -76,6 +80,7 @@ export function PaymentForm({
         await connect({ connector: connectors[0] });
       }
       const amount = BigInt(CREDITS_PRICE) * BigInt(10 ** USDC_DECIMALS); // 10 credits = $0.10
+      console.log('total', amount);
       await writeContractAsync({
         address: USDC_ADDRESS,
         abi: erc20Abi,
@@ -122,6 +127,10 @@ export function PaymentForm({
 
   // One-tap USDC payment using the pay() function
   const handlePayment = async () => {
+    if (credits < 10) {
+      onShowTopUpModal();
+      return;
+    }
     if (typeof window !== 'undefined' && window.innerWidth >= 768) {
       // Desktop: use Base Pay
       try {
@@ -269,12 +278,6 @@ export function PaymentForm({
               <span className="font-black text-xl uppercase">STYLE:</span>
               <span className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
                 {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center w-full">
-              <span className="font-black text-2xl uppercase">TOTAL:</span>
-              <span className="bg-red-500 text-white px-3 py-1 border-4 border-black font-black text-2xl rounded-lg">
-                10 CREDITS
               </span>
             </div>
           </div>

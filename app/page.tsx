@@ -322,15 +322,15 @@ export default function Home() {
         )}
         {/* Payment Step */}
         {state.step === 'payment' && (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
-            <PaymentForm
-              originalImage={state.originalImage || ''}
-              selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
-              previewImage={state.previewImage || ''}
-              onPaymentSuccess={handlePaymentSuccess}
-              onStyledImageGenerated={handleStyledImageGenerated}
-            />
-          </div>
+          <PaymentForm
+            originalImage={state.originalImage!}
+            selectedStyle={state.selectedStyle!}
+            previewImage={state.previewImage}
+            onPaymentSuccess={handlePaymentSuccess}
+            onStyledImageGenerated={handleStyledImageGenerated}
+            credits={credits}
+            onShowTopUpModal={() => setShowCreditsModal(true)}
+          />
         )}
         {/* Result Step */}
         {state.step === 'result' && (
