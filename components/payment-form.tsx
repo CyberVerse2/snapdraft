@@ -258,36 +258,34 @@ export function PaymentForm({
   }, [generationRequestId, isProcessing, isGenerating, generationProgress]);
 
   return (
-    <>
-      {/* Pay section: fixed between header and nav, never scrolls the page */}
-      <div className="fixed left-0 right-0 top-16 bottom-20 z-40 overflow-y-auto bg-white">
-        <div className="w-full max-w-md mx-auto flex flex-col items-center px-4 pt-8 gap-8">
-          {/* Preview Image */}
-          <div className="w-full max-w-md mx-auto border-8 border-black object-cover overflow-hidden max-h-80 mt-2 shadow-[8px_8px_0px_0px_#000000]">
-            <Image
-              src={previewImage || originalImage || '/placeholder.svg'}
-              alt="Order Preview"
-              width={320}
-              height={320}
-              className="object-cover w-full h-auto max-h-80"
-            />
-          </div>
-          {/* Style and Total distributed vertically */}
-          <div className="w-full flex flex-col gap-6">
-            <div className="flex justify-between items-center w-full">
-              <span className="font-black text-xl uppercase">STYLE:</span>
-              <span className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
-                {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
-              </span>
-            </div>
-          </div>
-          {/* Error/status message above pay button */}
-          {error && (
-            <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700 w-full max-w-md mx-auto mt-4">
-              {error}
-            </div>
-          )}
+    <div className="flex flex-col w-full bg-yellow-100 z-50 overflow-y-auto">
+      {/* Main content: center everything, no scroll */}
+      <div className="flex-1 flex flex-col items-center justify-start w-full max-w-md mx-auto px-4 pt-20 pb-24">
+        {/* Preview Image */}
+        <div className="w-full max-w-md mx-auto border-8 border-black object-cover overflow-hidden max-h-80 mt-2 shadow-[8px_8px_0px_0px_#000000]">
+          <Image
+            src={previewImage || originalImage || '/placeholder.svg'}
+            alt="Order Preview"
+            width={320}
+            height={320}
+            className="object-cover w-full h-auto max-h-80"
+          />
         </div>
+        {/* Style and Total distributed vertically */}
+        <div className="flex flex-col gap-6 w-full mt-6 flex-shrink-0">
+          <div className="flex justify-between items-center w-full">
+            <span className="font-black text-xl uppercase">STYLE:</span>
+            <span className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
+              {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
+            </span>
+          </div>
+        </div>
+        {/* Error/status message above pay button */}
+        {error && (
+          <div className="bg-red-200 border-4 border-red-500 p-4 text-center font-bold uppercase text-red-700 w-full max-w-md mx-auto mt-4">
+            {error}
+          </div>
+        )}
       </div>
       {/* Pay Button: always visible, sticky above nav */}
       <div className="fixed left-0 right-0 bottom-20 w-full px-4 z-[70]">
@@ -305,6 +303,6 @@ export function PaymentForm({
             : 'PAY 10 credits'}
         </button>
       </div>
-    </>
+    </div>
   );
 }

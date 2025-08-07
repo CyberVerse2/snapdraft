@@ -259,7 +259,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-yellow-100 overflow-hidden">
       {/* Credits Modal */}
       {showCreditsModal && (
         <div
