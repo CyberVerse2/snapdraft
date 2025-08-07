@@ -1,6 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useAccount, useConnect, useReadContract } from 'wagmi';
+import { erc20Abi } from 'viem';
+
+const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
+const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+const USDC_DECIMALS = 6;
+const CREDITS_PER_USDC = 100;
 
 interface GalleryEntry {
   url: string;
@@ -18,6 +26,24 @@ function getGallery(): GalleryEntry[] {
 }
 
 export default function GalleryPage() {
+  // Credits logic
+  const { address, isConnected } = useAccount();
+  const usdcReadArgs = address ? ([address as `0x${string}`] as const) : undefined;
+  const { data: usdcBalanceRaw, isLoading: isBalanceLoading } = useReadContract({
+    address: USDC_ADDRESS,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: usdcReadArgs
+  });
+  let credits = 0;
+  if (usdcBalanceRaw && typeof usdcBalanceRaw === 'bigint') {
+    credits = (Number(usdcBalanceRaw) / 10 ** USDC_DECIMALS) * CREDITS_PER_USDC;
+    credits = Math.floor(credits);
+  }
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Gallery logic
   const [gallery, setGallery] = useState<GalleryEntry[]>([]);
   const [favorites, setFavorites] = useState<Record<string, boolean>>(() => {
     if (typeof window === 'undefined') return {};
@@ -59,11 +85,59 @@ export default function GalleryPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
+      {/* Credits Modal */}
+      {showCreditsModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-4"
+          onClick={() => setShowCreditsModal(false)}
+        >
+          <div
+            className="bg-white border-8 border-black rounded-xl max-w-md w-full p-6 flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-black uppercase mb-6 text-center">Top Up Credits</h2>
+            <div className="mb-4 w-full flex items-center justify-center gap-2">
+              <div className="bg-gray-100 border-2 border-black rounded-lg px-4 py-2 font-mono text-sm break-all inline-block">
+                {RECIPIENT_ADDRESS.slice(0, 6)}...{RECIPIENT_ADDRESS.slice(-5)}
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(RECIPIENT_ADDRESS);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                className="bg-yellow-400 text-black px-3 py-1 border-2 border-black font-bold rounded hover:bg-yellow-300 transition-all"
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <div className="text-center text-base font-bold mt-2 mb-6">
+              1 credit = $0.01 USDC
+              <br />
+              Send USDC to this address to top up your credits.
+            </div>
+            <button
+              onClick={() => setShowCreditsModal(false)}
+              className="mt-4 bg-red-500 text-white px-6 py-2 border-4 border-black font-black text-base uppercase hover:bg-red-600 rounded-lg"
+            >
+              CLOSE
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Sticky Header: SNAP (left), Credits (right) */}
       <header className="sticky top-0 z-40 bg-black text-white border-b-4 border-black h-16 flex flex-row items-center justify-between w-full px-2 sm:px-4 py-2">
         <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
-          GALLERY
+          SNAP
         </h1>
+        <div
+          className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 transition-all"
+          onClick={() => setShowCreditsModal(true)}
+        >
+          {isConnected ? (isBalanceLoading ? '...' : credits) : 0} Credits
+        </div>
       </header>
+      {/* Main Content: Gallery Grid */}
       <main className="flex-1 flex flex-col items-center w-full px-2 pt-4 pb-24">
         {gallery.length === 0 ? (
           <div className="text-center text-lg font-bold mt-12">No images in your gallery yet.</div>
@@ -115,6 +189,23 @@ export default function GalleryPage() {
           </div>
         )}
       </main>
+      {/* Bottom Navigation */}
+      <footer className="fixed left-0 right-0 bottom-0 z-50 bg-black border-t-4 border-black h-20 flex flex-row items-center justify-between w-full sm:px-4">
+        <Link
+          href="/"
+          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
+          style={{ minWidth: 120 }}
+        >
+          HOME
+        </Link>
+        <Link
+          href="/gallery"
+          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
+          style={{ minWidth: 120 }}
+        >
+          GALLERY
+        </Link>
+      </footer>
     </div>
   );
 }
