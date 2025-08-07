@@ -1,7 +1,7 @@
 'use client';
 
 import { pay, getPaymentStatus } from '@base-org/account';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ImageUpload } from '@/components/image-upload';
 import { StyleSelection } from '@/components/style-selection';
 import { PaymentForm } from '@/components/payment-form';
@@ -11,6 +11,8 @@ import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount, useConnect, useReadContract } from 'wagmi';
 import { erc20Abi } from 'viem';
 import Link from 'next/link';
+import Image from 'next/image';
+import sampleHero from '/public/sample-hero.jpg'; // Add a sample image to public/ if not present
 
 export type StyleType =
   | 'ghibli'
@@ -110,6 +112,15 @@ export default function Home() {
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [galleryPage, setGalleryPage] = useState(false);
+  const [showUpload, setShowUpload] = useState(true);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkWidth = () => setShowUpload(window.innerWidth >= 400);
+      checkWidth();
+      window.addEventListener('resize', checkWidth);
+      return () => window.removeEventListener('resize', checkWidth);
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('snapdraft_credits', credits.toString());
@@ -231,8 +242,24 @@ export default function Home() {
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
 
+  // Get a featured image: from gallery if available, else use sample
+  const featuredImage = gallery.length > 0 ? gallery[0].url : sampleHero;
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const handleSimpleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        handleImageUpload(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white overflow-hidden">
       {/* Credits Modal */}
       {showCreditsModal && (
         <div
@@ -288,14 +315,77 @@ export default function Home() {
           {isConnected ? (isBalanceLoading ? '...' : credits) : 0} Credits
         </div>
       </header>
+      {/* HERO SECTION */}
+      {state.step === 'upload' && (
+        <>
+          <section className="w-full flex flex-col items-center justify-center bg-yellow-100 border-b-4 border-black py-6 px-4">
+            <div className="w-full max-w-md mx-auto border-8 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] mb-4">
+              <Image
+                src={featuredImage}
+                alt="Featured AI Styled"
+                width={400}
+                height={300}
+                className="object-cover w-full h-56"
+                priority
+              />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black uppercase text-center mb-2">
+              Turn your photos into art. Instantly.
+            </h2>
+            {/* <p className="text-lg text-center font-bold text-black/80 mb-2">Upload a photo, pick a style, and get a stunning AI creation in seconds.</p> */}
+            <div className="w-full max-w-xs mx-auto mt-2 mb-2 flex justify-center">
+              <button
+                className="bg-black text-white font-black uppercase px-6 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-400 hover:text-black transition-all text-base"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ width: '100%' }}
+              >
+                Upload Photo
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleSimpleUpload}
+              />
+            </div>
+          </section>
+          {/* HOW IT WORKS */}
+          <section className="w-full flex flex-col items-center justify-center py-4 px-4 bg-white border-b-4 border-black">
+            <div className="flex flex-row items-center justify-center gap-4 max-w-md mx-auto">
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl mb-1">
+                  1
+                </div>
+                <span className="text-xs font-bold uppercase text-black">UPLOAD</span>
+              </div>
+              <span className="font-black text-xl">→</span>
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl mb-1">
+                  2
+                </div>
+                <span className="text-xs font-bold uppercase text-black">STYLE</span>
+              </div>
+              <span className="font-black text-xl">→</span>
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl mb-1">
+                  3
+                </div>
+                <span className="text-xs font-bold uppercase text-black">PAY</span>
+              </div>
+              <span className="font-black text-xl">→</span>
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl mb-1">
+                  4
+                </div>
+                <span className="text-xs font-bold uppercase text-black">DOWNLOAD</span>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
       {/* Main Content: Direct, centered, mobile-first layout */}
-      <main className="flex-1 flex flex-col items-center justify-center w-full px-4 pb-24">
-        {/* Upload Step */}
-        {state.step === 'upload' && !galleryPage && (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
-            <ImageUpload onImageUpload={handleImageUpload} />
-          </div>
-        )}
+      <main className="flex-1 flex flex-col items-center justify-center w-full px-4 pb-0 overflow-hidden">
         {/* Style Selection Step */}
         {state.step === 'style' && (
           <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
@@ -348,18 +438,18 @@ export default function Home() {
         )}
       </main>
       {/* Bottom Navigation */}
-      <footer className="fixed left-0 right-0 bottom-0 z-50 bg-black border-t-4 border-black h-20 flex flex-row items-center justify-between w-full sm:px-4">
+      <footer className="fixed left-0 right-0 bottom-0 z-50 bg-black border-t-4 border-black h-16 flex flex-row items-center justify-between w-full px-2">
         <Link
           href="/"
-          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
-          style={{ minWidth: 120 }}
+          className="flex-1 flex items-center justify-center h-full text-white font-black text-base uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
+          style={{ minWidth: 90 }}
         >
           HOME
         </Link>
         <Link
           href="/gallery"
-          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
-          style={{ minWidth: 120 }}
+          className="flex-1 flex items-center justify-center h-full text-white font-black text-base uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
+          style={{ minWidth: 90 }}
         >
           GALLERY
         </Link>
