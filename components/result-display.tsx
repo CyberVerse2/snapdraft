@@ -42,6 +42,7 @@ export function ResultDisplay({
     ? 'ORIGINAL'
     : styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE';
   const imageToShow = showOriginal ? originalImage : styledImage;
+  const safeImageToShow = imageToShow || '/placeholder.svg';
 
   // When a new styled image arrives, ensure we display it (not the placeholder or original)
   useEffect(() => {
@@ -91,12 +92,10 @@ export function ResultDisplay({
         className="relative w-full max-w-md mx-auto h-64 sm:h-80 border-8 border-black shadow-[8px_8px_0px_0px_#000000] mb-4 cursor-pointer overflow-hidden"
         onClick={() => setShowOriginal((v) => !v)}
       >
-        <Image
-          key={imageToShow || 'placeholder'}
-          src={imageToShow}
+        <img
+          key={safeImageToShow}
+          src={safeImageToShow}
           alt={showOriginal ? 'Original Image' : 'Styled Result'}
-          width={320}
-          height={400}
           className="object-cover w-full h-full"
         />
         {/* No overlay */}

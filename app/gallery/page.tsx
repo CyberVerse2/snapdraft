@@ -31,6 +31,8 @@ export default function GalleryPage() {
   // Gallery logic
   const [gallery, setGallery] = useState<GalleryEntry[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string>('');
 
   useEffect(() => {
     (async () => {
@@ -145,14 +147,8 @@ export default function GalleryPage() {
                   </button>
                   <button
                     onClick={() => {
-                      // Open a modal-like simple copy UI using native prompt or clipboard
-                      navigator.clipboard
-                        .writeText(entry.url)
-                        .catch(() => {})
-                        .finally(() => {
-                          // Fallback: open in new tab for manual download or save
-                          window.open(entry.url, '_blank');
-                        });
+                      setDownloadUrl(entry.url);
+                      setShowDownloadModal(true);
                     }}
                     className="text-xl text-green-600 bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
                     aria-label="Download"
@@ -169,6 +165,46 @@ export default function GalleryPage() {
           </div>
         )}
       </main>
+      {showDownloadModal && (
+        <div
+          className="fixed inset-0 z-[999] bg-black/70 flex items-center justify-center px-4"
+          onClick={() => setShowDownloadModal(false)}
+        >
+          <div
+            className="bg-white border-8 border-black rounded-xl max-w-md w-full p-6 flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-black uppercase text-center">Copy Image Link</h3>
+            <div className="bg-gray-100 border-2 border-black rounded-lg px-3 py-2 font-mono text-xs break-all select-all">
+              {downloadUrl}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(downloadUrl).catch(() => {});
+                }}
+                className="flex-1 bg-yellow-400 text-black px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-yellow-300"
+              >
+                Copy
+              </button>
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 text-center bg-blue-500 text-white px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-blue-600"
+              >
+                Open
+              </a>
+            </div>
+            <button
+              onClick={() => setShowDownloadModal(false)}
+              className="bg-red-500 text-white px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-red-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       {/* Bottom Navigation */}
       <footer className="fixed left-0 right-0 bottom-0 z-50 bg-black border-t-4 border-black h-20 flex flex-row items-center justify-between w-full sm:px-4">
         <Link

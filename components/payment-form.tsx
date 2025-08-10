@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import type { StyleType } from '@/app/page';
-import Image from 'next/image';
 import { useAccount, useConnect, useSendTransaction } from 'wagmi';
 import { parseEther } from 'viem';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
@@ -98,6 +97,11 @@ export function PaymentForm({
       if (data.requestId) setGenerationRequestId(data.requestId);
       if (!cancelled) {
         setGeneratedUrl(data.styledImageUrl as string);
+        // Proactively notify parent with the URL so result page has it ready
+        if (!hasNotifiedRef.current && typeof onStyledImageGenerated === 'function') {
+          hasNotifiedRef.current = true;
+          onStyledImageGenerated(data.styledImageUrl as string);
+        }
       }
     } catch (e: any) {
       if (!cancelled) setError(e?.message || 'Failed to start generation');
@@ -247,7 +251,7 @@ export function PaymentForm({
             className="relative w-full h-auto max-h-80 cursor-pointer"
             onClick={() => setShowOriginal((v) => !v)}
           >
-            <Image
+            <img
               src={
                 (showOriginal ? originalImage : generatedUrl) ||
                 previewImage ||
@@ -255,8 +259,6 @@ export function PaymentForm({
                 '/placeholder.svg'
               }
               alt={showOriginal ? 'Original' : 'Generated'}
-              width={320}
-              height={320}
               className="object-cover w-full h-auto max-h-80"
             />
             {!generatedUrl && (generationRequestId || generationProgress < 100) && (
