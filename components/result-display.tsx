@@ -38,6 +38,7 @@ export function ResultDisplay({
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
   const styleLabel = showOriginal
     ? 'ORIGINAL'
     : styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE';
@@ -56,6 +57,7 @@ export function ResultDisplay({
   const handleDownload = () => {
     // Debug: trace modal open
     console.log('[ResultDisplay] Open download modal');
+    setCopiedUrl(false);
     setShowDownloadModal(true);
   };
 
@@ -132,7 +134,10 @@ export function ResultDisplay({
       {showDownloadModal && (
         <div
           className="fixed inset-0 z-[999] bg-black/70 flex items-center justify-center px-4"
-          onClick={() => setShowDownloadModal(false)}
+          onClick={() => {
+            setShowDownloadModal(false);
+            setCopiedUrl(false);
+          }}
         >
           <div
             className="bg-white border-8 border-black rounded-xl max-w-md w-full p-6 flex flex-col gap-4"
@@ -145,11 +150,17 @@ export function ResultDisplay({
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(styledImage).catch(() => {});
+                  navigator.clipboard
+                    .writeText(styledImage)
+                    .then(() => {
+                      setCopiedUrl(true);
+                      setTimeout(() => setCopiedUrl(false), 1500);
+                    })
+                    .catch(() => {});
                 }}
                 className="flex-1 bg-yellow-400 text-black px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-yellow-300"
               >
-                Copy
+                {copiedUrl ? 'Copied!' : 'Copy'}
               </button>
               <a
                 href={styledImage}
@@ -161,7 +172,10 @@ export function ResultDisplay({
               </a>
             </div>
             <button
-              onClick={() => setShowDownloadModal(false)}
+              onClick={() => {
+                setShowDownloadModal(false);
+                setCopiedUrl(false);
+              }}
               className="bg-red-500 text-white px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-red-600"
             >
               Close

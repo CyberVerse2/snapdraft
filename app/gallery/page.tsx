@@ -33,6 +33,7 @@ export default function GalleryPage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string>('');
+  const [downloadCopied, setDownloadCopied] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -148,6 +149,7 @@ export default function GalleryPage() {
                   <button
                     onClick={() => {
                       setDownloadUrl(entry.url);
+                      setDownloadCopied(false);
                       setShowDownloadModal(true);
                     }}
                     className="text-xl text-green-600 bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
@@ -168,7 +170,10 @@ export default function GalleryPage() {
       {showDownloadModal && (
         <div
           className="fixed inset-0 z-[999] bg-black/70 flex items-center justify-center px-4"
-          onClick={() => setShowDownloadModal(false)}
+          onClick={() => {
+            setShowDownloadModal(false);
+            setDownloadCopied(false);
+          }}
         >
           <div
             className="bg-white border-8 border-black rounded-xl max-w-md w-full p-6 flex flex-col gap-4"
@@ -181,11 +186,17 @@ export default function GalleryPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(downloadUrl).catch(() => {});
+                  navigator.clipboard
+                    .writeText(downloadUrl)
+                    .then(() => {
+                      setDownloadCopied(true);
+                      setTimeout(() => setDownloadCopied(false), 1500);
+                    })
+                    .catch(() => {});
                 }}
                 className="flex-1 bg-yellow-400 text-black px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-yellow-300"
               >
-                Copy
+                {downloadCopied ? 'Copied!' : 'Copy'}
               </button>
               <a
                 href={downloadUrl}
@@ -197,7 +208,10 @@ export default function GalleryPage() {
               </a>
             </div>
             <button
-              onClick={() => setShowDownloadModal(false)}
+              onClick={() => {
+                setShowDownloadModal(false);
+                setDownloadCopied(false);
+              }}
               className="bg-red-500 text-white px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-red-600"
             >
               Close
