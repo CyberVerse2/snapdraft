@@ -17,11 +17,16 @@ export async function POST(request: NextRequest) {
     const requestId = randomUUID();
     let latestProgress = 0;
 
+    // Align generation logic with preview route
     let result;
-    if (style === 'minecraft') {
-      // Use upscaler model for minecraft
-      result = await fal.subscribe('fal-ai/clarity-upscaler', {
+    const prompt = styles.find((s) => s.id === style)?.prompt || styles[0].prompt;
+    if (style === 'anime' || style === 'ghibli') {
+      result = await fal.subscribe('fal-ai/flux-kontext-lora', {
         input: {
+          prompt,
+          guidance_scale: 3.5,
+          num_images: 1,
+          output_format: 'jpeg',
           image_url: imageUrl
         },
         logs: true,
@@ -42,8 +47,6 @@ export async function POST(request: NextRequest) {
         }
       });
     } else {
-      // Use default model for all other styles
-      const prompt = styles.find((s) => s.id === style)?.prompt || styles[0].prompt;
       result = await fal.subscribe('fal-ai/flux-pro/kontext', {
         input: {
           prompt,

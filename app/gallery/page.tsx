@@ -3,16 +3,23 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAccount, useBalance } from 'wagmi';
+import { useFarcasterContext } from '@/hooks/use-farcaster-context';
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
 const CREDITS_PER_ETH = 100000; // align with homepage
 
-interface GalleryEntry { id: string; url: string; style: string | null; createdAt: string }
+interface GalleryEntry {
+  id: string;
+  url: string;
+  style: string | null;
+  createdAt: string;
+}
 
 export default function GalleryPage() {
   // Credits logic
   const { address, isConnected } = useAccount();
   const { data: ethBalance, isLoading: isBalanceLoading } = useBalance({ address });
+  const { fid } = useFarcasterContext();
   let credits = 0;
   if (ethBalance && typeof ethBalance.formatted === 'string') {
     const eth = parseFloat(ethBalance.formatted);
@@ -27,13 +34,17 @@ export default function GalleryPage() {
 
   useEffect(() => {
     (async () => {
+      if (!fid) {
+        setGallery([]);
+        return;
+      }
       try {
-        const res = await fetch('/api/gallery');
+        const res = await fetch(`/api/gallery?fid=${fid}`);
         const data = await res.json();
         if (data?.success) setGallery(data.images);
       } catch {}
     })();
-  }, []);
+  }, [fid]);
 
   function handleDelete(id: string) {
     setGallery((prev) => prev.filter((g) => g.id !== id));
