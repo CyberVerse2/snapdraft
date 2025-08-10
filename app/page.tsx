@@ -332,6 +332,10 @@ export default function Home() {
     username?: string | null;
     pfpUrl?: string | null;
   } | null>(null);
+  const [recentImages, setRecentImages] = useReactState<
+    Array<{ url: string; username?: string | null; pfpUrl?: string | null }>
+  >([]);
+  const [recentIndex, setRecentIndex] = useReactState<number>(0);
   useReactEffect(() => {
     let ignore = false;
     (async () => {
@@ -346,6 +350,18 @@ export default function Home() {
           });
         } else if (!ignore && gallery.length > 0) {
           setFeaturedUrl(gallery[0].url);
+        }
+        // Also fetch recent images list for cycling
+        const res2 = await fetch('/api/gallery');
+        const data2 = await res2.json();
+        if (!ignore && data2?.success && Array.isArray(data2.images)) {
+          const mapped = data2.images.map((img: any) => ({
+            url: img.url as string,
+            username: img.creator?.username as string | undefined,
+            pfpUrl: img.creator?.pfpUrl as string | undefined
+          }));
+          setRecentImages(mapped);
+          setRecentIndex(0);
         }
       } catch {
         if (!ignore && gallery.length > 0) setFeaturedUrl(gallery[0].url);
@@ -439,8 +455,17 @@ export default function Home() {
                 alt="Featured AI Styled"
                 width={400}
                 height={300}
-                className="object-cover w-full h-56 transition-opacity duration-500"
+                className="object-cover w-full h-56 transition-opacity duration-500 cursor-pointer"
                 priority
+                onClick={() => {
+                  if (recentImages.length > 0) {
+                    const next = (recentIndex + 1) % recentImages.length;
+                    setRecentIndex(next);
+                    const nextImg = recentImages[next];
+                    setFeaturedUrl(nextImg.url);
+                    setFeaturedUser({ username: nextImg.username, pfpUrl: nextImg.pfpUrl });
+                  }
+                }}
               />
               {featuredUser?.username && (
                 <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">

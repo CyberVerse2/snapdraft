@@ -6,7 +6,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const fid = searchParams.get('fid');
     const where = fid ? { creator: { fid: Number(fid) } } : {};
-    const images = await prisma.image.findMany({ where, orderBy: { createdAt: 'desc' }, take: 100 });
+    const images = await prisma.image.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: { creator: true }
+    });
     return NextResponse.json({ success: true, images });
   } catch (error) {
     console.error('Gallery fetch failed:', error);
