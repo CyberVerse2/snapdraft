@@ -482,7 +482,7 @@ export default function Home() {
               )}
             </div>
             <h2 className="text-2xl sm:text-3xl font-black uppercase text-center mb-2">
-              Your Photos. Reimagined in Seconds.
+              Your Photos Reimagined in Seconds.
             </h2>
             {/* <p className="text-lg text-center font-bold text-black/80 mb-2">Upload a photo, pick a style, and get a stunning AI creation in seconds.</p> */}
             <div className="w-full max-w-xs mx-auto mt-2 mb-2 flex justify-center">
