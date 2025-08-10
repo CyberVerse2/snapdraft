@@ -19,6 +19,7 @@ interface PaymentFormProps {
   onStyledImageGenerated: (imageUrl: string) => void;
   credits: number;
   onShowTopUpModal: () => void;
+  onStartGeneration?: (args: { imageUrl: string; style: StyleType; fid?: number | null }) => void;
 }
 
 const styleNames = {
@@ -44,7 +45,8 @@ export function PaymentForm({
   onPaymentSuccess,
   onStyledImageGenerated,
   credits,
-  onShowTopUpModal
+  onShowTopUpModal,
+  onStartGeneration
 }: PaymentFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -129,7 +131,8 @@ export function PaymentForm({
       setIsProcessing(false);
       setPolling(false);
       onPaymentSuccess();
-      await handleGenerateImage();
+      // Delegate generation to parent so result page can show overlay while generating
+      onStartGeneration?.({ imageUrl: previewImage || originalImage, style: selectedStyle, fid: fid ?? undefined });
     }
   };
 

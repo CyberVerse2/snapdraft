@@ -61,7 +61,7 @@ const CREDITS_PER_ETH = 100000; // 1 ETH = 100,000 credits (adjust as needed)
 
 export default function Home() {
   const { setFrameReady, isFrameReady } = useMiniKit();
-  const { fid, isInMiniApp } = useFarcasterContext();
+  const { fid, isInMiniApp, username, displayName, pfpUrl } = useFarcasterContext();
   // The setFrameReady() function is called when your mini-app is ready to be shown
   useEffect(() => {
     if (!isFrameReady) {
@@ -157,9 +157,9 @@ export default function Home() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fid,
-            username: null,
-            displayName: null,
-            pfpUrl: null,
+            username,
+            displayName,
+            pfpUrl,
             walletAddress: address
           })
         });
@@ -173,7 +173,7 @@ export default function Home() {
         await res.json();
       } catch {}
     })();
-  }, [fid, address]);
+  }, [fid, address, username, displayName, pfpUrl]);
 
   useEffect(() => {
     if (showGallery) setGallery(getGallery());
@@ -214,6 +214,8 @@ export default function Home() {
       ...prev,
       paymentCompleted: true
     }));
+    // Go to result page immediately; overlay will show until styled image arrives
+    setStep('result');
   };
 
   const handleStyledImageGenerated = async (imageUrl: string) => {
@@ -549,6 +551,20 @@ export default function Home() {
             onStyledImageGenerated={handleStyledImageGenerated}
             credits={credits}
             onShowTopUpModal={() => setShowCreditsModal(true)}
+            onStartGeneration={async ({ imageUrl, style, fid }) => {
+              // Trigger server generation; overlay will show in ResultDisplay
+              try {
+                const res = await fetch('/api/generate-image', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ imageUrl, style, fid })
+                });
+                const data = await res.json();
+                if (res.ok && data.styledImageUrl) {
+                  handleStyledImageGenerated(data.styledImageUrl);
+                }
+              } catch {}
+            }}
           />
         )}
         {/* Result Step */}
@@ -559,8 +575,7 @@ export default function Home() {
               styledImage={state.styledImage || ''}
               selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
               onReset={() => setStep('upload')}
-              isFavorite={isResultFavorite}
-              onFavorite={handleResultFavorite}
+              isLoading={!state.styledImage}
             />
           </div>
         )}

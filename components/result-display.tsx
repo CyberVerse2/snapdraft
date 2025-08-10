@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { StyleType } from '@/app/page';
-import { Download, Twitter, RefreshCw, Share2, X } from 'lucide-react';
+import { Download, Twitter, RefreshCw, Share2, PlusCircle } from 'lucide-react';
 import Image from 'next/image';
 
 interface ResultDisplayProps {
@@ -10,8 +10,7 @@ interface ResultDisplayProps {
   styledImage: string;
   selectedStyle: StyleType;
   onReset: () => void;
-  isFavorite: boolean;
-  onFavorite: () => void;
+  isLoading?: boolean;
 }
 
 const styleNames = {
@@ -35,8 +34,7 @@ export function ResultDisplay({
   styledImage,
   selectedStyle,
   onReset,
-  isFavorite,
-  onFavorite
+  isLoading
 }: ResultDisplayProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
@@ -105,12 +103,17 @@ export function ResultDisplay({
           height={400}
           className="object-cover w-full h-full"
         />
+        {isLoading && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+            <div className="text-white font-bold uppercase text-sm">Generating...</div>
+          </div>
+        )}
       </div>
       {/* Style Badge */}
       <div className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg mb-4">
         {styleLabel}
       </div>
-      {/* Action Buttons: Download, Share, Favorite in one row */}
+      {/* Action Buttons: Download, Share, Generate Another */}
       <div className="flex flex-row gap-2 w-full mt-6 items-center">
         <button
           onClick={handleDownload}
@@ -125,22 +128,14 @@ export function ResultDisplay({
           Share
         </button>
         <button
-          onClick={onFavorite}
-          className={`flex-[0.7] py-4 text-lg ${
-            isFavorite ? 'text-yellow-400' : 'text-gray-400'
-          } bg-white border-4 border-black rounded-xl shadow-[2px_2px_0px_0px_#000000] transition-all hover:bg-yellow-100`}
-          aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
+          onClick={onReset}
+          className="flex-[0.7] bg-yellow-400 text-black py-4 border-4 border-black font-black text-lg uppercase rounded-xl hover:bg-yellow-300 shadow-[2px_2px_0px_0px_#000000] transition-all"
+          aria-label="Generate Another"
         >
-          ★
+          <PlusCircle className="inline-block" />
         </button>
       </div>
-      {/* Try Another Button */}
-      <button
-        onClick={onReset}
-        className="w-full bg-black text-white py-4 border-4 border-black font-black text-xl uppercase rounded-xl mt-8 mb-24 hover:bg-gray-900 shadow-[4px_4px_0px_0px_#000000] transition-all"
-      >
-        Try Another
-      </button>
+      {/* Removed fourth button */}
     </div>
   );
 }
