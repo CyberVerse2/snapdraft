@@ -1,0 +1,74 @@
+// Prisma schema for MongoDB
+// https://www.prisma.io/docs/orm/overview/databases/mongodb
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+/// Represents a Farcaster user or app client interacting with Snapdraft
+model User {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Farcaster identity
+  fid         Int?     @unique
+  username    String?
+  displayName String?
+  pfpUrl      String?
+
+  // Wallet/account
+  walletAddress String? @unique
+
+  // Relations
+  images       Image[]
+  creditBalance CreditBalance?
+  creditEvents  CreditEvent[]
+}
+
+/// Generated images
+model Image {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt   DateTime @default(now())
+  url         String
+  style       String
+  prompt      String?
+  // Set true for the currently featured image on homepage
+  isFeatured  Boolean  @default(false)
+
+  // creator
+  creatorId   String?  @db.ObjectId
+  creator     User?    @relation(fields: [creatorId], references: [id])
+
+  @@index([isFeatured])
+  @@index([creatorId])
+}
+
+/// Current credits available to a user (credits are denominated relative to ETH pricing)
+model CreditBalance {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  credits   Int      @default(0) // whole credits; conversion from ETH handled in app logic
+  updatedAt DateTime @updatedAt
+}
+
+/// Ledger of credit changes for auditing (purchases, spending, daily login)
+model CreditEvent {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt    DateTime @default(now())
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id])
+  // positive for accrual (purchases, daily login), negative for spending (generations)
+  delta        Int
+  reason       String   // e.g., "purchase_eth", "daily_login", "generation_spend"
+  txHash       String?  // onchain payment hash if applicable
+  metadataJson String?  // any extra info
+
+  @@index([userId])
+}

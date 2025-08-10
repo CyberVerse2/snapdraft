@@ -13,6 +13,7 @@ import { erc20Abi } from 'viem';
 import Link from 'next/link';
 import Image from 'next/image';
 import sampleHero from '/public/sample-hero.jpg'; // Add a sample image to public/ if not present
+import { useEffect as useReactEffect, useState as useReactState } from 'react';
 
 export type StyleType =
   | 'ghibli'
@@ -242,8 +243,27 @@ export default function Home() {
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
 
-  // Get a featured image: from gallery if available, else use sample
-  const featuredImage = gallery.length > 0 ? gallery[0].url : sampleHero;
+  // Featured image from DB via API; fallback to local gallery then sample
+  const [featuredUrl, setFeaturedUrl] = useReactState<string | null>(null);
+  useReactEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/featured');
+        const data = await res.json();
+        if (!ignore && data?.featured?.url) {
+          setFeaturedUrl(data.featured.url as string);
+        } else if (!ignore && gallery.length > 0) {
+          setFeaturedUrl(gallery[0].url);
+        }
+      } catch {
+        if (!ignore && gallery.length > 0) setFeaturedUrl(gallery[0].url);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [gallery.length]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const handleSimpleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -321,7 +341,7 @@ export default function Home() {
           <section className="w-full flex flex-col items-center justify-center bg-yellow-100 border-b-4 border-black py-6 px-4">
             <div className="w-full max-w-md mx-auto border-8 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] mb-4">
               <Image
-                src={featuredImage}
+                src={featuredUrl || sampleHero}
                 alt="Featured AI Styled"
                 width={400}
                 height={300}
@@ -330,7 +350,7 @@ export default function Home() {
               />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black uppercase text-center mb-2">
-              Turn your photos into art. Instantly.
+              Your Photos. Reimagined in Seconds.
             </h2>
             {/* <p className="text-lg text-center font-bold text-black/80 mb-2">Upload a photo, pick a style, and get a stunning AI creation in seconds.</p> */}
             <div className="w-full max-w-xs mx-auto mt-2 mb-2 flex justify-center">

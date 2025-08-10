@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
 import { randomUUID } from 'crypto';
 import { styles } from '@/lib/styles';
+import { prisma } from '@/lib/prisma';
 
 fal.config({
   credentials: process.env.FAL_API_KEY
@@ -79,6 +80,20 @@ export async function POST(request: NextRequest) {
     }
     // Mark as complete
     progressStore[requestId] = 100;
+
+    // Persist image and set as featured
+    try {
+      await prisma.image.updateMany({ data: { isFeatured: false }, where: { isFeatured: true } });
+      await prisma.image.create({
+        data: {
+          url: styledImageUrl,
+          style: style ?? 'unknown',
+          isFeatured: true
+        }
+      });
+    } catch (e) {
+      console.error('Failed to persist image:', e);
+    }
 
     return NextResponse.json({
       success: true,

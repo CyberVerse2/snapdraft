@@ -2,10 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import type { StyleType } from '@/app/page';
-import { CreditCard, Shield, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { getPaymentStatus, pay } from '@base-org/account';
-import { ethers } from 'ethers';
 import { useAccount, useConnect, useWriteContract } from 'wagmi';
 import { erc20Abi } from 'viem';
 

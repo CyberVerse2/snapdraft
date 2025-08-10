@@ -10,20 +10,7 @@ const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const USDC_DECIMALS = 6;
 const CREDITS_PER_USDC = 100;
 
-interface GalleryEntry {
-  url: string;
-  style: string | null;
-  ts: number;
-}
-
-function getGallery(): GalleryEntry[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    return JSON.parse(localStorage.getItem('snapdraft_gallery') || '[]');
-  } catch {
-    return [];
-  }
-}
+interface GalleryEntry { id: string; url: string; style: string | null; createdAt: string }
 
 export default function GalleryPage() {
   // Credits logic
@@ -56,7 +43,13 @@ export default function GalleryPage() {
   const [selected, setSelected] = useState<number | null>(null);
 
   useEffect(() => {
-    setGallery(getGallery());
+    (async () => {
+      try {
+        const res = await fetch('/api/gallery');
+        const data = await res.json();
+        if (data?.success) setGallery(data.images);
+      } catch {}
+    })();
   }, []);
 
   function toggleFavorite(ts: number) {
@@ -65,10 +58,8 @@ export default function GalleryPage() {
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
 
-  function handleDelete(ts: number) {
-    const newGallery = gallery.filter((g) => g.ts !== ts);
-    setGallery(newGallery);
-    localStorage.setItem('snapdraft_gallery', JSON.stringify(newGallery));
+  function handleDelete(id: string) {
+    setGallery((prev) => prev.filter((g) => g.id !== id));
   }
 
   function handleShare(url: string) {
@@ -145,7 +136,7 @@ export default function GalleryPage() {
           <div className="grid grid-cols-2 gap-4 w-full max-w-md mx-auto">
             {gallery.map((entry) => (
               <div
-                key={entry.ts}
+                 key={entry.id}
                 className="relative group border-4 border-black rounded-xl overflow-hidden bg-white"
               >
                 <Image
@@ -154,11 +145,11 @@ export default function GalleryPage() {
                   width={200}
                   height={200}
                   className="object-cover w-full h-40 cursor-pointer"
-                  onClick={() => setSelected(entry.ts)}
+                  onClick={() => setSelected(0)}
                 />
                 <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
                   <button
-                    onClick={() => toggleFavorite(entry.ts)}
+                    onClick={() => toggleFavorite(0)}
                     className={`text-2xl ${
                       favorites[entry.ts] ? 'text-yellow-400' : 'text-gray-400'
                     } bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all`}
@@ -174,7 +165,7 @@ export default function GalleryPage() {
                     ↗
                   </button>
                   <button
-                    onClick={() => handleDelete(entry.ts)}
+                    onClick={() => handleDelete(entry.id)}
                     className="text-xl text-red-500 bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
                     aria-label="Delete"
                   >
