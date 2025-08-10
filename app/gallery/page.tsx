@@ -227,15 +227,25 @@ export default function GalleryPage() {
       <footer className="fixed left-0 right-0 bottom-0 z-50 bg-black border-t-4 border-black h-20 flex flex-row items-center justify-between w-full sm:px-4">
         <Link
           href="/"
-          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
+          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all active:scale-[0.98]"
           style={{ minWidth: 120 }}
+          onClick={() => {
+            try {
+              navigator.vibrate?.(10);
+            } catch {}
+          }}
         >
           HOME
         </Link>
         <Link
           href="/gallery"
-          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"
+          className="flex-1 flex items-center justify-center h-full text-white font-black text-xl uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all active:scale-[0.98]"
           style={{ minWidth: 120 }}
+          onClick={() => {
+            try {
+              navigator.vibrate?.(10);
+            } catch {}
+          }}
         >
           GALLERY
         </Link>

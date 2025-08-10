@@ -64,7 +64,7 @@ export function PaymentForm({
   const [paymentComplete, setPaymentComplete] = useState<boolean>(false);
   const hasNavigatedRef = useRef<boolean>(false);
   const encouragementItems = ['✨ 4X RESOLUTION', '🎨 ENHANCED DETAILS', '💎 PREMIUM QUALITY'];
-  const [encIndex, setEncIndex] = useState<number>(0);
+  const tickerRef = useRef<HTMLDivElement | null>(null);
   // Guards to prevent duplicate generations (StrictMode and rapid re-renders)
   const generationInFlightRef = useRef<boolean>(false);
   const lastGenerationKeyRef = useRef<string | null>(null);
@@ -129,11 +129,18 @@ export function PaymentForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originalImage, previewImage, selectedStyle]);
 
-  // Auto-advance encouragement carousel text
+  // Horizontal infinite scroll for encouragement items
   useEffect(() => {
+    const el = tickerRef.current;
+    if (!el) return;
     const id = setInterval(() => {
-      setEncIndex((i) => (i + 1) % encouragementItems.length);
-    }, 2000);
+      if (!el) return;
+      el.scrollLeft += 1;
+      const max = el.scrollWidth - el.clientWidth - 1;
+      if (el.scrollLeft >= max) {
+        el.scrollLeft = 0;
+      }
+    }, 20);
     return () => clearInterval(id);
   }, []);
 
@@ -309,24 +316,30 @@ export function PaymentForm({
         {/* Style and Total distributed vertically */}
         <div className="flex flex-col gap-3 w-full mt-4 flex-shrink-0">
           <div className="flex justify-between items-center w-full">
-            <span className="font-black text-base uppercase">STYLE:</span>
-            <span className="bg-yellow-400 text-black px-3 py-0.5 border-2 border-black font-black text-sm uppercase rounded-lg">
+            <span className="font-black text-lg uppercase">STYLE:</span>
+            <span className="bg-yellow-400 text-black px-4 py-1 border-2 border-black font-black text-lg uppercase rounded-lg">
               {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
             </span>
           </div>
         </div>
         {/* Encouragement block from Style Preview */}
-        <div className="w-full max-w-md mx-auto mt-12">
+        <div className="w-full max-w-md mx-auto mt-6">
           <div className="space-y-2">
             <p className="font-black text-lg uppercase text-center leading-none">
               LOVE IT? GET THE FULL QUALITY!
             </p>
-            <div className="flex items-center justify-center h-8 overflow-hidden">
-              <div
-                key={encIndex}
-                className="bg-white text-black px-2 py-1 border-4 border-black whitespace-nowrap text-[11px] font-bold uppercase rounded-sm transition-opacity duration-300"
-              >
-                {encouragementItems[encIndex]}
+            <div ref={tickerRef} className="w-full overflow-hidden">
+              <div className="flex flex-row items-center gap-3 py-1 px-2 whitespace-nowrap">
+                {[...Array(6)]
+                  .flatMap(() => encouragementItems)
+                  .map((label, idx) => (
+                    <span
+                      key={`${label}-${idx}`}
+                      className="bg-white text-black px-2 py-1 border-4 border-black text-[11px] font-bold uppercase rounded-sm whitespace-nowrap"
+                    >
+                      {label}
+                    </span>
+                  ))}
               </div>
             </div>
           </div>
@@ -349,7 +362,17 @@ export function PaymentForm({
             {isProcessing || polling ? 'PROCESSING...' : `PAY ${CREDITS_PRICE} credits`}
           </button>
           <button
-            onClick={handleRegenerate}
+            onClick={async () => {
+              if (generatedUrl) {
+                // allow re-generate after completion
+                await handleRegenerate();
+              } else {
+                // if still generating, ignore or give small feedback
+                try {
+                  navigator.vibrate?.(5);
+                } catch {}
+              }
+            }}
             className="w-14 h-[52px] bg-white text-black border-4 border-black rounded-xl hover:bg-gray-100 shadow-[4px_4px_0px_0px_#000000] transition-all flex items-center justify-center"
             aria-label="Regenerate preview"
             title="Regenerate preview"
