@@ -49,7 +49,6 @@ export function PaymentForm({
   onStartGeneration
 }: PaymentFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('');
@@ -57,9 +56,7 @@ export function PaymentForm({
   const [theme, setTheme] = useState('light');
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
-  const [generationProgress, setGenerationProgress] = useState<number>(0);
-  const [generationRequestId, setGenerationRequestId] = useState<string | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Removed internal generation progress logic
   const styledImageUrlRef = useRef<string | null>(null);
   const [lastRealProgress, setLastRealProgress] = useState(Date.now());
 
@@ -90,34 +87,7 @@ export function PaymentForm({
     }
   }
 
-  const handleGenerateImage = async () => {
-    setIsProcessing(true);
-    setError(null);
-    setGenerationProgress(0);
-    setGenerationRequestId(null);
-    styledImageUrlRef.current = null;
-    try {
-      const res = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ imageUrl: previewImage || originalImage, style: selectedStyle, fid })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.styledImageUrl) {
-        throw new Error(data.error || 'Image generation failed');
-      }
-      if (data.requestId) {
-        setGenerationRequestId(data.requestId);
-      }
-      styledImageUrlRef.current = data.styledImageUrl;
-      // Wait for progress to reach 100% before proceeding
-    } catch (err: any) {
-      setIsProcessing(false);
-      setError(err.message || 'An error occurred');
-    }
-  };
+  // Removed local handleGenerateImage; parent handles generation
 
   // ETH payment based on credits-to-ETH conversion
   const handlePayment = async () => {
@@ -143,79 +113,13 @@ export function PaymentForm({
   // No external status polling for ETH send; we proceed after sendTransaction resolves
   const handlePaymentStatus = async () => true;
 
-  // Poll payment status when polling is enabled
-  useEffect(() => {
-    if (polling) {
-      pollingRef.current = setInterval(async () => {
-        const completed = await handlePaymentStatus();
-        if (completed) {
-          if (pollingRef.current) clearInterval(pollingRef.current);
-          setPolling(false);
-          setIsProcessing(false);
-          if (previewImage) {
-            onStyledImageGenerated(previewImage);
-          }
-          onPaymentSuccess();
-        }
-      }, 3000);
-      return () => {
-        if (pollingRef.current) clearInterval(pollingRef.current);
-      };
-    }
-  }, [polling]);
+  // Removed payment status polling
 
-  // Poll for generation progress
-  useEffect(() => {
-    if (generationRequestId) {
-      progressIntervalRef.current = setInterval(async () => {
-        const res = await fetch(`/api/generate-image?id=${generationRequestId}`);
-        const data = await res.json();
-        if (typeof data.progress === 'number' && data.progress > generationProgress) {
-          setGenerationProgress(data.progress);
-          setLastRealProgress(Date.now());
-        }
-        if (data.progress >= 100) {
-          if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-          setGenerationRequestId(null);
-          setIsProcessing(false);
-          setIsGenerating(true);
-          if (styledImageUrlRef.current) {
-            onStyledImageGenerated(styledImageUrlRef.current);
-          }
-        }
-      }, 200);
-      return () => {
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      };
-    }
-  }, [generationRequestId, generationProgress]);
+  // Removed generation progress polling
 
-  // Simulate progress if no real progress for 2 seconds
-  useEffect(() => {
-    let fakeProgressInterval: NodeJS.Timeout | null = null;
-    if (generationRequestId && generationProgress < 100) {
-      fakeProgressInterval = setInterval(() => {
-        if (Date.now() - lastRealProgress > 2000) {
-          setGenerationProgress((prev) => {
-            if (prev < 95) {
-              return prev + Math.max(2, Math.round((100 - prev) * 0.13));
-            }
-            return prev;
-          });
-        }
-      }, 200);
-    }
-    return () => {
-      if (fakeProgressInterval) clearInterval(fakeProgressInterval);
-    };
-  }, [generationRequestId, generationProgress, lastRealProgress]);
+  // Removed simulated progress
 
-  // When upscaling is done, jump to 100%
-  useEffect(() => {
-    if (!generationRequestId && !isProcessing && isGenerating && generationProgress < 100) {
-      setGenerationProgress(100);
-    }
-  }, [generationRequestId, isProcessing, isGenerating, generationProgress]);
+  // Removed upscaling tracking
 
   return (
     <div className="fixed left-0 right-0 top-16 bottom-14 z-50 bg-yellow-100 overflow-y-auto">
@@ -251,16 +155,10 @@ export function PaymentForm({
       <div className="fixed left-0 right-0 bottom-20 w-full px-4 z-[70]">
         <button
           onClick={handlePayment}
-          disabled={isProcessing || isGenerating || polling || !!generationRequestId}
+          disabled={isProcessing || polling}
           className="w-full bg-red-500 text-white py-4 border-4 border-black font-black text-xl uppercase rounded-xl hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {generationRequestId
-            ? 'UPSCALING IMAGE...'
-            : isProcessing || polling
-            ? 'PROCESSING PAYMENT...'
-            : isGenerating
-            ? 'GENERATING IMAGE...'
-            : `PAY ${CREDITS_PRICE} credits`}
+          {isProcessing || polling ? 'PROCESSING PAYMENT...' : `PAY ${CREDITS_PRICE} credits`}
         </button>
       </div>
     </div>
