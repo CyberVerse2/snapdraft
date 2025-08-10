@@ -93,7 +93,7 @@ export function ResultDisplay({
       >
         <Image
           key={imageToShow || 'placeholder'}
-          src={imageToShow || '/placeholder.svg'}
+          src={imageToShow}
           alt={showOriginal ? 'Original Image' : 'Styled Result'}
           width={320}
           height={400}
@@ -119,7 +119,7 @@ export function ResultDisplay({
           aria-label="Share to Farcaster"
           title="Share to Farcaster"
         >
-          <img src="/white-purple.svg" alt="Farcaster" className="inline-block w-6 h-6" />
+          <img src="/white-purple.svg" alt="Farcaster" className="inline-block w-8 h-8" />
         </button>
         <button
           onClick={onReset}

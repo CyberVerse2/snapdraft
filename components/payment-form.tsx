@@ -61,6 +61,8 @@ export function PaymentForm({
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const hasNotifiedRef = useRef<boolean>(false);
+  const [paymentComplete, setPaymentComplete] = useState<boolean>(false);
+  const hasNavigatedRef = useRef<boolean>(false);
 
   // Move Wagmi hooks here
   const { isConnected, address } = useAccount();
@@ -106,29 +108,40 @@ export function PaymentForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originalImage, previewImage, selectedStyle]);
 
-  // Poll for generation progress (with simulated increments if backend updates are sparse)
+  // Poll for generation progress (and simulate increments if backend updates are sparse)
   useEffect(() => {
-    if (!generationRequestId) return;
+    // Stop any progress updates once the image is ready
+    if (generatedUrl) {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      return;
+    }
     let lastTick = Date.now();
     progressIntervalRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/generate-image?id=${generationRequestId}`);
-        const data = await res.json();
-        if (typeof data.progress === 'number') {
-          setGenerationProgress((prev) => Math.max(prev, data.progress));
-        }
-      } catch {}
-      // Simulate a small increment if no real update for >1s
-      const now = Date.now();
-      if (now - lastTick > 1000) {
-        lastTick = now;
-        setGenerationProgress((prev) => (prev < 95 ? prev + Math.max(1, Math.round((100 - prev) * 0.05)) : prev));
+      // If we have a request id, try to fetch real progress updates
+      if (generationRequestId) {
+        try {
+          const res = await fetch(`/api/generate-image?id=${generationRequestId}`);
+          const data = await res.json();
+          if (typeof data.progress === 'number') {
+            setGenerationProgress((prev) => Math.max(prev, data.progress));
+          }
+        } catch {}
       }
-    }, 500);
+      // Simulate a faster increment if no real update for >0.5s
+      const now = Date.now();
+      if (now - lastTick > 500) {
+        lastTick = now;
+        setGenerationProgress((prev) => {
+          if (prev >= 98) return prev;
+          const boost = Math.max(2, Math.round((100 - prev) * 0.12));
+          return Math.min(98, prev + boost);
+        });
+      }
+    }, 300);
     return () => {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
-  }, [generationRequestId]);
+  }, [generationRequestId, generatedUrl]);
 
   // When completed, notify parent once
   useEffect(() => {
@@ -137,6 +150,14 @@ export function PaymentForm({
       onStyledImageGenerated(generatedUrl);
     }
   }, [generationRequestId, generatedUrl, onStyledImageGenerated]);
+
+  // If payment already completed, navigate to result as soon as image is ready
+  useEffect(() => {
+    if (paymentComplete && generatedUrl && !hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
+      onPaymentSuccess();
+    }
+  }, [paymentComplete, generatedUrl, onPaymentSuccess]);
 
   async function sendEthPayment(): Promise<boolean> {
     try {
@@ -173,8 +194,13 @@ export function PaymentForm({
       setPaymentStatus('Payment complete!');
       setIsProcessing(false);
       setPolling(false);
-      console.log('[Payment] ETH payment success, firing onPaymentSuccess and starting generation');
-      onPaymentSuccess();
+      console.log('[Payment] ETH payment success');
+      setPaymentComplete(true);
+      // If generation already finished, navigate immediately
+      if (generatedUrl && !hasNavigatedRef.current) {
+        hasNavigatedRef.current = true;
+        onPaymentSuccess();
+      }
     }
   };
 
