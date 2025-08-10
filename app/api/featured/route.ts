@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const featured = await prisma.image.findFirst({ where: { isFeatured: true }, orderBy: { createdAt: 'desc' } });
+    const featured = await prisma.image.findFirst({ where: { isFeatured: true }, orderBy: { createdAt: 'desc' }, include: { creator: true } });
     return NextResponse.json({ success: true, featured });
   } catch (error) {
     console.error('Featured fetch failed:', error);

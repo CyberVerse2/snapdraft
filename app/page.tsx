@@ -68,14 +68,27 @@ export default function Home() {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
-  // Auto prompt add frame when ready
+  // Auto prompt add miniapp if not added, tracked in DB
   useEffect(() => {
-    if (isFrameReady && !isInMiniApp) {
+    (async () => {
+      if (!isFrameReady || !fid) return;
       try {
-        setFrameReady();
+        const res = await fetch(`/api/miniappprompt?fid=${fid}`);
+        const data = await res.json();
+        const alreadyAdded = !!data?.frameAdded;
+        if (!alreadyAdded && !isInMiniApp) {
+          try {
+            setFrameReady();
+            await fetch('/api/miniappprompt', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fid, frameAdded: true })
+            });
+          } catch {}
+        }
       } catch {}
-    }
-  }, [isFrameReady, isInMiniApp, setFrameReady]);
+    })();
+  }, [isFrameReady, isInMiniApp, setFrameReady, fid]);
   const [state, setState] = useState<AppState>({
     step: 'upload',
     originalImage: null,
@@ -293,8 +306,9 @@ export default function Home() {
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
 
-  // Featured image from DB via API; fallback to local gallery then sample
+  // Featured image and creator info from DB via API; fallback to local gallery then sample
   const [featuredUrl, setFeaturedUrl] = useReactState<string | null>(null);
+  const [featuredUser, setFeaturedUser] = useReactState<{ username?: string | null; pfpUrl?: string | null } | null>(null);
   useReactEffect(() => {
     let ignore = false;
     (async () => {
@@ -303,6 +317,7 @@ export default function Home() {
         const data = await res.json();
         if (!ignore && data?.featured?.url) {
           setFeaturedUrl(data.featured.url as string);
+          setFeaturedUser({ username: data.featured?.creator?.username, pfpUrl: data.featured?.creator?.pfpUrl });
         } else if (!ignore && gallery.length > 0) {
           setFeaturedUrl(gallery[0].url);
         }
