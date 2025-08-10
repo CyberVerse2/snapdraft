@@ -100,18 +100,10 @@ export function PaymentForm({
         })
       });
       const data = await res.json();
-      if (!res.ok || !data.styledImageUrl) {
+      if (!res.ok || !data?.requestId) {
         throw new Error(data.error || 'Image generation failed');
       }
-      if (data.requestId) setGenerationRequestId(data.requestId);
-      if (!cancelled) {
-        setGeneratedUrl(data.styledImageUrl as string);
-        // Proactively notify parent with the URL so result page has it ready
-        if (!hasNotifiedRef.current && typeof onStyledImageGenerated === 'function') {
-          hasNotifiedRef.current = true;
-          onStyledImageGenerated(data.styledImageUrl as string);
-        }
-      }
+      setGenerationRequestId(data.requestId as string);
     } catch (e: any) {
       if (!cancelled) setError(e?.message || 'Failed to start generation');
     }
@@ -165,6 +157,13 @@ export function PaymentForm({
           const data = await res.json();
           if (typeof data.progress === 'number') {
             setGenerationProgress((prev) => Math.max(prev, data.progress));
+          }
+          if (data?.styledImageUrl && !generatedUrl) {
+            setGeneratedUrl(data.styledImageUrl as string);
+            if (!hasNotifiedRef.current && typeof onStyledImageGenerated === 'function') {
+              hasNotifiedRef.current = true;
+              onStyledImageGenerated(data.styledImageUrl as string);
+            }
           }
         } catch {}
       }
