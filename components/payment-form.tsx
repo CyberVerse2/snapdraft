@@ -95,11 +95,13 @@ export function PaymentForm({
       onShowTopUpModal();
       return;
     }
+    console.log('[Payment] Starting ETH payment');
     const success = await sendEthPayment();
     if (success) {
       setPaymentStatus('Payment complete!');
       setIsProcessing(false);
       setPolling(false);
+      console.log('[Payment] ETH payment success, firing onPaymentSuccess and starting generation');
       onPaymentSuccess();
       // Delegate generation to parent so result page can show overlay while generating
       onStartGeneration?.({

@@ -210,21 +210,22 @@ export default function Home() {
   };
 
   const handlePaymentSuccess = () => {
+    console.log('[Payment] Success received, navigating to result overlay');
     setState((prev) => ({
       ...prev,
-      paymentCompleted: true
+      paymentCompleted: true,
+      step: 'result'
     }));
-    // Go to result page immediately; overlay will show until styled image arrives
-    setStep('result');
   };
 
   const handleStyledImageGenerated = async (imageUrl: string) => {
+    console.log('[Generation] Styled image URL received:', imageUrl);
     setState((prev) => ({
       ...prev,
       styledImage: imageUrl
     }));
-    // Navigate to result view only after we have the styled image
-    setStep('result');
+    // We should already be on result; ensure we are
+    setState((prev) => ({ ...prev, step: 'result' }));
   };
 
   const resetApp = () => {
