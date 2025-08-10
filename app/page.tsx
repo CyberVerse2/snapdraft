@@ -123,6 +123,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [galleryPage, setGalleryPage] = useState(false);
   const [showUpload, setShowUpload] = useState(true);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkWidth = () => setShowUpload(window.innerWidth >= 400);
@@ -131,15 +132,38 @@ export default function Home() {
       return () => window.removeEventListener('resize', checkWidth);
     }
   }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('snapdraft_credits', credits.toString());
   }, [credits]);
 
-  // Daily login credit: attempt once per mount if Farcaster context is present
+  // Auto-connect wallet in miniapp so credits load immediately
+  useEffect(() => {
+    if (!isConnected && isInMiniApp && connectors && connectors.length > 0) {
+      connect({ connector: connectors[0] });
+    }
+  }, [isConnected, isInMiniApp, connectors, connect]);
+
+  // Upsert user + daily login credit when Farcaster context is present
   useEffect(() => {
     if (!fid) return;
     (async () => {
+      try {
+        await fetch('/api/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fid,
+            username: null,
+            displayName: null,
+            pfpUrl: null,
+            walletAddress: address
+          })
+        });
+      } catch {}
       try {
         const res = await fetch('/api/credits/daily', {
           method: 'POST',
@@ -149,7 +173,7 @@ export default function Home() {
         await res.json();
       } catch {}
     })();
-  }, [fid]);
+  }, [fid, address]);
 
   useEffect(() => {
     if (showGallery) setGallery(getGallery());
@@ -188,10 +212,8 @@ export default function Home() {
   const handlePaymentSuccess = () => {
     setState((prev) => ({
       ...prev,
-      paymentCompleted: true,
-      step: 'result'
+      paymentCompleted: true
     }));
-    // Deduct 25 credits per image
   };
 
   const handleStyledImageGenerated = async (imageUrl: string) => {
@@ -199,13 +221,8 @@ export default function Home() {
       ...prev,
       styledImage: imageUrl
     }));
-    try {
-      await fetch('/api/gallery', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: imageUrl, style: state.selectedStyle, setFeatured: true })
-      });
-    } catch {}
+    // Navigate to result view only after we have the styled image
+    setStep('result');
   };
 
   const resetApp = () => {
@@ -406,7 +423,7 @@ export default function Home() {
           className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 transition-all"
           onClick={() => setShowCreditsModal(true)}
         >
-          {isConnected ? (isBalanceLoading ? '...' : credits) : 0} Credits
+          {mounted && isConnected ? (isBalanceLoading ? '...' : credits) : 0} Credits
         </div>
       </header>
       {/* HERO SECTION */}

@@ -175,7 +175,6 @@ export function PaymentForm({
           if (styledImageUrlRef.current) {
             onStyledImageGenerated(styledImageUrlRef.current);
           }
-          onPaymentSuccess();
         }
       }, 200);
       return () => {
