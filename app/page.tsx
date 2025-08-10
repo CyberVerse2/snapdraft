@@ -570,7 +570,7 @@ export default function Home() {
         )}
         {/* Result Step */}
         {state.step === 'result' && (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-4">
             <ResultDisplay
               originalImage={state.originalImage || ''}
               styledImage={state.styledImage || ''}

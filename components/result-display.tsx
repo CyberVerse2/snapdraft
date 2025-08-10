@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { StyleType } from '@/app/page';
 import { Download, Twitter, RefreshCw, Share2, PlusCircle } from 'lucide-react';
 import Image from 'next/image';
@@ -39,10 +39,33 @@ export function ResultDisplay({
   const [isDownloading, setIsDownloading] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [progress, setProgress] = useState<number>(0);
   const styleLabel = showOriginal
     ? 'ORIGINAL'
     : styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE';
   const imageToShow = showOriginal ? originalImage : styledImage;
+
+  // Simulated loading progress similar to StylePreview
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isLoading) {
+      setProgress(0);
+      interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev < 95) {
+            return prev + Math.max(1, Math.round((100 - prev) * 0.07));
+          }
+          return prev;
+        });
+      }, 400);
+    } else {
+      setProgress(100);
+      if (interval) clearInterval(interval);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isLoading]);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -88,7 +111,7 @@ export function ResultDisplay({
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto px-4">
       {/* Generation Complete Banner */}
-      <div className="w-full max-w-md mx-auto bg-green-400 text-black px-8 py-4 border-4 border-black font-black text-xl uppercase text-center mt-4 mb-6 rounded-lg">
+      <div className="w-full max-w-md mx-auto bg-green-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase text-center mt-2 mb-2 rounded-lg">
         GENERATION COMPLETE
       </div>
       {/* Generated Image (toggle on click) with loader from preview */}
@@ -108,11 +131,11 @@ export function ResultDisplay({
             <div className="relative">
               <div
                 className="rounded-full h-24 w-24 border-8 border-black"
-                style={{ background: `conic-gradient(#fde047 65%, #fff 0)` }}
+                style={{ background: `conic-gradient(#fde047 ${progress}%, #fff 0)` }}
               >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
-                    Loading
+                    {progress}%
                   </div>
                 </div>
               </div>
