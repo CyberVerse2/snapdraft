@@ -65,6 +65,9 @@ export function PaymentForm({
   const hasNavigatedRef = useRef<boolean>(false);
   const encouragementItems = ['✨ 4X RESOLUTION', '🎨 ENHANCED DETAILS', '💎 PREMIUM QUALITY'];
   const [encIndex, setEncIndex] = useState<number>(0);
+  // Guards to prevent duplicate generations (StrictMode and rapid re-renders)
+  const generationInFlightRef = useRef<boolean>(false);
+  const lastGenerationKeyRef = useRef<string | null>(null);
 
   // Move Wagmi hooks here
   const { isConnected, address } = useAccount();
@@ -76,6 +79,12 @@ export function PaymentForm({
   async function startGeneration() {
     let cancelled = false;
     try {
+      if (generationInFlightRef.current) {
+        return () => {
+          /* no-op */
+        };
+      }
+      generationInFlightRef.current = true;
       setError(null);
       setGenerationProgress(0);
       setGenerationRequestId(null);
@@ -108,10 +117,16 @@ export function PaymentForm({
     }
     return () => {
       cancelled = true;
+      generationInFlightRef.current = false;
     };
   }
 
   useEffect(() => {
+    const key = `${previewImage || originalImage}|${selectedStyle}`;
+    if (lastGenerationKeyRef.current === key) {
+      return;
+    }
+    lastGenerationKeyRef.current = key;
     let cleanup: any;
     (async () => {
       cleanup = await startGeneration();
@@ -153,17 +168,17 @@ export function PaymentForm({
           }
         } catch {}
       }
-      // Simulate a faster increment if no real update for >0.5s
+      // Simulate a slightly slower increment if no real update for >0.9s
       const now = Date.now();
-      if (now - lastTick > 500) {
+      if (now - lastTick > 900) {
         lastTick = now;
         setGenerationProgress((prev) => {
-          if (prev >= 98) return prev;
-          const boost = Math.max(2, Math.round((100 - prev) * 0.12));
-          return Math.min(98, prev + boost);
+          if (prev >= 97) return prev;
+          const boost = Math.max(1, Math.round((100 - prev) * 0.08));
+          return Math.min(97, prev + boost);
         });
       }
-    }, 300);
+    }, 500);
     return () => {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
