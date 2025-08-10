@@ -1,6 +1,6 @@
 import type React from 'react';
 import { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, League_Spartan } from 'next/font/google';
 import './globals.css';
 import { MiniKitContextProvider } from '@/providers/MiniKitProvider';
 import { WagmiProvider } from '@/providers/WagmiConfig';
@@ -32,13 +32,21 @@ export async function generateMetadata(): Promise<Metadata> {
 const inter = Inter({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-inter',
+  display: 'swap'
+});
+
+const spartan = League_Spartan({
+  subsets: ['latin'],
+  weight: ['700', '800', '900'],
+  variable: '--font-spartan',
   display: 'swap'
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={`${inter.variable} ${spartan.variable}`}>
+      <body className="font-sans">
         <WagmiProvider>
           <MiniKitContextProvider>{children}</MiniKitContextProvider>
         </WagmiProvider>
