@@ -14,6 +14,18 @@ const progressStore: Record<string, number> = {};
 export async function POST(request: NextRequest) {
   try {
     const { imageUrl, style, fid } = await request.json();
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'Invalid or missing imageUrl' },
+        { status: 400 }
+      );
+    }
+    if (!process.env.FAL_API_KEY) {
+      return NextResponse.json(
+        { success: false, error: 'Server misconfigured: missing FAL_API_KEY' },
+        { status: 500 }
+      );
+    }
     const requestId = randomUUID();
     let latestProgress = 0;
 
@@ -77,9 +89,12 @@ export async function POST(request: NextRequest) {
 
     console.log('Fal AI result:', JSON.stringify(result, null, 2));
     // Fal AI returns a result object with .data.images[0].url or .data.image.url
-    const styledImageUrl = result?.data?.image?.url || result?.data?.images?.[0]?.url;
+    const styledImageUrl = result?.data?.images?.[0]?.url as string | undefined;
     if (!styledImageUrl) {
-      throw new Error('Fal AI did not return an image URL');
+      return NextResponse.json(
+        { success: false, error: 'Image provider did not return an image URL' },
+        { status: 502 }
+      );
     }
     // Mark as complete
     progressStore[requestId] = 100;
@@ -87,15 +102,16 @@ export async function POST(request: NextRequest) {
     // Persist image and set as featured
     try {
       await prisma.image.updateMany({ data: { isFeatured: false }, where: { isFeatured: true } });
-      // Upsert creator if provided
-      const creator = fid
+      // Upsert creator if provided (guard non-numeric fids)
+      const numericFid = typeof fid === 'number' ? fid : Number(fid);
+      const creator = Number.isFinite(numericFid)
         ? await prisma.user.upsert({
-            where: { fid: Number(fid) },
+            where: { fid: numericFid },
             update: {},
-            create: { fid: Number(fid) }
+            create: { fid: numericFid }
           })
         : null;
-      const saved = await prisma.image.create({
+      await prisma.image.create({
         data: {
           url: styledImageUrl,
           style: style ?? 'unknown',
@@ -112,9 +128,10 @@ export async function POST(request: NextRequest) {
       styledImageUrl,
       requestId
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Image generation failed:', error);
-    return NextResponse.json({ success: false, error: 'Image generation failed' }, { status: 500 });
+    const message = typeof error?.message === 'string' ? error.message : 'Image generation failed';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 

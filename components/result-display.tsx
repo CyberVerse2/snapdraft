@@ -67,6 +67,13 @@ export function ResultDisplay({
     };
   }, [isLoading]);
 
+  // When a new styled image arrives, ensure we display it (not the placeholder or original)
+  useEffect(() => {
+    if (styledImage) {
+      setShowOriginal(false);
+    }
+  }, [styledImage]);
+
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
@@ -120,6 +127,7 @@ export function ResultDisplay({
         onClick={() => setShowOriginal((v) => !v)}
       >
         <Image
+          key={imageToShow || 'placeholder'}
           src={imageToShow || '/placeholder.svg'}
           alt={showOriginal ? 'Original Image' : 'Styled Result'}
           width={320}
