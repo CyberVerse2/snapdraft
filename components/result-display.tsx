@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { StyleType } from '@/app/page';
 import { Download, Twitter, RefreshCw, Share2 } from 'lucide-react';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import Image from 'next/image';
 
 interface ResultDisplayProps {
@@ -39,6 +40,7 @@ export function ResultDisplay({
   const [showOriginal, setShowOriginal] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const sdk = useMiniKit();
   const styleLabel = showOriginal
     ? 'ORIGINAL'
     : styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE';
@@ -67,19 +69,17 @@ export function ResultDisplay({
     window.open(url, '_blank');
   };
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'My AI Styled Image',
-          text: 'Check out this amazing AI-styled image!',
-          url: window.location.href
-        });
-      } catch (error) {
-        console.error('Share failed:', error);
-      }
+  const handleShareToFarcaster = () => {
+    const APP_URL =
+      process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const shareText = 'Just styled an image with SNAPDRAFT AI!';
+    const shareEmbed = `${APP_URL}/share/${encodeURIComponent(styledImage)}`;
+    if (sdk && (sdk as any).actions && typeof (sdk as any).actions.composeCast === 'function') {
+      (sdk as any).actions.composeCast({ text: shareText, embeds: [shareEmbed] });
+    } else if (navigator.share) {
+      navigator.share({ title: 'SNAPDRAFT AI', text: shareText, url: shareEmbed }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(shareEmbed).catch(() => {});
     }
   };
 
@@ -115,7 +115,7 @@ export function ResultDisplay({
           Download
         </button>
         <button
-          onClick={handleShare}
+          onClick={handleShareToFarcaster}
           className="flex-1 bg-white text-black py-4 border-4 border-black font-black text-lg uppercase rounded-xl hover:bg-gray-100 shadow-[4px_4px_0px_0px_#000000] transition-all"
           aria-label="Share to Farcaster"
           title="Share to Farcaster"

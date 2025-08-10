@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import Link from 'next/link';
 import { useAccount, useBalance } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
@@ -34,6 +35,7 @@ export default function GalleryPage() {
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string>('');
   const [downloadCopied, setDownloadCopied] = useState(false);
+  const sdk = useMiniKit();
 
   useEffect(() => {
     (async () => {
@@ -53,15 +55,17 @@ export default function GalleryPage() {
     setGallery((prev) => prev.filter((g) => g.id !== id));
   }
 
-  function handleShare(url: string) {
-    if (navigator.share) {
-      navigator.share({
-        title: 'My AI Styled Image',
-        text: 'Check out this amazing AI-styled image!',
-        url
-      });
+  function handleShareToFarcaster(id: string, url: string) {
+    const APP_URL =
+      process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const shareText = 'Just styled an image with SNAPDRAFT AI!';
+    const shareEmbed = `${APP_URL}/share/${id}`;
+    if (sdk && (sdk as any).actions && typeof (sdk as any).actions.composeCast === 'function') {
+      (sdk as any).actions.composeCast({ text: shareText, embeds: [shareEmbed] });
+    } else if (navigator.share) {
+      navigator.share({ title: 'SNAPDRAFT AI', text: shareText, url: shareEmbed }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(url);
+      navigator.clipboard.writeText(shareEmbed).catch(() => {});
     }
   }
 
@@ -139,7 +143,7 @@ export default function GalleryPage() {
                 />
                 <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
                   <button
-                    onClick={() => handleShare(entry.url)}
+                    onClick={() => handleShareToFarcaster(entry.id, entry.url)}
                     className="bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
                     aria-label="Share to Farcaster"
                     title="Share to Farcaster"
