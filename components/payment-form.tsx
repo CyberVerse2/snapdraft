@@ -160,7 +160,7 @@ export function PaymentForm({
           disabled={isProcessing || polling}
           className="w-full bg-red-500 text-white py-4 border-4 border-black font-black text-xl uppercase rounded-xl hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isProcessing || polling ? 'PROCESSING PAYMENT...' : `PAY ${CREDITS_PRICE} credits`}
+          {isProcessing || polling ? 'PROCESSING PAYMENT...' : `PAY 7 credits`}
         </button>
       </div>
     </div>

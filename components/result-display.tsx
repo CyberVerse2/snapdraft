@@ -79,6 +79,8 @@ export function ResultDisplay({
   const showOverlay = Boolean(isLoading);
 
   const handleDownload = () => {
+    // Debug: trace modal open
+    console.log('[ResultDisplay] Open download modal');
     setShowDownloadModal(true);
   };
 
@@ -159,10 +161,12 @@ export function ResultDisplay({
           Download
         </button>
         <button
-          onClick={handleTwitterShare}
-          className="flex-1 bg-blue-500 text-white py-4 border-4 border-black font-black text-lg uppercase rounded-xl hover:bg-blue-600 shadow-[4px_4px_0px_0px_#000000] transition-all"
+          onClick={handleShare}
+          className="flex-1 bg-white text-black py-4 border-4 border-black font-black text-lg uppercase rounded-xl hover:bg-gray-100 shadow-[4px_4px_0px_0px_#000000] transition-all"
+          aria-label="Share to Farcaster"
+          title="Share to Farcaster"
         >
-          Share
+          <img src="/white-purple.svg" alt="Farcaster" className="inline-block w-6 h-6" />
         </button>
         <button
           onClick={onReset}
@@ -175,7 +179,7 @@ export function ResultDisplay({
       {/* Removed fourth button */}
       {showDownloadModal && (
         <div
-          className="fixed inset-0 z-[90] bg-black/70 flex items-center justify-center px-4"
+          className="fixed inset-0 z-[999] bg-black/70 flex items-center justify-center px-4"
           onClick={() => setShowDownloadModal(false)}
         >
           <div

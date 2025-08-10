@@ -132,23 +132,33 @@ export default function GalleryPage() {
                   alt={entry.style || 'Styled Image'}
                   width={200}
                   height={200}
-                  className="object-cover w-full h-40 cursor-pointer"
-                  onClick={() => setSelected(0)}
+                  className="object-cover w-full h-40"
                 />
                 <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
                   <button
                     onClick={() => handleShare(entry.url)}
-                    className="text-xl text-blue-500 bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
-                    aria-label="Share"
+                    className="bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
+                    aria-label="Share to Farcaster"
+                    title="Share to Farcaster"
                   >
-                    ↗
+                    <img src="/white-purple.svg" alt="Farcaster" className="w-6 h-6" />
                   </button>
                   <button
-                    onClick={() => handleDelete(entry.id)}
-                    className="text-xl text-red-500 bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
-                    aria-label="Delete"
+                    onClick={() => {
+                      // Open a modal-like simple copy UI using native prompt or clipboard
+                      navigator.clipboard
+                        .writeText(entry.url)
+                        .catch(() => {})
+                        .finally(() => {
+                          // Fallback: open in new tab for manual download or save
+                          window.open(entry.url, '_blank');
+                        });
+                    }}
+                    className="text-xl text-green-600 bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
+                    aria-label="Download"
+                    title="Download / Open"
                   >
-                    🗑
+                    ⬇
                   </button>
                 </div>
                 <div className="absolute bottom-2 left-2 bg-yellow-400 text-black px-2 py-1 border-2 border-black font-bold text-xs uppercase rounded-lg">
