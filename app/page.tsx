@@ -386,7 +386,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-yellow-100 overflow-hidden">
+    <div className="flex flex-col h-screen bg-yellow-100 overflow-hidden">
       {/* Credits Modal */}
       {showCreditsModal && (
         <div
@@ -431,7 +431,7 @@ export default function Home() {
         </div>
       )}
       {/* Sticky Header: SNAP (left), Credits (right) */}
-      <header className="sticky top-0 z-40 bg-black text-white border-b-4 border-black h-16 flex flex-row items-center justify-between w-full px-2 sm:px-4 py-2">
+      <header className="fixed top-0 z-40 bg-black text-white border-b-4 border-black h-16 w-full flex flex-row items-center justify-between px-2 sm:px-4 py-2">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
             SNAP
@@ -445,6 +445,8 @@ export default function Home() {
           {mounted && isConnected ? (isBalanceLoading ? '...' : credits) : 0} Credits
         </div>
       </header>
+      {/* Spacer below fixed header */}
+      <div className="h-16" />
       {/* HERO SECTION */}
       {state.step === 'upload' && (
         <>
