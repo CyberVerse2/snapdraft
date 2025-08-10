@@ -75,7 +75,10 @@ export function PaymentForm({
         await connect({ connector: connectors[0] });
       }
       const ethAmount = (CREDITS_PRICE / CREDITS_PER_ETH).toFixed(18);
-      await sendTransactionAsync({ to: RECIPIENT_ADDRESS as `0x${string}`, value: parseEther(ethAmount) });
+      await sendTransactionAsync({
+        to: RECIPIENT_ADDRESS as `0x${string}`,
+        value: parseEther(ethAmount)
+      });
       setIsProcessing(false);
       return true;
     } catch (e: any) {

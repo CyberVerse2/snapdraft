@@ -68,6 +68,14 @@ export default function Home() {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
+  // Auto prompt add frame when ready
+  useEffect(() => {
+    if (isFrameReady && !isInMiniApp) {
+      try {
+        setFrameReady();
+      } catch {}
+    }
+  }, [isFrameReady, isInMiniApp, setFrameReady]);
   const [state, setState] = useState<AppState>({
     step: 'upload',
     originalImage: null,
@@ -371,20 +379,7 @@ export default function Home() {
           <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
             SNAP
           </h1>
-          {!isInMiniApp && (
-            <button
-              className="text-xs bg-yellow-400 text-black px-2 py-1 border-2 border-black font-bold rounded hover:bg-yellow-300"
-              onClick={() => {
-                // Suggest adding miniapp via MiniKit frame action
-                try {
-                  // setFrameReady triggers frame; add frame handled by MiniKitProvider listeners
-                  setFrameReady();
-                } catch {}
-              }}
-            >
-              Add Miniapp
-            </button>
-          )}
+          {/* Auto-prompt add miniapp handled on load; no manual button */}
         </div>
         <div
           className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 transition-all"

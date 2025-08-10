@@ -23,14 +23,6 @@ export default function GalleryPage() {
 
   // Gallery logic
   const [gallery, setGallery] = useState<GalleryEntry[]>([]);
-  const [favorites, setFavorites] = useState<Record<string, boolean>>(() => {
-    if (typeof window === 'undefined') return {};
-    try {
-      return JSON.parse(localStorage.getItem('snapdraft_favorites') || '{}');
-    } catch {
-      return {};
-    }
-  });
   const [selected, setSelected] = useState<number | null>(null);
 
   useEffect(() => {
@@ -42,12 +34,6 @@ export default function GalleryPage() {
       } catch {}
     })();
   }, []);
-
-  function toggleFavorite(key: string) {
-    const newFavs = { ...favorites, [key]: !favorites[key] };
-    setFavorites(newFavs);
-    localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
-  }
 
   function handleDelete(id: string) {
     setGallery((prev) => prev.filter((g) => g.id !== id));
@@ -139,15 +125,6 @@ export default function GalleryPage() {
                   onClick={() => setSelected(0)}
                 />
                 <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
-                  <button
-                    onClick={() => toggleFavorite(entry.id)}
-                    className={`text-2xl ${
-                      favorites[entry.id] ? 'text-yellow-400' : 'text-gray-400'
-                    } bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all`}
-                    aria-label={favorites[entry.id] ? 'Unfavorite' : 'Favorite'}
-                  >
-                    ★
-                  </button>
                   <button
                     onClick={() => handleShare(entry.url)}
                     className="text-xl text-blue-500 bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all"
