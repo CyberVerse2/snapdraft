@@ -39,6 +39,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, awarded: delta });
   } catch (error) {
     console.error('Daily credit grant failed:', error);
-    return NextResponse.json({ success: false, error: 'Failed to grant daily credit' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Failed to grant daily credit' },
+      { status: 500 }
+    );
   }
 }

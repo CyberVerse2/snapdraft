@@ -91,7 +91,7 @@ export default function Home() {
   // Credits state
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
-  const { data: ethBalance, isLoading: isBalanceLoading } = useBalance({ address })
+  const { data: ethBalance, isLoading: isBalanceLoading } = useBalance({ address });
   let credits = 0;
   if (ethBalance && typeof ethBalance.formatted === 'string') {
     const eth = parseFloat(ethBalance.formatted);
@@ -217,8 +217,20 @@ export default function Home() {
   }
 
   const styles = [
-    { id: 'ghibli', name: 'Ghibli', description: 'Anime-style fantasy art', popular: true, thumbnail: '/sample-hero.jpg' },
-    { id: 'anime', name: 'Anime', description: 'Japanese anime style', popular: true, thumbnail: '/sample-hero.jpg' },
+    {
+      id: 'ghibli',
+      name: 'Ghibli',
+      description: 'Anime-style fantasy art',
+      popular: true,
+      thumbnail: '/sample-hero.jpg'
+    },
+    {
+      id: 'anime',
+      name: 'Anime',
+      description: 'Japanese anime style',
+      popular: true,
+      thumbnail: '/sample-hero.jpg'
+    },
     {
       id: 'cyberpunk',
       name: 'Cyberpunk',
@@ -226,8 +238,20 @@ export default function Home() {
       popular: true,
       thumbnail: '/sample-hero.jpg'
     },
-    { id: 'watercolor', name: 'Watercolor', description: 'Soft, painterly style', popular: true, thumbnail: '/sample-hero.jpg' },
-    { id: 'sketch', name: 'Sketch', description: 'Pencil drawing style', popular: true, thumbnail: '/sample-hero.jpg' },
+    {
+      id: 'watercolor',
+      name: 'Watercolor',
+      description: 'Soft, painterly style',
+      popular: true,
+      thumbnail: '/sample-hero.jpg'
+    },
+    {
+      id: 'sketch',
+      name: 'Sketch',
+      description: 'Pencil drawing style',
+      popular: true,
+      thumbnail: '/sample-hero.jpg'
+    },
     {
       id: 'oil-painting',
       name: 'Oil Painting',
@@ -235,8 +259,20 @@ export default function Home() {
       popular: true,
       thumbnail: '/sample-hero.jpg'
     },
-    { id: 'pixel-art', name: 'Pixel Art', description: 'Retro, blocky style', popular: true, thumbnail: '/sample-hero.jpg' },
-    { id: 'minecraft', name: 'Minecraft', description: 'Minecraft-like blocky art', popular: true, thumbnail: '/sample-hero.jpg' }
+    {
+      id: 'pixel-art',
+      name: 'Pixel Art',
+      description: 'Retro, blocky style',
+      popular: true,
+      thumbnail: '/sample-hero.jpg'
+    },
+    {
+      id: 'minecraft',
+      name: 'Minecraft',
+      description: 'Minecraft-like blocky art',
+      popular: true,
+      thumbnail: '/sample-hero.jpg'
+    }
   ];
 
   // Add favorite logic for result
@@ -441,7 +477,11 @@ export default function Home() {
                   } min-h-[56px] hover:bg-yellow-200 transition-all`}
                   onClick={() => handleStyleSelect(style.id as StyleType)}
                 >
-                  <img src={style.thumbnail} alt={style.name} className="w-full h-24 object-cover rounded-md border-2 border-black" />
+                  <img
+                    src={style.thumbnail}
+                    alt={style.name}
+                    className="w-full h-24 object-cover rounded-md border-2 border-black"
+                  />
                   <span className="text-lg font-black uppercase">{style.name}</span>
                   <span className="text-xs text-gray-500">{style.description}</span>
                   {style.popular && (
