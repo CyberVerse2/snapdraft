@@ -3,14 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import type { StyleType } from '@/app/page';
 import Image from 'next/image';
-import { getPaymentStatus, pay } from '@base-org/account';
-import { useAccount, useConnect, useWriteContract } from 'wagmi';
-import { erc20Abi } from 'viem';
+import { useAccount, useConnect, useSendTransaction } from 'wagmi';
+import { parseEther } from 'viem';
+import { useFarcasterContext } from '@/hooks/use-farcaster-context';
 
-const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'; // Replace with Base USDC if needed
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
-const CREDITS_PRICE = 10; // 10 credits
-const USDC_DECIMALS = 6;
+const CREDITS_PRICE = 30; // 30 credits per image
+const CREDITS_PER_ETH = 420000; // 1 ETH = 420k credits (ETH ~$4200, 1 credit ~= $0.01)
 
 interface PaymentFormProps {
   originalImage: string;
@@ -65,31 +64,23 @@ export function PaymentForm({
   // Move Wagmi hooks here
   const { isConnected, address } = useAccount();
   const { connect, connectors } = useConnect();
-  const { writeContractAsync } = useWriteContract();
+  const { sendTransactionAsync } = useSendTransaction();
+  const { fid } = useFarcasterContext();
 
-  async function handleErc20PaymentWagmi(
-    setError: (e: string) => void,
-    setProcessing: (b: boolean) => void
-  ) {
+  async function sendEthPayment(): Promise<boolean> {
     try {
-      setProcessing(true);
+      setIsProcessing(true);
       setError('');
       if (!isConnected) {
         await connect({ connector: connectors[0] });
       }
-      const amount = BigInt(Math.floor((CREDITS_PRICE * 10 ** USDC_DECIMALS) / 100));
-      console.log('total', amount);
-      await writeContractAsync({
-        address: USDC_ADDRESS,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [RECIPIENT_ADDRESS, amount]
-      });
-      setProcessing(false);
+      const ethAmount = (CREDITS_PRICE / CREDITS_PER_ETH).toFixed(18);
+      await sendTransactionAsync({ to: RECIPIENT_ADDRESS as `0x${string}`, value: parseEther(ethAmount) });
+      setIsProcessing(false);
       return true;
     } catch (e: any) {
-      setError(e.message || 'ERC20 payment failed');
-      setProcessing(false);
+      setError(e.message || 'ETH payment failed');
+      setIsProcessing(false);
       return false;
     }
   }
@@ -106,7 +97,7 @@ export function PaymentForm({
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ imageUrl: previewImage || originalImage, style: selectedStyle })
+        body: JSON.stringify({ imageUrl: previewImage || originalImage, style: selectedStyle, fid })
       });
       const data = await res.json();
       if (!res.ok || !data.styledImageUrl) {
@@ -123,62 +114,24 @@ export function PaymentForm({
     }
   };
 
-  // One-tap USDC payment using the pay() function
+  // ETH payment based on credits-to-ETH conversion
   const handlePayment = async () => {
-    if (credits < 10) {
+    if (credits < CREDITS_PRICE) {
       onShowTopUpModal();
       return;
     }
-    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-      // Desktop: use Base Pay
-      try {
-        setIsProcessing(true);
-        setError('');
-        const result = await pay({
-          amount: (CREDITS_PRICE * 0.01).toFixed(2),
-          to: RECIPIENT_ADDRESS
-        });
-        if (result.success) {
-          setPaymentId(result.id);
-          setPaymentStatus('Payment initiated! Waiting for confirmation...');
-          setPolling(true);
-        } else {
-          setError(result.error || 'Payment failed');
-          setPaymentStatus('Payment failed');
-          setIsProcessing(false);
-        }
-      } catch (error) {
-        setError('Payment failed');
-        setPaymentStatus('Payment failed');
-        setIsProcessing(false);
-      }
-    } else {
-      // Mobile: use Wagmi ERC-20 transfer
-      const success = await handleErc20PaymentWagmi(setError, setIsProcessing);
-      if (success) {
-        setPaymentStatus('Payment complete!');
-        setIsProcessing(false);
-        setPolling(false);
-        onPaymentSuccess();
-      }
+    const success = await sendEthPayment();
+    if (success) {
+      setPaymentStatus('Payment complete!');
+      setIsProcessing(false);
+      setPolling(false);
+      onPaymentSuccess();
+      await handleGenerateImage();
     }
   };
 
-  // Check payment status using stored payment ID
-  const handlePaymentStatus = async () => {
-    if (!paymentId) {
-      setPaymentStatus('No payment ID found. Please make a payment first.');
-      return false;
-    }
-    try {
-      const { status } = await getPaymentStatus({ id: paymentId });
-      setPaymentStatus(`Payment status: ${status}`);
-      return status === 'completed';
-    } catch (error) {
-      setPaymentStatus('Status check failed');
-      return false;
-    }
-  };
+  // No external status polling for ETH send; we proceed after sendTransaction resolves
+  const handlePaymentStatus = async () => true;
 
   // Poll payment status when polling is enabled
   useEffect(() => {
@@ -298,7 +251,7 @@ export function PaymentForm({
             ? 'PROCESSING PAYMENT...'
             : isGenerating
             ? 'GENERATING IMAGE...'
-            : 'PAY 10 credits'}
+            : `PAY ${CREDITS_PRICE} credits`}
         </button>
       </div>
     </div>

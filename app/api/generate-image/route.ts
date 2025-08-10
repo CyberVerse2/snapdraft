@@ -13,7 +13,7 @@ const progressStore: Record<string, number> = {};
 
 export async function POST(request: NextRequest) {
   try {
-    const { imageUrl, style } = await request.json();
+    const { imageUrl, style, fid } = await request.json();
     const requestId = randomUUID();
     let latestProgress = 0;
 
@@ -84,11 +84,16 @@ export async function POST(request: NextRequest) {
     // Persist image and set as featured
     try {
       await prisma.image.updateMany({ data: { isFeatured: false }, where: { isFeatured: true } });
+      // Upsert creator if provided
+      const creator = fid
+        ? await prisma.user.upsert({ where: { fid: Number(fid) }, update: {}, create: { fid: Number(fid) } })
+        : null;
       await prisma.image.create({
         data: {
           url: styledImageUrl,
           style: style ?? 'unknown',
-          isFeatured: true
+          isFeatured: true,
+          creatorId: creator ? creator.id : undefined
         }
       });
     } catch (e) {

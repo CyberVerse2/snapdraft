@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const images = await prisma.image.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 100
-    });
+    const { searchParams } = new URL(request.url);
+    const fid = searchParams.get('fid');
+    const where = fid ? { creator: { fid: Number(fid) } } : {};
+    const images = await prisma.image.findMany({ where, orderBy: { createdAt: 'desc' }, take: 100 });
     return NextResponse.json({ success: true, images });
   } catch (error) {
     console.error('Gallery fetch failed:', error);
