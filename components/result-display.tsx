@@ -10,7 +10,6 @@ interface ResultDisplayProps {
   styledImage: string;
   selectedStyle: StyleType;
   onReset: () => void;
-  isLoading?: boolean;
 }
 
 const styleNames = {
@@ -34,40 +33,17 @@ export function ResultDisplay({
   styledImage,
   selectedStyle,
   onReset,
-  isLoading
+  
 }: ResultDisplayProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [progress, setProgress] = useState<number>(0);
   const styleLabel = showOriginal
     ? 'ORIGINAL'
     : styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE';
   const imageToShow = showOriginal ? originalImage : styledImage;
 
-  // Simulated loading progress similar to StylePreview (slower ramp-up)
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isLoading) {
-      setProgress(0);
-      interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev < 95) {
-            // slower progression for a more gradual fill
-            return prev + Math.max(1, Math.round((100 - prev) * 0.03));
-          }
-          return prev;
-        });
-      }, 500);
-    } else {
-      setProgress(100);
-      if (interval) clearInterval(interval);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isLoading]);
 
   // When a new styled image arrives, ensure we display it (not the placeholder or original)
   useEffect(() => {
@@ -76,7 +52,7 @@ export function ResultDisplay({
     }
   }, [styledImage]);
 
-  const showOverlay = Boolean(isLoading);
+  // No loading overlay here; handled in StylePreview
 
   const handleDownload = () => {
     // Debug: trace modal open
@@ -125,28 +101,7 @@ export function ResultDisplay({
           height={400}
           className="object-cover w-full h-full"
         />
-        {showOverlay && (
-          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center space-y-6">
-            <div className="relative">
-              <div
-                className="rounded-full h-24 w-24 border-8 border-black"
-                style={{ background: `conic-gradient(#fde047 ${progress}%, #fff 0)` }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
-                    {progress}%
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="bg-yellow-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase mb-2">
-                GENERATING...
-              </div>
-              <p className="font-bold text-lg uppercase text-white">HOLD TIGHT!</p>
-            </div>
-          </div>
-        )}
+        {/* No overlay */}
       </div>
       {/* Style Badge */}
       <div className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg mb-2">

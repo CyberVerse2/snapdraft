@@ -34,7 +34,7 @@ export function StylePreview({
 }: StylePreviewProps) {
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [showComparison, setShowComparison] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
   const [previewProgress, setPreviewProgress] = useState<number>(0);
   const [previewRequestId, setPreviewRequestId] = useState<string | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -50,15 +50,15 @@ export function StylePreview({
     setPreviewProgress(0);
     setPreviewRequestId(null);
     try {
-      const res = await fetch('/api/generate-preview', {
+      const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl: originalImage, style: selectedStyle })
       });
       if (!res.ok) throw new Error('Failed to generate preview');
       const data = await res.json();
-      setPreviewRequestId(data.requestId);
-      const previewUrl = data.previewImageUrl;
+      if (data.requestId) setPreviewRequestId(data.requestId);
+      const previewUrl = data.styledImageUrl;
       setPreviewImage(previewUrl);
       onPreviewGenerated(previewUrl);
     } catch (err) {
@@ -73,7 +73,7 @@ export function StylePreview({
   useEffect(() => {
     if (previewRequestId) {
       progressIntervalRef.current = setInterval(async () => {
-        const res = await fetch(`/api/generate-preview?id=${previewRequestId}`);
+        const res = await fetch(`/api/generate-image?id=${previewRequestId}`);
         const data = await res.json();
         setPreviewProgress(data.progress);
         if (data.progress >= 100) {
@@ -166,83 +166,28 @@ export function StylePreview({
             </div>
           ) : (
             <div className="space-y-8">
-              {/* Comparison Toggle */}
-              <div className="text-center">
-                <button
-                  onClick={() => setShowComparison(!showComparison)}
-                  className="bg-blue-500 text-white px-6 py-3 border-4 border-black font-black text-lg uppercase hover:bg-blue-600 transition-colors"
+              {/* Click image to toggle between Original and Generated */}
+              <div className="max-w-lg mx-auto text-center">
+                <div className="bg-red-500 text-white px-6 py-3 border-4 border-black font-black text-xl uppercase mb-2">
+                  {styleNames[selectedStyle]}
+                </div>
+                <div
+                  className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000] overflow-hidden cursor-pointer"
+                  onClick={() => setShowOriginal((v) => !v)}
                 >
-                  {showComparison ? 'HIDE' : 'SHOW'} COMPARISON
-                </button>
+                  <Image
+                    src={(showOriginal ? originalImage : previewImage) || '/placeholder.svg'}
+                    alt={showOriginal ? 'Original' : 'Generated'}
+                    fill
+                    className="object-cover"
+                    onContextMenu={(e) => e.preventDefault()}
+                    onDragStart={(e) => e.preventDefault()}
+                  />
+                  <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
+                    {showOriginal ? 'ORIGINAL' : 'GENERATED'}
+                  </div>
+                </div>
               </div>
-
-              {/* Image Display */}
-              {showComparison ? (
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="text-center">
-                    <div className="bg-gray-300 text-black px-4 py-2 border-4 border-black font-black text-lg uppercase mb-4">
-                      ORIGINAL
-                    </div>
-                    <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000]">
-                      <Image
-                        src={originalImage || '/placeholder.svg'}
-                        alt="Original"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="text-center">
-                    <div className="bg-red-500 text-white px-4 py-2 border-4 border-black font-black text-lg uppercase mb-4">
-                      {styleNames[selectedStyle]} PREVIEW
-                    </div>
-                    <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000] overflow-hidden">
-                      <Image
-                        src={previewImage || '/placeholder.svg'}
-                        alt="Preview"
-                        fill
-                        className="object-cover cursor-zoom-in"
-                        onContextMenu={(e) => e.preventDefault()}
-                        onDragStart={(e) => e.preventDefault()}
-                        onClick={() => previewImage && setZoomImage(previewImage)}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-                        <span className="text-3xl md:text-5xl font-black uppercase text-white opacity-60 bg-black bg-opacity-40 px-6 py-2 rounded-lg">
-                          SNAPDRAFT PREVIEW
-                        </span>
-                      </div>
-                      <div className="absolute top-4 right-4 bg-yellow-400 text-black px-2 py-1 border-2 border-black font-black text-xs uppercase">
-                        PREVIEW
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="max-w-lg mx-auto text-center">
-                  <div className="bg-red-500 text-white px-6 py-3 border-4 border-black font-black text-xl uppercase mb-6">
-                    {styleNames[selectedStyle]} PREVIEW
-                  </div>
-                  <div className="relative w-full aspect-square border-8 border-black shadow-[8px_8px_0px_0px_#000000] overflow-hidden">
-                    <Image
-                      src={previewImage || '/placeholder.svg'}
-                      alt="Preview"
-                      fill
-                      className="object-cover"
-                      onContextMenu={(e) => e.preventDefault()}
-                      onDragStart={(e) => e.preventDefault()}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-                      <span className="text-3xl md:text-5xl font-black uppercase text-white opacity-60 bg-black bg-opacity-40 px-6 py-2 rounded-lg">
-                        SNAPDRAFT PREVIEW
-                      </span>
-                    </div>
-                    <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-2 border-2 border-black font-black text-sm uppercase">
-                      PREVIEW QUALITY
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {zoomImage && (
                 <div
