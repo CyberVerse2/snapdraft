@@ -91,9 +91,9 @@ export function ResultDisplay({
       <div className="w-full max-w-md mx-auto bg-green-400 text-black px-8 py-4 border-4 border-black font-black text-xl uppercase text-center mt-4 mb-6 rounded-lg">
         GENERATION COMPLETE
       </div>
-      {/* Generated Image (toggle on click) */}
+      {/* Generated Image (toggle on click) with loader from preview */}
       <div
-        className="w-full max-w-md mx-auto h-80 border-8 border-black shadow-[8px_8px_0px_0px_#000000] mb-4 cursor-pointer overflow-hidden"
+        className="relative w-full max-w-md mx-auto h-80 border-8 border-black shadow-[8px_8px_0px_0px_#000000] mb-4 cursor-pointer overflow-hidden"
         onClick={() => setShowOriginal((v) => !v)}
       >
         <Image
@@ -104,8 +104,25 @@ export function ResultDisplay({
           className="object-cover w-full h-full"
         />
         {isLoading && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <div className="text-white font-bold uppercase text-sm">Generating...</div>
+          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center space-y-6">
+            <div className="relative">
+              <div
+                className="rounded-full h-24 w-24 border-8 border-black"
+                style={{ background: `conic-gradient(#fde047 65%, #fff 0)` }}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
+                    Loading
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="bg-yellow-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase mb-2">
+                GENERATING...
+              </div>
+              <p className="font-bold text-lg uppercase text-white">HOLD TIGHT!</p>
+            </div>
           </div>
         )}
       </div>

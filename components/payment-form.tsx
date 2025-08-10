@@ -132,7 +132,11 @@ export function PaymentForm({
       setPolling(false);
       onPaymentSuccess();
       // Delegate generation to parent so result page can show overlay while generating
-      onStartGeneration?.({ imageUrl: previewImage || originalImage, style: selectedStyle, fid: fid ?? undefined });
+      onStartGeneration?.({
+        imageUrl: previewImage || originalImage,
+        style: selectedStyle,
+        fid: fid ?? undefined
+      });
     }
   };
 
