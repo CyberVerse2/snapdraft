@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useAccount, useConnect, useSendTransaction } from 'wagmi';
 import { parseEther } from 'viem';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
+import { RotateCw } from 'lucide-react';
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
 const CREDITS_PRICE = 30; // 30 credits per image
@@ -63,6 +64,8 @@ export function PaymentForm({
   const hasNotifiedRef = useRef<boolean>(false);
   const [paymentComplete, setPaymentComplete] = useState<boolean>(false);
   const hasNavigatedRef = useRef<boolean>(false);
+  const encouragementItems = ['✨ 4X RESOLUTION', '🎨 ENHANCED DETAILS', '💎 PREMIUM QUALITY'];
+  const [encIndex, setEncIndex] = useState<number>(0);
 
   // Move Wagmi hooks here
   const { isConnected, address } = useAccount();
@@ -71,42 +74,61 @@ export function PaymentForm({
   const { fid } = useFarcasterContext();
 
   // Start image generation on mount or when inputs change
-  useEffect(() => {
+  async function startGeneration() {
     let cancelled = false;
-    async function generate() {
-      try {
-        setError(null);
-        setGenerationProgress(0);
-        setGenerationRequestId(null);
-        setGeneratedUrl(null);
-        hasNotifiedRef.current = false;
-        const res = await fetch('/api/generate-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageUrl: previewImage || originalImage,
-            style: selectedStyle,
-            fid
-          })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.styledImageUrl) {
-          throw new Error(data.error || 'Image generation failed');
-        }
-        if (data.requestId) setGenerationRequestId(data.requestId);
-        if (!cancelled) {
-          setGeneratedUrl(data.styledImageUrl as string);
-        }
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message || 'Failed to start generation');
+    try {
+      setError(null);
+      setGenerationProgress(0);
+      setGenerationRequestId(null);
+      setGeneratedUrl(null);
+      hasNotifiedRef.current = false;
+      const res = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: previewImage || originalImage,
+          style: selectedStyle,
+          fid
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.styledImageUrl) {
+        throw new Error(data.error || 'Image generation failed');
       }
+      if (data.requestId) setGenerationRequestId(data.requestId);
+      if (!cancelled) {
+        setGeneratedUrl(data.styledImageUrl as string);
+      }
+    } catch (e: any) {
+      if (!cancelled) setError(e?.message || 'Failed to start generation');
     }
-    generate();
     return () => {
       cancelled = true;
     };
+  }
+
+  useEffect(() => {
+    let cleanup: any;
+    (async () => {
+      cleanup = await startGeneration();
+    })();
+    return () => {
+      if (typeof cleanup === 'function') cleanup();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originalImage, previewImage, selectedStyle]);
+
+  // Auto-advance encouragement carousel text
+  useEffect(() => {
+    const id = setInterval(() => {
+      setEncIndex((i) => (i + 1) % encouragementItems.length);
+    }, 2000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleRegenerate = async () => {
+    await startGeneration();
+  };
 
   // Poll for generation progress (and simulate increments if backend updates are sparse)
   useEffect(() => {
@@ -216,11 +238,11 @@ export function PaymentForm({
   // Removed upscaling tracking
 
   return (
-    <div className="fixed left-0 right-0 top-16 bottom-14 z-50 bg-yellow-100 overflow-y-auto">
+    <div className="fixed left-0 right-0 top-16 bottom-14 z-50 bg-yellow-100 overflow-y-auto overflow-x-hidden">
       {/* Main content: center everything, no scroll */}
-      <div className="flex-1 flex flex-col items-center justify-start w-full max-w-md mx-auto px-4 pt-8 pb-24">
+      <div className="flex-1 flex flex-col items-center justify-start w-full max-w-md mx-auto px-4 pt-4 pb-24">
         {/* Preview Image */}
-        <div className="w-full max-w-md mx-auto border-8 border-black object-cover overflow-hidden max-h-80 mt-2 shadow-[8px_8px_0px_0px_#000000]">
+        <div className="w-full max-w-md mx-auto border-8 border-black object-cover overflow-hidden max-h-80 mt-1 shadow-[8px_8px_0px_0px_#000000]">
           <div
             className="relative w-full h-auto max-h-80 cursor-pointer"
             onClick={() => setShowOriginal((v) => !v)}
@@ -261,20 +283,36 @@ export function PaymentForm({
                     </div>
                   </div>
                 </div>
-                <div className="bg-yellow-400 text-black px-4 py-2 border-4 border-black font-black text-base uppercase">
-                  Generating...
+                <div className="bg-yellow-400 text-black px-3 py-1 border-4 border-black font-black text-xs uppercase tracking-tight">
+                  Generating preview — hold tight!
                 </div>
               </div>
             )}
           </div>
         </div>
         {/* Style and Total distributed vertically */}
-        <div className="flex flex-col gap-6 w-full mt-6 flex-shrink-0">
+        <div className="flex flex-col gap-3 w-full mt-4 flex-shrink-0">
           <div className="flex justify-between items-center w-full">
-            <span className="font-black text-xl uppercase">STYLE:</span>
-            <span className="bg-yellow-400 text-black px-6 py-1 border-4 border-black font-black text-xl uppercase rounded-lg">
+            <span className="font-black text-base uppercase">STYLE:</span>
+            <span className="bg-yellow-400 text-black px-3 py-0.5 border-2 border-black font-black text-sm uppercase rounded-lg">
               {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
             </span>
+          </div>
+        </div>
+        {/* Encouragement block from Style Preview */}
+        <div className="w-full max-w-md mx-auto mt-12">
+          <div className="space-y-2">
+            <p className="font-black text-lg uppercase text-center leading-none">
+              LOVE IT? GET THE FULL QUALITY!
+            </p>
+            <div className="flex items-center justify-center h-8 overflow-hidden">
+              <div
+                key={encIndex}
+                className="bg-white text-black px-2 py-1 border-4 border-black whitespace-nowrap text-[11px] font-bold uppercase rounded-sm transition-opacity duration-300"
+              >
+                {encouragementItems[encIndex]}
+              </div>
+            </div>
           </div>
         </div>
         {/* Error/status message above pay button */}
@@ -286,13 +324,23 @@ export function PaymentForm({
       </div>
       {/* Pay Button: always visible, sticky above nav */}
       <div className="fixed left-0 right-0 bottom-20 w-full px-4 z-[70]">
-        <button
-          onClick={handlePayment}
-          disabled={isProcessing || polling}
-          className="w-full bg-red-500 text-white py-4 border-4 border-black font-black text-xl uppercase rounded-xl hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isProcessing || polling ? 'PROCESSING PAYMENT...' : `PAY ${CREDITS_PRICE} credits`}
-        </button>
+        <div className="flex gap-3 items-center">
+          <button
+            onClick={handlePayment}
+            disabled={isProcessing || polling}
+            className="flex-[2] bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isProcessing || polling ? 'PROCESSING...' : `PAY ${CREDITS_PRICE} credits`}
+          </button>
+          <button
+            onClick={handleRegenerate}
+            className="w-14 h-[52px] bg-white text-black border-4 border-black rounded-xl hover:bg-gray-100 shadow-[4px_4px_0px_0px_#000000] transition-all flex items-center justify-center"
+            aria-label="Regenerate preview"
+            title="Regenerate preview"
+          >
+            <RotateCw className="w-6 h-6" />
+          </button>
+        </div>
       </div>
     </div>
   );
