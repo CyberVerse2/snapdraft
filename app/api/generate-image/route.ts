@@ -86,9 +86,13 @@ export async function POST(request: NextRequest) {
       await prisma.image.updateMany({ data: { isFeatured: false }, where: { isFeatured: true } });
       // Upsert creator if provided
       const creator = fid
-        ? await prisma.user.upsert({ where: { fid: Number(fid) }, update: {}, create: { fid: Number(fid) } })
+        ? await prisma.user.upsert({
+            where: { fid: Number(fid) },
+            update: {},
+            create: { fid: Number(fid) }
+          })
         : null;
-      await prisma.image.create({
+      const saved = await prisma.image.create({
         data: {
           url: styledImageUrl,
           style: style ?? 'unknown',

@@ -308,7 +308,10 @@ export default function Home() {
 
   // Featured image and creator info from DB via API; fallback to local gallery then sample
   const [featuredUrl, setFeaturedUrl] = useReactState<string | null>(null);
-  const [featuredUser, setFeaturedUser] = useReactState<{ username?: string | null; pfpUrl?: string | null } | null>(null);
+  const [featuredUser, setFeaturedUser] = useReactState<{
+    username?: string | null;
+    pfpUrl?: string | null;
+  } | null>(null);
   useReactEffect(() => {
     let ignore = false;
     (async () => {
@@ -317,7 +320,10 @@ export default function Home() {
         const data = await res.json();
         if (!ignore && data?.featured?.url) {
           setFeaturedUrl(data.featured.url as string);
-          setFeaturedUser({ username: data.featured?.creator?.username, pfpUrl: data.featured?.creator?.pfpUrl });
+          setFeaturedUser({
+            username: data.featured?.creator?.username,
+            pfpUrl: data.featured?.creator?.pfpUrl
+          });
         } else if (!ignore && gallery.length > 0) {
           setFeaturedUrl(gallery[0].url);
         }
@@ -407,15 +413,27 @@ export default function Home() {
       {state.step === 'upload' && (
         <>
           <section className="w-full flex flex-col items-center justify-center bg-yellow-100 border-b-4 border-black py-6 px-4">
-            <div className="w-full max-w-md mx-auto border-8 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] mb-4">
+            <div className="w-full max-w-md mx-auto border-8 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] mb-4 relative">
               <Image
                 src={featuredUrl || sampleHero}
                 alt="Featured AI Styled"
                 width={400}
                 height={300}
-                className="object-cover w-full h-56"
+                className="object-cover w-full h-56 transition-opacity duration-500"
                 priority
               />
+              {featuredUser?.username && (
+                <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
+                  {featuredUser.pfpUrl && (
+                    <img
+                      src={featuredUser.pfpUrl}
+                      alt={featuredUser.username || ''}
+                      className="w-6 h-6 rounded-full border border-black"
+                    />
+                  )}
+                  <span className="text-xs font-bold">{featuredUser.username}</span>
+                </div>
+              )}
             </div>
             <h2 className="text-2xl sm:text-3xl font-black uppercase text-center mb-2">
               Your Photos. Reimagined in Seconds.
