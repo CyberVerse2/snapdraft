@@ -609,7 +609,7 @@ export default function Home() {
         )}
       </main>
       {/* Bottom Navigation */}
-      <footer className="fixed left-0 right-0 bottom-0 z-50 bg-black border-t-4 border-black h-16 flex flex-row items-center justify-between w-full px-2">
+      <footer className="fixed left-0 right-0 bottom-0 z-[80] bg-black border-t-4 border-black h-16 flex flex-row items-center justify-between w-full px-2">
         <Link
           href="/"
           className="flex-1 flex items-center justify-center h-full text-white font-black text-base uppercase tracking-tight hover:bg-yellow-400 hover:text-black transition-all"

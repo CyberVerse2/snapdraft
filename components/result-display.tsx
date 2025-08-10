@@ -39,6 +39,7 @@ export function ResultDisplay({
   const [isDownloading, setIsDownloading] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const styleLabel = showOriginal
     ? 'ORIGINAL'
@@ -77,23 +78,8 @@ export function ResultDisplay({
 
   const showOverlay = Boolean(isLoading);
 
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    try {
-      const response = await fetch(styledImage);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `styled-image-${selectedStyle}-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download failed:', error);
-    }
-    setIsDownloading(false);
+  const handleDownload = () => {
+    setShowDownloadModal(true);
   };
 
   const handleTwitterShare = () => {
@@ -121,7 +107,7 @@ export function ResultDisplay({
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto px-4">
       {/* Generation Complete Banner */}
-      <div className="w-full max-w-md mx-auto bg-green-400 text-black px-3 py-1 border-4 border-black font-black text-xl uppercase text-center mt-3 mb-1 rounded-lg">
+      <div className="w-full max-w-md mx-auto bg-green-400 text-black px-3 py-1 border-4 border-black font-black text-xl uppercase text-center mt-3 mb-3 rounded-lg">
         GENERATION COMPLETE
       </div>
       {/* Generated Image (toggle on click) with loader from preview */}
@@ -187,6 +173,46 @@ export function ResultDisplay({
         </button>
       </div>
       {/* Removed fourth button */}
+      {showDownloadModal && (
+        <div
+          className="fixed inset-0 z-[90] bg-black/70 flex items-center justify-center px-4"
+          onClick={() => setShowDownloadModal(false)}
+        >
+          <div
+            className="bg-white border-8 border-black rounded-xl max-w-md w-full p-6 flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-black uppercase text-center">Copy Image Link</h3>
+            <div className="bg-gray-100 border-2 border-black rounded-lg px-3 py-2 font-mono text-xs break-all select-all">
+              {styledImage}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(styledImage).catch(() => {});
+                }}
+                className="flex-1 bg-yellow-400 text-black px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-yellow-300"
+              >
+                Copy
+              </button>
+              <a
+                href={styledImage}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 text-center bg-blue-500 text-white px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-blue-600"
+              >
+                Open
+              </a>
+            </div>
+            <button
+              onClick={() => setShowDownloadModal(false)}
+              className="bg-red-500 text-white px-4 py-2 border-4 border-black font-black uppercase rounded-lg hover:bg-red-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
