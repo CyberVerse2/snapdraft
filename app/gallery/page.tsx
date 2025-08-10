@@ -2,30 +2,21 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAccount, useConnect, useReadContract } from 'wagmi';
-import { erc20Abi } from 'viem';
+import { useAccount, useBalance } from 'wagmi';
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
-const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-const USDC_DECIMALS = 6;
-const CREDITS_PER_USDC = 100;
+const CREDITS_PER_ETH = 100000; // align with homepage
 
 interface GalleryEntry { id: string; url: string; style: string | null; createdAt: string }
 
 export default function GalleryPage() {
   // Credits logic
   const { address, isConnected } = useAccount();
-  const usdcReadArgs = address ? ([address as `0x${string}`] as const) : undefined;
-  const { data: usdcBalanceRaw, isLoading: isBalanceLoading } = useReadContract({
-    address: USDC_ADDRESS,
-    abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: usdcReadArgs
-  });
+  const { data: ethBalance, isLoading: isBalanceLoading } = useBalance({ address });
   let credits = 0;
-  if (usdcBalanceRaw && typeof usdcBalanceRaw === 'bigint') {
-    credits = (Number(usdcBalanceRaw) / 10 ** USDC_DECIMALS) * CREDITS_PER_USDC;
-    credits = Math.floor(credits);
+  if (ethBalance && typeof ethBalance.formatted === 'string') {
+    const eth = parseFloat(ethBalance.formatted);
+    if (!Number.isNaN(eth)) credits = Math.floor(eth * CREDITS_PER_ETH);
   }
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -52,8 +43,8 @@ export default function GalleryPage() {
     })();
   }, []);
 
-  function toggleFavorite(ts: number) {
-    const newFavs = { ...favorites, [ts]: !favorites[ts] };
+  function toggleFavorite(key: string) {
+    const newFavs = { ...favorites, [key]: !favorites[key] };
     setFavorites(newFavs);
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
@@ -103,9 +94,9 @@ export default function GalleryPage() {
               </button>
             </div>
             <div className="text-center text-base font-bold mt-2 mb-6">
-              1 credit = $0.01 USDC
+              Credits are denominated in ETH
               <br />
-              Send USDC to this address to top up your credits.
+              Send ETH to this address to top up your credits.
             </div>
             <button
               onClick={() => setShowCreditsModal(false)}
@@ -136,7 +127,7 @@ export default function GalleryPage() {
           <div className="grid grid-cols-2 gap-4 w-full max-w-md mx-auto">
             {gallery.map((entry) => (
               <div
-                 key={entry.id}
+                key={entry.id}
                 className="relative group border-4 border-black rounded-xl overflow-hidden bg-white"
               >
                 <Image
@@ -149,11 +140,11 @@ export default function GalleryPage() {
                 />
                 <div className="absolute top-2 right-2 flex flex-row gap-2 z-10">
                   <button
-                    onClick={() => toggleFavorite(0)}
+                    onClick={() => toggleFavorite(entry.id)}
                     className={`text-2xl ${
-                      favorites[entry.ts] ? 'text-yellow-400' : 'text-gray-400'
+                      favorites[entry.id] ? 'text-yellow-400' : 'text-gray-400'
                     } bg-white border-2 border-black rounded-full p-1 shadow-[2px_2px_0px_0px_#000000] transition-all`}
-                    aria-label={favorites[entry.ts] ? 'Unfavorite' : 'Favorite'}
+                    aria-label={favorites[entry.id] ? 'Unfavorite' : 'Favorite'}
                   >
                     ★
                   </button>

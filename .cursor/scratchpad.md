@@ -49,6 +49,18 @@ This will allow users to pay with crypto and enable a new AI-powered image style
 - x402-next middleware has been created to protect /api/generate-image with a $0.25 paywall using the provided CDP Wallet address. Next: update PaymentForm and backend to work with x402 payment flow.
 - PaymentForm now posts to /api/generate-image, handles HTTP 402, and displays a placeholder x402 Pay UI. Next: set up and test CDP Wallet for payment collection.
 - Implemented reusable Farcaster helper hook `hooks/use-farcaster-context.ts` to expose `fid`, `username`, `displayName`, `pfpUrl`, `isInMiniApp`, and raw `context` from MiniKit. Ready to consume in any client component.
+- Started DB integration (Prisma + MongoDB): added `prisma/schema.prisma`, `lib/prisma.ts`, Prisma scripts, and generated client. Awaiting `DATABASE_URL` in `.env` before `prisma db push`.
+- Added API routes: `app/api/gallery/route.ts` (list/create) and `app/api/featured/route.ts` (get/set featured image).
+- Updated `app/api/generate-image/route.ts` to persist generated images and mark the latest as `isFeatured`.
+- Updated homepage `app/page.tsx` to fetch featured image from `/api/featured` (fallback to local) and to save newly generated images to the DB.
+- Began style thumbnails support by extending `lib/styles.ts` with a `thumbnail` field (temporary placeholder paths).
+
+Executor's next steps:
+
+- Provide MongoDB `DATABASE_URL` so I can run `npm run prisma:push`.
+- Implement ETH-denominated credits and daily login credit accrual in DB (CreditBalance/CreditEvent) and wire to UI.
+- Prompt users to add the miniapp for notifications using MiniKit actions; add a CTA in the header/home.
+- Replace style selection UI to display images horizontally using `styles[].thumbnail`.
 
 # Lessons
 

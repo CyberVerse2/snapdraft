@@ -8,8 +8,8 @@ import { PaymentForm } from '@/components/payment-form';
 import { ResultDisplay } from '@/components/result-display';
 import { StylePreview } from '@/components/style-preview';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
-import { useAccount, useConnect, useReadContract } from 'wagmi';
-import { erc20Abi } from 'viem';
+import { useFarcasterContext } from '@/hooks/use-farcaster-context';
+import { useAccount, useConnect, useBalance } from 'wagmi';
 import Link from 'next/link';
 import Image from 'next/image';
 import sampleHero from '/public/sample-hero.jpg'; // Add a sample image to public/ if not present
@@ -56,12 +56,12 @@ function saveToGallery(entry: GalleryEntry) {
 }
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
-const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'; // Base Mainnet USDC
-const USDC_DECIMALS = 6;
-const CREDITS_PER_USDC = 100; // 1 USDC = 100 credits (1 credit = $0.01)
+// Credits are now denominated in ETH
+const CREDITS_PER_ETH = 100000; // 1 ETH = 100,000 credits (adjust as needed)
 
 export default function Home() {
   const { setFrameReady, isFrameReady } = useMiniKit();
+  const { fid, isInMiniApp } = useFarcasterContext();
   // The setFrameReady() function is called when your mini-app is ready to be shown
   useEffect(() => {
     if (!isFrameReady) {
@@ -91,23 +91,11 @@ export default function Home() {
   // Credits state
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
-  const usdcReadArgs = address ? ([address as `0x${string}`] as const) : undefined;
-  const { data: usdcBalanceRaw, isLoading: isBalanceLoading } = useReadContract({
-    address: USDC_ADDRESS,
-    abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: usdcReadArgs
-  });
-  if (address) {
-    console.log('Querying USDC balance for address:', address);
-  }
-  if (usdcBalanceRaw) {
-    console.log('Raw USDC balance:', usdcBalanceRaw.toString());
-  }
+  const { data: ethBalance, isLoading: isBalanceLoading } = useBalance({ address })
   let credits = 0;
-  if (usdcBalanceRaw && typeof usdcBalanceRaw === 'bigint') {
-    credits = (Number(usdcBalanceRaw) / 10 ** USDC_DECIMALS) * CREDITS_PER_USDC;
-    credits = Math.floor(credits);
+  if (ethBalance && typeof ethBalance.formatted === 'string') {
+    const eth = parseFloat(ethBalance.formatted);
+    if (!Number.isNaN(eth)) credits = Math.floor(eth * CREDITS_PER_ETH);
   }
 
   const [showCreditsModal, setShowCreditsModal] = useState(false);
@@ -126,6 +114,21 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem('snapdraft_credits', credits.toString());
   }, [credits]);
+
+  // Daily login credit: attempt once per mount if Farcaster context is present
+  useEffect(() => {
+    if (!fid) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/credits/daily', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fid })
+        });
+        await res.json();
+      } catch {}
+    })();
+  }, [fid]);
 
   useEffect(() => {
     if (showGallery) setGallery(getGallery());
@@ -170,17 +173,18 @@ export default function Home() {
     // Deduct 25 credits per image
   };
 
-  const handleStyledImageGenerated = (imageUrl: string) => {
+  const handleStyledImageGenerated = async (imageUrl: string) => {
     setState((prev) => ({
       ...prev,
       styledImage: imageUrl
     }));
-    // Save to gallery
-    saveToGallery({
-      url: imageUrl,
-      style: state.selectedStyle,
-      ts: Date.now()
-    });
+    try {
+      await fetch('/api/gallery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: imageUrl, style: state.selectedStyle, setFeatured: true })
+      });
+    } catch {}
   };
 
   const resetApp = () => {
@@ -213,24 +217,26 @@ export default function Home() {
   }
 
   const styles = [
-    { id: 'ghibli', name: 'Ghibli', description: 'Anime-style fantasy art', popular: true },
-    { id: 'anime', name: 'Anime', description: 'Japanese anime style', popular: true },
+    { id: 'ghibli', name: 'Ghibli', description: 'Anime-style fantasy art', popular: true, thumbnail: '/sample-hero.jpg' },
+    { id: 'anime', name: 'Anime', description: 'Japanese anime style', popular: true, thumbnail: '/sample-hero.jpg' },
     {
       id: 'cyberpunk',
       name: 'Cyberpunk',
       description: 'Futuristic urban landscape',
-      popular: true
+      popular: true,
+      thumbnail: '/sample-hero.jpg'
     },
-    { id: 'watercolor', name: 'Watercolor', description: 'Soft, painterly style', popular: true },
-    { id: 'sketch', name: 'Sketch', description: 'Pencil drawing style', popular: true },
+    { id: 'watercolor', name: 'Watercolor', description: 'Soft, painterly style', popular: true, thumbnail: '/sample-hero.jpg' },
+    { id: 'sketch', name: 'Sketch', description: 'Pencil drawing style', popular: true, thumbnail: '/sample-hero.jpg' },
     {
       id: 'oil-painting',
       name: 'Oil Painting',
       description: 'Rich, textured oil painting',
-      popular: true
+      popular: true,
+      thumbnail: '/sample-hero.jpg'
     },
-    { id: 'pixel-art', name: 'Pixel Art', description: 'Retro, blocky style', popular: true },
-    { id: 'minecraft', name: 'Minecraft', description: 'Minecraft-like blocky art', popular: true }
+    { id: 'pixel-art', name: 'Pixel Art', description: 'Retro, blocky style', popular: true, thumbnail: '/sample-hero.jpg' },
+    { id: 'minecraft', name: 'Minecraft', description: 'Minecraft-like blocky art', popular: true, thumbnail: '/sample-hero.jpg' }
   ];
 
   // Add favorite logic for result
@@ -309,9 +315,9 @@ export default function Home() {
               </button>
             </div>
             <div className="text-center text-base font-bold mt-2 mb-6">
-              1 credit = $0.01 USDC
+              Credits are denominated in ETH
               <br />
-              Send USDC to this address to top up your credits.
+              Send ETH to this address to top up your credits.
             </div>
             {/* Close button: centered below text */}
             <button
@@ -325,9 +331,25 @@ export default function Home() {
       )}
       {/* Sticky Header: SNAP (left), Credits (right) */}
       <header className="sticky top-0 z-40 bg-black text-white border-b-4 border-black h-16 flex flex-row items-center justify-between w-full px-2 sm:px-4 py-2">
-        <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
-          SNAP
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
+            SNAP
+          </h1>
+          {!isInMiniApp && (
+            <button
+              className="text-xs bg-yellow-400 text-black px-2 py-1 border-2 border-black font-bold rounded hover:bg-yellow-300"
+              onClick={() => {
+                // Suggest adding miniapp via MiniKit frame action
+                try {
+                  // setFrameReady triggers frame; add frame handled by MiniKitProvider listeners
+                  setFrameReady();
+                } catch {}
+              }}
+            >
+              Add Miniapp
+            </button>
+          )}
+        </div>
         <div
           className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 transition-all"
           onClick={() => setShowCreditsModal(true)}
@@ -419,6 +441,7 @@ export default function Home() {
                   } min-h-[56px] hover:bg-yellow-200 transition-all`}
                   onClick={() => handleStyleSelect(style.id as StyleType)}
                 >
+                  <img src={style.thumbnail} alt={style.name} className="w-full h-24 object-cover rounded-md border-2 border-black" />
                   <span className="text-lg font-black uppercase">{style.name}</span>
                   <span className="text-xs text-gray-500">{style.description}</span>
                   {style.popular && (
