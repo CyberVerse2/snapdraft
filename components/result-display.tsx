@@ -32,8 +32,7 @@ export function ResultDisplay({
   originalImage,
   styledImage,
   selectedStyle,
-  onReset,
-  
+  onReset
 }: ResultDisplayProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
@@ -43,7 +42,6 @@ export function ResultDisplay({
     ? 'ORIGINAL'
     : styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE';
   const imageToShow = showOriginal ? originalImage : styledImage;
-
 
   // When a new styled image arrives, ensure we display it (not the placeholder or original)
   useEffect(() => {

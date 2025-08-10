@@ -224,8 +224,7 @@ export default function Home() {
       ...prev,
       styledImage: imageUrl
     }));
-    // We should already be on result; ensure we are
-    setState((prev) => ({ ...prev, step: 'result' }));
+    // Do not navigate here; navigation to result happens only after successful payment
   };
 
   const resetApp = () => {
@@ -579,20 +578,6 @@ export default function Home() {
             onStyledImageGenerated={handleStyledImageGenerated}
             credits={credits}
             onShowTopUpModal={() => setShowCreditsModal(true)}
-            onStartGeneration={async ({ imageUrl, style, fid }) => {
-              // Trigger server generation; overlay will show in ResultDisplay
-              try {
-                const res = await fetch('/api/generate-image', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ imageUrl, style, fid })
-                });
-                const data = await res.json();
-                if (res.ok && data.styledImageUrl) {
-                  handleStyledImageGenerated(data.styledImageUrl);
-                }
-              } catch {}
-            }}
           />
         )}
         {/* Result Step */}
@@ -603,7 +588,6 @@ export default function Home() {
               styledImage={state.styledImage || ''}
               selectedStyle={(state.selectedStyle || styles[0].id) as StyleType}
               onReset={() => setStep('upload')}
-              isLoading={!state.styledImage}
             />
           </div>
         )}
