@@ -76,19 +76,18 @@ export default function Home() {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
-  // Check if mini-app has been added; if not, show onboarding prompt (do not auto-mark added)
+  // Show onboarding ONLY on first homepage load (this session) AND only if user hasn't added the miniapp
+  const onboardingCheckedRef = useRef(false);
   useEffect(() => {
+    if (onboardingCheckedRef.current) return;
+    if (!isFrameReady || !fid) return;
+    onboardingCheckedRef.current = true;
     (async () => {
-      if (!isFrameReady || !fid) return;
       try {
         const res = await fetch(`/api/miniappprompt?fid=${fid}`);
         const data = await res.json();
         const alreadyAdded = !!data?.frameAdded;
-        if (!alreadyAdded) {
-          setShowOnboarding(true);
-        } else {
-          setShowOnboarding(false);
-        }
+        setShowOnboarding(!alreadyAdded);
       } catch (err) {
         console.warn('[MiniApp] Failed to fetch miniapp prompt status', err);
       }
@@ -147,18 +146,8 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
   }, []);
-  // First-time onboarding modal (shown once)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const seen = localStorage.getItem('snapdraft_onboarding_seen');
-      if (!seen) setShowOnboarding(true);
-    } catch {}
-  }, []);
+  // Dismiss onboarding for this session
   const dismissOnboarding = () => {
-    try {
-      localStorage.setItem('snapdraft_onboarding_seen', '1');
-    } catch {}
     setShowOnboarding(false);
   };
 
