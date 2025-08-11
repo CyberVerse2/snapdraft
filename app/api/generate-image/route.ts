@@ -15,7 +15,7 @@ const resultStore: Record<string, string> = {};
 
 export async function POST(request: NextRequest) {
   try {
-    const { imageUrl, style, fid } = await request.json();
+    const { imageUrl, style, fid, preview } = await request.json();
     if (!imageUrl || typeof imageUrl !== 'string') {
       return NextResponse.json(
         { success: false, error: 'Invalid or missing imageUrl' },
@@ -82,30 +82,32 @@ export async function POST(request: NextRequest) {
         if (styledImageUrl) {
           progressStore[requestId] = 100;
           resultStore[requestId] = styledImageUrl;
-          // Persist image and set as featured
-          try {
-            await prisma.image.updateMany({
-              data: { isFeatured: false },
-              where: { isFeatured: true }
-            });
-            const numericFid = typeof fid === 'number' ? fid : Number(fid);
-            const creator = Number.isFinite(numericFid)
-              ? await prisma.user.upsert({
-                  where: { fid: numericFid },
-                  update: {},
-                  create: { fid: numericFid }
-                })
-              : null;
-            await prisma.image.create({
-              data: {
-                url: styledImageUrl,
-                style: style ?? 'unknown',
-                isFeatured: true,
-                creatorId: creator ? creator.id : undefined
-              }
-            });
-          } catch (e) {
-            console.error('Failed to persist image:', e);
+          // Skip DB persistence during preview generation
+          if (!preview) {
+            try {
+              await prisma.image.updateMany({
+                data: { isFeatured: false },
+                where: { isFeatured: true }
+              });
+              const numericFid = typeof fid === 'number' ? fid : Number(fid);
+              const creator = Number.isFinite(numericFid)
+                ? await prisma.user.upsert({
+                    where: { fid: numericFid },
+                    update: {},
+                    create: { fid: numericFid }
+                  })
+                : null;
+              await prisma.image.create({
+                data: {
+                  url: styledImageUrl,
+                  style: style ?? 'unknown',
+                  isFeatured: true,
+                  creatorId: creator ? creator.id : undefined
+                }
+              });
+            } catch (e) {
+              console.error('Failed to persist image:', e);
+            }
           }
         }
       } catch (e) {

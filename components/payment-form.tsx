@@ -96,7 +96,8 @@ export function PaymentForm({
         body: JSON.stringify({
           imageUrl: previewImage || originalImage,
           style: selectedStyle,
-          fid
+          fid,
+          preview: true
         })
       });
       const data = await res.json();
