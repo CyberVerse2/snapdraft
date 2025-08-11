@@ -58,7 +58,7 @@ function saveToGallery(entry: GalleryEntry) {
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
 // Credits are now denominated in ETH
-const CREDITS_PER_ETH = 100000; // 1 ETH = 100,000 credits (adjust as needed)
+const CREDITS_PER_ETH = 420000; // 1 ETH = 420,000 credits (ETH ~$4200, 1 credit ~$0.01)
 
 export default function Home() {
   const { setFrameReady, isFrameReady } = useMiniKit();
