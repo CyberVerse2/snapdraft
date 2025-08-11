@@ -283,8 +283,8 @@ export default function Home() {
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
 
-  // Featured image and creator info from DB via API; fallback to local gallery then sample
-  const [featuredUrl, setFeaturedUrl] = useReactState<string | null>(null);
+  // Featured image: show default only; do not fetch from DB
+  const [featuredUrl, setFeaturedUrl] = useReactState<string | null>('/sample-hero.jpg');
   const [featuredUser, setFeaturedUser] = useReactState<{
     username?: string | null;
     pfpUrl?: string | null;
@@ -293,49 +293,7 @@ export default function Home() {
     Array<{ url: string; username?: string | null; pfpUrl?: string | null }>
   >([]);
   const [recentIndex, setRecentIndex] = useReactState<number>(0);
-  useReactEffect(() => {
-    let ignore = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/featured');
-        const data = await res.json();
-        if (!ignore && data?.featured?.url) {
-          setFeaturedUrl(data.featured.url as string);
-          setFeaturedUser({
-            username: data.featured?.creator?.username,
-            pfpUrl: data.featured?.creator?.pfpUrl
-          });
-        } else if (!ignore && gallery.length > 0) {
-          setFeaturedUrl(gallery[0].url);
-        }
-        // Also fetch recent images list for cycling
-        const res2 = await fetch('/api/gallery');
-        const data2 = await res2.json();
-        if (!ignore && data2?.success && Array.isArray(data2.images)) {
-          const mapped = data2.images.map((img: any) => ({
-            url: img.url as string,
-            username: img.creator?.username as string | undefined,
-            pfpUrl: img.creator?.pfpUrl as string | undefined
-          }));
-          setRecentImages(mapped);
-          setRecentIndex(0);
-          // Build style -> images map (limit per style)
-          const byStyle: Record<string, string[]> = {};
-          for (const img of data2.images as any[]) {
-            const s = (img.style as string) || 'unknown';
-            byStyle[s] = byStyle[s] || [];
-            if (byStyle[s].length < 12) byStyle[s].push(img.url as string);
-          }
-          setStyleImagesMap(byStyle);
-        }
-      } catch {
-        if (!ignore && gallery.length > 0) setFeaturedUrl(gallery[0].url);
-      }
-    })();
-    return () => {
-      ignore = true;
-    };
-  }, [gallery.length]);
+  // Do not fetch featured or recent images; keep default only
 
   // Default a style when entering style step
   useEffect(() => {
