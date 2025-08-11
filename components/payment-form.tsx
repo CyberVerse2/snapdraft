@@ -311,6 +311,14 @@ export function PaymentForm({
               }
               alt={showOriginal ? 'Original' : 'Generated'}
               className="object-cover w-full h-auto max-h-80"
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+              style={{
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                userSelect: 'none' as const
+              }}
             />
             {!generatedUrl && (generationRequestId || generationProgress < 100) && (
               <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center space-y-4">
