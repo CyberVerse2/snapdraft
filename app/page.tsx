@@ -67,7 +67,8 @@ const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
 const CREDITS_PER_ETH = 42000; // 1 ETH ≈ 42,000 credits (ETH ~$4200, 1 credit ≈ $0.10)
 
 export default function Home() {
-  const { setFrameReady, isFrameReady } = useMiniKit();
+  const miniKit = useMiniKit() as any;
+  const { setFrameReady, isFrameReady } = miniKit || {};
   const { fid, isInMiniApp, username, displayName, pfpUrl } = useFarcasterContext();
   // The setFrameReady() function is called when your mini-app is ready to be shown
   useEffect(() => {
@@ -75,7 +76,7 @@ export default function Home() {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
-  // Auto prompt add miniapp if not added, tracked in DB
+  // Check if mini-app has been added; if not, show onboarding prompt (do not auto-mark added)
   useEffect(() => {
     (async () => {
       if (!isFrameReady || !fid) return;
@@ -83,19 +84,16 @@ export default function Home() {
         const res = await fetch(`/api/miniappprompt?fid=${fid}`);
         const data = await res.json();
         const alreadyAdded = !!data?.frameAdded;
-        if (!alreadyAdded && !isInMiniApp) {
-          try {
-            setFrameReady();
-            await fetch('/api/miniappprompt', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ fid, frameAdded: true })
-            });
-          } catch {}
+        if (!alreadyAdded) {
+          setShowOnboarding(true);
+        } else {
+          setShowOnboarding(false);
         }
-      } catch {}
+      } catch (err) {
+        console.warn('[MiniApp] Failed to fetch miniapp prompt status', err);
+      }
     })();
-  }, [isFrameReady, isInMiniApp, setFrameReady, fid]);
+  }, [isFrameReady, fid]);
   const [state, setState] = useState<AppState>({
     step: 'upload',
     originalImage: null,
@@ -456,8 +454,22 @@ export default function Home() {
                   } catch {}
                   console.log('[Onboarding] Add Mini App clicked', { fid });
                   try {
-                    setFrameReady();
-                    console.log('[Onboarding] setFrameReady called');
+                    // Prefer the SDK add flow if available
+                    let addResult: any = null;
+                    if (
+                      miniKit &&
+                      miniKit.actions &&
+                      typeof miniKit.actions.addFrame === 'function'
+                    ) {
+                      addResult = await miniKit.actions.addFrame();
+                      console.log('[Onboarding] addFrame result', addResult);
+                    } else {
+                      console.warn(
+                        '[Onboarding] addFrame not available on SDK; calling setFrameReady as fallback'
+                      );
+                      setFrameReady?.();
+                    }
+
                     if (fid) {
                       const res = await fetch('/api/miniappprompt', {
                         method: 'POST',
@@ -476,6 +488,11 @@ export default function Home() {
                     } else {
                       console.warn('[Onboarding] No fid available; skipping miniappprompt');
                     }
+
+                    // Auto-close after ~3s
+                    setTimeout(() => {
+                      dismissOnboarding();
+                    }, 3000);
                   } catch (e) {
                     console.error('[Onboarding] Add Mini App failed', e);
                   }
@@ -499,7 +516,7 @@ export default function Home() {
           <img
             src="/icon.jpg"
             alt="Snapdraft"
-            className="h-10 w-10 sm:h-12 sm:w-12 rounded-sm shrink-0"
+            className="h-8 w-8 sm:h-10 sm:w-10 rounded-sm shrink-0"
           />
           <span className="sr-only">Snapdraft</span>
           {/* Auto-prompt add miniapp handled on load; no manual button */}
