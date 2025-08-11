@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import type { StyleType } from '@/app/page';
 import { Download, Twitter, RefreshCw, Share2, Home } from 'lucide-react';
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useComposeCast } from '@coinbase/onchainkit/minikit';
 import Image from 'next/image';
-
 interface ResultDisplayProps {
   originalImage: string;
   styledImage: string;
@@ -40,7 +39,7 @@ export function ResultDisplay({
   const [showOriginal, setShowOriginal] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
-  const sdk = useMiniKit();
+  const { composeCast } = useComposeCast();
   const styleLabel = showOriginal
     ? 'ORIGINAL'
     : styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'STYLE';
@@ -72,15 +71,13 @@ export function ResultDisplay({
   const handleShareToFarcaster = () => {
     const APP_URL =
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-    const shareText = 'Just styled an image with SNAPDRAFT AI!';
-    const shareEmbed = `${APP_URL}/share/${encodeURIComponent(styledImage)}`;
-    if (sdk && (sdk as any).actions && typeof (sdk as any).actions.composeCast === 'function') {
-      (sdk as any).actions.composeCast({ text: shareText, embeds: [shareEmbed] });
-    } else if (navigator.share) {
-      navigator.share({ title: 'SNAPDRAFT AI', text: shareText, url: shareEmbed }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(shareEmbed).catch(() => {});
-    }
+    const shareText = 'Just reimagined my photo with Snap, You can do yours to';
+    if (!styledImage) return;
+    const encodedImage = encodeURIComponent(styledImage);
+    composeCast({
+      text: shareText,
+      embeds: [`${APP_URL}/share/${encodedImage}`]
+    });
   };
 
   return (

@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     version: '1',
     imageUrl,
     button: {
-      title: `Launch ${appName}`,
+      title: `Reimagine Your Profile`,
       action: {
         type: 'launch_miniapp',
         name: appName,
