@@ -376,7 +376,7 @@ export default function Home() {
       {/* Credits Modal */}
       {showCreditsModal && (
         <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-4"
+          className="fixed inset-0 z-[1000] bg-black bg-opacity-70 flex items-center justify-center px-4"
           onClick={() => setShowCreditsModal(false)}
         >
           <div
@@ -500,15 +500,18 @@ export default function Home() {
           </h1>
           {/* Auto-prompt add miniapp handled on load; no manual button */}
         </div>
-        <div
-          className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 transition-all"
+        <button
+          type="button"
+          className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 active:scale-[0.98] transition-all"
           onClick={() => setShowCreditsModal(true)}
+          aria-haspopup="dialog"
+          aria-expanded={showCreditsModal}
         >
           {mounted && isConnected ? (isBalanceLoading ? '...' : credits) : 0} Credits
-        </div>
+        </button>
       </header>
-      {/* Spacer below fixed header (minimized on style step) */}
-      <div className={state.step === 'style' ? 'h-1' : 'h-16'} />
+      {/* Spacer below fixed header (more space on style step) */}
+      <div className={state.step === 'style' ? 'h-20' : 'h-16'} />
       {/* HERO SECTION */}
       {state.step === 'upload' && (
         <>
