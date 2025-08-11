@@ -53,7 +53,7 @@ export function StylePreview({
       const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: originalImage, style: selectedStyle })
+        body: JSON.stringify({ imageUrl: originalImage, style: selectedStyle, preview: true })
       });
       if (!res.ok) throw new Error('Failed to generate preview');
       const data = await res.json();

@@ -5,7 +5,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const fid = searchParams.get('fid');
-    const where = fid ? { creator: { fid: Number(fid) } } : {};
+    const where: any = { paid: true };
+    if (fid) {
+      where.creator = { fid: Number(fid) };
+    }
     const images = await prisma.image.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { url, style, creatorFid, setFeatured } = await request.json();
+    const { url, style, creatorFid, setFeatured, paid } = await request.json();
     if (!url) return NextResponse.json({ success: false, error: 'Missing url' }, { status: 400 });
 
     // Optional: set featured atomically by unsetting previous featured first
@@ -43,6 +46,7 @@ export async function POST(request: NextRequest) {
       data: {
         url,
         style: style ?? 'unknown',
+        paid: !!paid,
         isFeatured: !!setFeatured,
         creatorId: creator ? creator.id : undefined
       }

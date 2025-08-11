@@ -41,6 +41,8 @@ model Image {
   url         String
   style       String
   prompt      String?
+  // True only for fully generated, paid images. Previews are not persisted.
+  paid        Boolean  @default(false)
   // Set true for the currently featured image on homepage
   isFeatured  Boolean  @default(false)
 
@@ -49,6 +51,7 @@ model Image {
   creator     User?    @relation(fields: [creatorId], references: [id])
 
   @@index([isFeatured])
+  @@index([paid])
   @@index([creatorId])
 }
 

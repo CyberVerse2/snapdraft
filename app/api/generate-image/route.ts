@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
                 data: {
                   url: styledImageUrl,
                   style: style ?? 'unknown',
+                  paid: true,
                   isFeatured: true,
                   creatorId: creator ? creator.id : undefined
                 }
