@@ -231,6 +231,9 @@ export function PaymentForm({
 
   // ETH payment based on credits-to-ETH conversion
   const handlePayment = async () => {
+    try {
+      navigator.vibrate?.(10);
+    } catch {}
     if (credits < CREDITS_PRICE) {
       onShowTopUpModal();
       return;
@@ -357,7 +360,7 @@ export function PaymentForm({
           <button
             onClick={handlePayment}
             disabled={isProcessing || polling}
-            className="flex-[2] bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-[2] bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] hover:shadow-[8px_8px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-black"
           >
             {isProcessing || polling ? 'PROCESSING...' : `PAY ${CREDITS_PRICE} credits`}
           </button>
@@ -373,7 +376,7 @@ export function PaymentForm({
                 } catch {}
               }
             }}
-            className="w-14 h-[52px] bg-white text-black border-4 border-black rounded-xl hover:bg-gray-100 shadow-[4px_4px_0px_0px_#000000] transition-all flex items-center justify-center"
+            className="w-14 h-[52px] bg-white text-black border-4 border-black rounded-xl hover:bg-gray-100 active:scale-95 shadow-[4px_4px_0px_0px_#000000] transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-black"
             aria-label="Regenerate preview"
             title="Regenerate preview"
           >

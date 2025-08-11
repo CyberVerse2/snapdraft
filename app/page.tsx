@@ -485,11 +485,33 @@ export default function Home() {
               Your Photos Reimagined in Seconds.
             </h2>
             {/* <p className="text-lg text-center font-bold text-black/80 mb-2">Upload a photo, pick a style, and get a stunning AI creation in seconds.</p> */}
-            <div className="w-full max-w-xs mx-auto mt-2 mb-2 flex justify-center">
+            <div className="w-full max-w-md mx-auto mt-2 mb-2 flex gap-3 justify-center px-2">
               <button
-                className="bg-black text-white font-black uppercase px-6 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-400 hover:text-black transition-all text-base"
-                onClick={() => fileInputRef.current?.click()}
-                style={{ width: '100%' }}
+                className="flex-1 bg-purple-600 text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-purple-500 active:scale-[0.98] transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={() => {
+                  if (pfpUrl) {
+                    try {
+                      navigator.vibrate?.(10);
+                    } catch {}
+                    handleImageUpload(pfpUrl);
+                  } else {
+                    try {
+                      navigator.vibrate?.(10);
+                    } catch {}
+                  }
+                }}
+                disabled={!pfpUrl}
+              >
+                Use Profile Photo
+              </button>
+              <button
+                className="flex-1 bg-black text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-400 hover:text-black active:scale-[0.98] transition-all text-sm"
+                onClick={() => {
+                  try {
+                    navigator.vibrate?.(10);
+                  } catch {}
+                  fileInputRef.current?.click();
+                }}
               >
                 Upload Photo
               </button>
