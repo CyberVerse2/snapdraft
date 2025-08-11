@@ -63,6 +63,7 @@ export function PaymentForm({
   const hasNotifiedRef = useRef<boolean>(false);
   const [paymentComplete, setPaymentComplete] = useState<boolean>(false);
   const hasNavigatedRef = useRef<boolean>(false);
+  const hasPersistedRef = useRef<boolean>(false);
   const encouragementItems = ['✨ 4X RESOLUTION', '🎨 ENHANCED DETAILS', '💎 PREMIUM QUALITY'];
   const tickerRef = useRef<HTMLDivElement | null>(null);
   // Guards to prevent duplicate generations (StrictMode and rapid re-renders)
@@ -199,13 +200,33 @@ export function PaymentForm({
     }
   }, [generationRequestId, generatedUrl, onStyledImageGenerated]);
 
-  // If payment already completed, navigate to result as soon as image is ready
+  // If payment already completed, persist the image then navigate to result
   useEffect(() => {
     if (paymentComplete && generatedUrl && !hasNavigatedRef.current) {
-      hasNavigatedRef.current = true;
-      onPaymentSuccess();
+      (async () => {
+        try {
+          if (!hasPersistedRef.current && fid) {
+            const res = await fetch('/api/gallery', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                url: generatedUrl,
+                style: selectedStyle,
+                creatorFid: fid,
+                paid: true,
+                setFeatured: true
+              })
+            });
+            if (res.ok) {
+              hasPersistedRef.current = true;
+            }
+          }
+        } catch {}
+        hasNavigatedRef.current = true;
+        onPaymentSuccess();
+      })();
     }
-  }, [paymentComplete, generatedUrl, onPaymentSuccess]);
+  }, [paymentComplete, generatedUrl, selectedStyle, fid, onPaymentSuccess]);
 
   async function sendEthPayment(): Promise<boolean> {
     try {
