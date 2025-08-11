@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     version: '1',
     imageUrl,
     button: {
-      title: `Open ${appName}`,
+      title: `Reimagine Yours ->`,
       action: {
         type: 'launch_miniapp',
         name: appName,

@@ -71,7 +71,7 @@ export function ResultDisplay({
   const handleShareToFarcaster = () => {
     const APP_URL =
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-    const shareText = 'Just reimagined my photo with Snap, You can do yours to';
+    const shareText = 'Just reimagined my photo with Snap, You can do yours too🔥';
     if (!styledImage) return;
     const encodedImage = encodeURIComponent(styledImage);
     composeCast({
