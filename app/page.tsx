@@ -454,16 +454,31 @@ export default function Home() {
                   try {
                     navigator.vibrate?.(10);
                   } catch {}
+                  console.log('[Onboarding] Add Mini App clicked', { fid });
                   try {
                     setFrameReady();
+                    console.log('[Onboarding] setFrameReady called');
                     if (fid) {
-                      await fetch('/api/miniappprompt', {
+                      const res = await fetch('/api/miniappprompt', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ fid, frameAdded: true })
                       });
+                      let data: any = null;
+                      try {
+                        data = await res.json();
+                      } catch {}
+                      console.log('[Onboarding] miniappprompt response', {
+                        ok: res.ok,
+                        status: res.status,
+                        data
+                      });
+                    } else {
+                      console.warn('[Onboarding] No fid available; skipping miniappprompt');
                     }
-                  } catch {}
+                  } catch (e) {
+                    console.error('[Onboarding] Add Mini App failed', e);
+                  }
                 }}
               >
                 Add Mini App
