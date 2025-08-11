@@ -277,11 +277,7 @@ export function PaymentForm({
       setPolling(false);
       console.log('[Payment] ETH payment success');
       setPaymentComplete(true);
-      // If generation already finished, navigate immediately
-      if (generatedUrl && !hasNavigatedRef.current) {
-        hasNavigatedRef.current = true;
-        onPaymentSuccess();
-      }
+      // Navigation happens after persistence in effect
     }
   };
 
