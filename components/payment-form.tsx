@@ -206,6 +206,11 @@ export function PaymentForm({
       (async () => {
         try {
           if (!hasPersistedRef.current && fid) {
+            console.log('[PaymentForm] Persisting image to gallery', {
+              url: generatedUrl,
+              style: selectedStyle,
+              fid
+            });
             const res = await fetch('/api/gallery', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -218,7 +223,11 @@ export function PaymentForm({
               })
             });
             if (res.ok) {
+              console.log('[PaymentForm] Gallery save OK');
               hasPersistedRef.current = true;
+            } else {
+              const errText = await res.text();
+              console.error('[PaymentForm] Gallery save failed', res.status, errText);
             }
           }
         } catch {}

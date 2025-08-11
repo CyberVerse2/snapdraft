@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { url, style, creatorFid, setFeatured, paid } = await request.json();
+    console.log('[Gallery][POST] incoming', { url: !!url, style, creatorFid, setFeatured, paid });
     if (!url) return NextResponse.json({ success: false, error: 'Missing url' }, { status: 400 });
 
     // Optional: set featured atomically by unsetting previous featured first
@@ -51,10 +52,14 @@ export async function POST(request: NextRequest) {
         creatorId: creator ? creator.id : undefined
       }
     });
-
+    console.log('[Gallery][POST] saved', {
+      id: image.id,
+      paid: image.paid,
+      isFeatured: image.isFeatured
+    });
     return NextResponse.json({ success: true, image });
   } catch (error) {
-    console.error('Gallery create failed:', error);
+    console.error('[Gallery][POST] create failed:', error);
     return NextResponse.json({ success: false, error: 'Failed to add image' }, { status: 500 });
   }
 }
