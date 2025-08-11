@@ -420,16 +420,17 @@ export default function Home() {
       {showOnboarding && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={dismissOnboarding} />
-          <div className="absolute left-0 right-0 bottom-0 h-[50vh] bg-white border-t-8 border-black rounded-t-2xl shadow-[0_-8px_0_0_#000000]">
+          <div className="absolute left-0 right-0 bottom-0 max-h-[80vh] bg-white border-t-8 border-black rounded-t-2xl shadow-[0_-8px_0_0_#000000] pb-4">
             <div className="h-1 w-16 bg-black rounded-full mx-auto mt-2" />
             <div className="p-4 flex flex-col items-center text-center gap-3">
               <h3 className="font-display text-2xl font-black uppercase">Welcome to Snapdraft</h3>
               <p className="text-sm font-bold text-black/80">
                 Transform your photos into stunning AI-styled artwork in seconds.
               </p>
-              {/* Redesigned steps: cleaner, bolder with connecting line */}
+              {/* Redesigned steps: centered connector line passing through badges */}
               <div className="w-full max-w-md mx-auto mt-2 relative">
-                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-2 bg-yellow-300 border-4 border-black rounded-full z-0" />
+                {/* connector line */}
+                <div className="absolute left-4 right-4 top-[28px] h-2 bg-yellow-300 border-4 border-black rounded-full z-0" />
                 <div className="grid grid-cols-4 gap-2 relative z-10">
                   {[
                     { n: 1, label: 'Upload' },
