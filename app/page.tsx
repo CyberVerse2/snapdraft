@@ -7,7 +7,7 @@ import { StyleSelection } from '@/components/style-selection';
 import { PaymentForm } from '@/components/payment-form';
 import { ResultDisplay } from '@/components/result-display';
 import { StylePreview } from '@/components/style-preview';
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useMiniKit, useAddFrame } from '@coinbase/onchainkit/minikit';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
 import { useAccount, useConnect, useBalance } from 'wagmi';
 import Link from 'next/link';
@@ -68,6 +68,7 @@ const CREDITS_PER_ETH = 42000; // 1 ETH ≈ 42,000 credits (ETH ~$4200, 1 credit
 
 export default function Home() {
   const miniKit = useMiniKit() as any;
+  const addFrame = useAddFrame();
   const { setFrameReady, isFrameReady } = miniKit || {};
   const { fid, isInMiniApp, username, displayName, pfpUrl } = useFarcasterContext();
   // The setFrameReady() function is called when your mini-app is ready to be shown
@@ -443,45 +444,23 @@ export default function Home() {
                   } catch {}
                   console.log('[Onboarding] Add Mini App clicked', { fid });
                   try {
-                    // Prefer the SDK add flow if available
-                    let addResult: any = null;
-                    if (
-                      miniKit &&
-                      miniKit.actions &&
-                      typeof miniKit.actions.addFrame === 'function'
-                    ) {
-                      addResult = await miniKit.actions.addFrame();
-                      console.log('[Onboarding] addFrame result', addResult);
-                    } else {
-                      console.warn(
-                        '[Onboarding] addFrame not available on SDK; calling setFrameReady as fallback'
-                      );
-                      setFrameReady?.();
-                    }
-
-                    if (fid) {
-                      const res = await fetch('/api/miniappprompt', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fid, frameAdded: true })
-                      });
-                      let data: any = null;
-                      try {
-                        data = await res.json();
-                      } catch {}
-                      console.log('[Onboarding] miniappprompt response', {
-                        ok: res.ok,
-                        status: res.status,
-                        data
-                      });
-                    } else {
-                      console.warn('[Onboarding] No fid available; skipping miniappprompt');
-                    }
-
-                    // Auto-close after ~3s
-                    setTimeout(() => {
+                    const result = await addFrame();
+                    if (result) {
+                      console.log('Frame added:', result.url, result.token);
+                      if (fid) {
+                        await fetch('/api/miniappprompt', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            fid,
+                            frameAdded: true,
+                            miniappUrl: result.url,
+                            miniappToken: result.token
+                          })
+                        });
+                      }
                       dismissOnboarding();
-                    }, 3000);
+                    }
                   } catch (e) {
                     console.error('[Onboarding] Add Mini App failed', e);
                   }
@@ -558,7 +537,7 @@ export default function Home() {
               )}
             </div>
             <h2 className="text-2xl sm:text-3xl font-black uppercase text-center mb-2">
-              Your Photos Reimagined in Seconds.
+              Your Photos Reimagined As Art.
             </h2>
             {/* Community strip: recent creations */}
             {recentImages.length > 0 && (

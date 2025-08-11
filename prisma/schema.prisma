@@ -27,6 +27,9 @@ model User {
 
   // Miniapp/notification enrollment
   frameAdded    Boolean  @default(false)
+  notificationCredentialsJson String?
+  miniappUrl    String?
+  miniappToken  String?
 
   // Relations
   images         Image[]

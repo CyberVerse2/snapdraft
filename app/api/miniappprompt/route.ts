@@ -16,12 +16,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { fid, frameAdded } = await request.json();
+    const { fid, frameAdded, notificationCredentials, miniappUrl, miniappToken } =
+      await request.json();
     if (!fid) return NextResponse.json({ success: false, error: 'Missing fid' }, { status: 400 });
     const user = await prisma.user.upsert({
       where: { fid: Number(fid) },
-      update: { frameAdded: !!frameAdded },
-      create: { fid: Number(fid), frameAdded: !!frameAdded }
+      update: {
+        frameAdded: !!frameAdded,
+        notificationCredentialsJson: notificationCredentials
+          ? JSON.stringify(notificationCredentials)
+          : undefined,
+        miniappUrl: miniappUrl ?? undefined,
+        miniappToken: miniappToken ?? undefined
+      },
+      create: {
+        fid: Number(fid),
+        frameAdded: !!frameAdded,
+        notificationCredentialsJson: notificationCredentials
+          ? JSON.stringify(notificationCredentials)
+          : undefined,
+        miniappUrl: miniappUrl ?? undefined,
+        miniappToken: miniappToken ?? undefined
+      }
     });
     return NextResponse.json({ success: true, user });
   } catch (error) {
