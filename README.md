@@ -1,7 +1,3 @@
-Here is a **clean, no-fluff `README.md` for SnapDraft AI**:
-
----
-
 # SnapDraft AI
 
 **Pay-per-prompt AI image generation with one-click simplicity.**
@@ -60,7 +56,3 @@ SnapDraft lets you generate a high-quality AI image by paying a **one-time 0.35 
 ## License
 
 MIT
-
----
-
-If you want, I can generate a **short badge header**, API usage section, or contributor instructions next to finalize before you publish. Let me know.
