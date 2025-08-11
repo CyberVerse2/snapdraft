@@ -20,6 +20,7 @@ import {
 } from 'react';
 import { Upload } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
+import { styles } from '@/lib/styles';
 
 export type StyleType =
   | 'ghibli'
@@ -131,13 +132,7 @@ export default function Home() {
   const [showUpload, setShowUpload] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  // Live style preview state (Style step)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewProgress, setPreviewProgress] = useState<number>(0);
-  const [previewRequestId, setPreviewRequestId] = useState<string | null>(null);
-  const [showCompare, setShowCompare] = useState<boolean>(false);
-  const previewCacheRef = useReactRef<Record<string, string>>({});
-  const previewInFlightRef = useReactRef<boolean>(false);
+  // (Optional) Live preview state was used before; now previews happen in the Preview step only
   // Recent gallery per-style images for style cards
   const [styleImagesMap, setStyleImagesMap] = useReactState<Record<string, string[]>>({});
   const [stylePreviewIndex, setStylePreviewIndex] = useReactState<Record<string, number>>({});
@@ -288,64 +283,7 @@ export default function Home() {
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
 
-  const styles = [
-    {
-      id: 'ghibli',
-      name: 'Ghibli',
-      description: 'Anime-style fantasy art',
-      popular: true,
-      thumbnail: '/sample-hero.jpg'
-    },
-    {
-      id: 'anime',
-      name: 'Anime',
-      description: 'Japanese anime style',
-      popular: true,
-      thumbnail: '/sample-hero.jpg'
-    },
-    {
-      id: 'cyberpunk',
-      name: 'Cyberpunk',
-      description: 'Futuristic urban landscape',
-      popular: true,
-      thumbnail: '/sample-hero.jpg'
-    },
-    {
-      id: 'watercolor',
-      name: 'Watercolor',
-      description: 'Soft, painterly style',
-      popular: true,
-      thumbnail: '/sample-hero.jpg'
-    },
-    {
-      id: 'sketch',
-      name: 'Sketch',
-      description: 'Pencil drawing style',
-      popular: true,
-      thumbnail: '/sample-hero.jpg'
-    },
-    {
-      id: 'oil-painting',
-      name: 'Oil Painting',
-      description: 'Rich, textured oil painting',
-      popular: true,
-      thumbnail: '/sample-hero.jpg'
-    },
-    {
-      id: 'pixel-art',
-      name: 'Pixel Art',
-      description: 'Retro, blocky style',
-      popular: true,
-      thumbnail: '/sample-hero.jpg'
-    },
-    {
-      id: 'minecraft',
-      name: 'Minecraft',
-      description: 'Minecraft-like blocky art',
-      popular: true,
-      thumbnail: '/sample-hero.jpg'
-    }
-  ];
+  // Styles now sourced from lib/styles.ts
 
   // Add favorite logic for result
   const resultKey = state.styledImage ? `${state.styledImage}_${state.selectedStyle}` : null;
@@ -418,41 +356,7 @@ export default function Home() {
     }
   }, [state.step, state.selectedStyle]);
 
-  // Generate live preview when style changes (cache per style)
-  useEffect(() => {
-    const run = async () => {
-      if (state.step !== 'style' || !state.originalImage || !state.selectedStyle) return;
-      const cacheKey = `${state.selectedStyle}`;
-      if (previewCacheRef.current[cacheKey]) {
-        setPreviewUrl(previewCacheRef.current[cacheKey]);
-        setPreviewProgress(100);
-        return;
-      }
-      if (previewInFlightRef.current) return;
-      previewInFlightRef.current = true;
-      setPreviewUrl(null);
-      setPreviewProgress(0);
-      setPreviewRequestId(null);
-      try {
-        const res = await fetch('/api/generate-preview', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: state.originalImage, style: state.selectedStyle })
-        });
-        const data = await res.json();
-        if (!res.ok || !data?.previewImageUrl) throw new Error(data.error || 'Preview failed');
-        setPreviewUrl(data.previewImageUrl as string);
-        setPreviewRequestId(data.requestId as string);
-        previewCacheRef.current[cacheKey] = data.previewImageUrl as string;
-        setPreviewProgress(100);
-      } catch {
-        // ignore
-      } finally {
-        previewInFlightRef.current = false;
-      }
-    };
-    run();
-  }, [state.step, state.originalImage, state.selectedStyle]);
+  // (Removed) Auto preview in style step; previews happen only when tapping Preview
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const handleSimpleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -603,8 +507,8 @@ export default function Home() {
           {mounted && isConnected ? (isBalanceLoading ? '...' : credits) : 0} Credits
         </div>
       </header>
-      {/* Spacer below fixed header */}
-      <div className="h-16" />
+      {/* Spacer below fixed header (minimized on style step) */}
+      <div className={state.step === 'style' ? 'h-1' : 'h-16'} />
       {/* HERO SECTION */}
       {state.step === 'upload' && (
         <>
@@ -712,17 +616,17 @@ export default function Home() {
       )}
       {/* Main Content: Direct, centered, mobile-first layout */}
       <main
-        className={`flex-1 flex flex-col items-center justify-center w-full px-4 ${
-          state.step === 'style' ? 'pb-24 overflow-y-auto' : 'pb-0 overflow-hidden'
-        }`}
+        className={`flex-1 flex flex-col items-center ${
+          state.step === 'style' ? 'justify-start' : 'justify-center'
+        } w-full px-4 pb-0 overflow-hidden`}
       >
         {/* Style Selection Step */}
         {state.step === 'style' && (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-4">
-            {/* Style cards horizontally (45vh height) */}
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-1">
+            {/* Style cards horizontally */}
             <div
               ref={stylesScrollerRef}
-              className="w-full h-[60vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-2"
+              className="w-full h-[54vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-1 mt-1"
               aria-label="Style selector"
             >
               {styles.map((style) => {
@@ -735,7 +639,7 @@ export default function Home() {
                 return (
                   <div
                     key={style.id}
-                    className={`snap-center flex-shrink-0 w-[85%] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] ${
+                    className={`snap-center flex-shrink-0 w-[80%] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] ${
                       state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
                     }`}
                     role="button"
@@ -750,7 +654,7 @@ export default function Home() {
                     <img
                       src={main}
                       alt={style.name}
-                      className="w-full h-[40vh] object-cover border-b-4 border-black"
+                      className="w-full h-[36vh] object-cover border-b-4 border-black"
                     />
                     <div className="p-2 flex flex-col gap-2">
                       <div className="flex items-center justify-between">
@@ -791,6 +695,20 @@ export default function Home() {
             <div className="text-center text-[11px] font-bold text-black/70">
               Tap a card to select · Press Spin to auto-pick a style
             </div>
+            {/* Preview Button */}
+            <button
+              className="w-full bg-yellow-400 text-black py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-yellow-300 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all disabled:opacity-60"
+              onClick={() => {
+                try {
+                  navigator.vibrate?.(10);
+                } catch {}
+                if (!state.selectedStyle) return;
+                handleProceedToPayment();
+              }}
+              disabled={!state.selectedStyle}
+            >
+              Preview
+            </button>
             {/* Jackpot Spin Button */}
             <button
               className="w-full bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all disabled:opacity-60"
@@ -837,8 +755,19 @@ export default function Home() {
               }}
               disabled={spinning}
             >
-              {spinning ? 'SPINNING...' : 'SPIN & PICK'}
+              {spinning ? 'SPINNING...' : 'Surprise me'}
             </button>
+          </div>
+        )}
+        {state.step === 'preview' && state.originalImage && state.selectedStyle && (
+          <div className="w-full max-w-md mx-auto">
+            <StylePreview
+              originalImage={state.originalImage}
+              selectedStyle={state.selectedStyle}
+              onPreviewGenerated={handlePreviewGenerated}
+              onProceedToPayment={handleProceedToPayment}
+              onBackToStyles={() => setStep('style')}
+            />
           </div>
         )}
         {/* Payment Step */}
