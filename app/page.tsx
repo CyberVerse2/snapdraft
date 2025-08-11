@@ -789,8 +789,8 @@ export default function Home() {
           </div>
         )}
       </main>
-      {/* Bottom Navigation */}
-      <BottomNav />
+      {/* Bottom Navigation (hidden during onboarding) */}
+      {!showOnboarding && <BottomNav />}
     </div>
   );
 }
