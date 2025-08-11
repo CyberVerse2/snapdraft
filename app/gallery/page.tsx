@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useComposeCast } from '@coinbase/onchainkit/minikit';
 import Link from 'next/link';
 import { BottomNav } from '@/components/bottom-nav';
 import { useAccount, useBalance } from 'wagmi';
@@ -37,7 +37,7 @@ export default function GalleryPage() {
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string>('');
   const [downloadCopied, setDownloadCopied] = useState(false);
-  const sdk = useMiniKit();
+  const { composeCast } = useComposeCast();
 
   useEffect(() => {
     (async () => {
@@ -61,14 +61,8 @@ export default function GalleryPage() {
     const APP_URL =
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareText = 'Just styled an image with SNAPDRAFT AI!';
-    const shareEmbed = `${APP_URL}/share/${id}`;
-    if (sdk && (sdk as any).actions && typeof (sdk as any).actions.composeCast === 'function') {
-      (sdk as any).actions.composeCast({ text: shareText, embeds: [shareEmbed] });
-    } else if (navigator.share) {
-      navigator.share({ title: 'SNAPDRAFT AI', text: shareText, url: shareEmbed }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(shareEmbed).catch(() => {});
-    }
+    const encoded = encodeURIComponent(url);
+    composeCast({ text: shareText, embeds: [`${APP_URL}/share/${encoded}`] });
   }
 
   return (
@@ -115,7 +109,7 @@ export default function GalleryPage() {
       )}
       {/* Sticky Header: SNAP (left), Credits (right) */}
       <header className="sticky top-0 z-40 bg-black text-white border-b-4 border-black h-16 flex flex-row items-center justify-between w-full px-2 sm:px-4 py-2">
-      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <img
             src="/icon.jpg"
             alt="Snapdraft"
@@ -140,9 +134,9 @@ export default function GalleryPage() {
               {/* <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg> */}
-              <FileX2Icon className='size-16'/>
+              <FileX2Icon className="size-16" />
             </div>
-            
+
             {/* Empty state text */}
             <div className="text-center space-y-3">
               <h2 className="text-2xl font-black uppercase text-black">Your Gallery is Empty</h2>
@@ -150,7 +144,7 @@ export default function GalleryPage() {
                 Start creating amazing AI-styled images to fill your gallery!
               </p>
             </div>
-            
+
             {/* Call to action */}
             <div className="bg-yellow-400 border-4 border-black rounded-xl p-6 text-center max-w-sm">
               <h3 className="text-lg font-black uppercase text-black mb-3">Ready to Create?</h3>
