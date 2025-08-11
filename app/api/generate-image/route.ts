@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { fal } from '@fal-ai/client';
 import { randomUUID } from 'crypto';
 import { styles } from '@/lib/styles';
+import { getEnv } from '@/lib/env';
 import { prisma } from '@/lib/prisma';
 
 fal.config({
@@ -21,7 +22,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (!process.env.FAL_API_KEY) {
+    const env = getEnv();
+    if (!env.FAL_API_KEY) {
       return NextResponse.json(
         { success: false, error: 'Server misconfigured: missing FAL_API_KEY' },
         { status: 500 }

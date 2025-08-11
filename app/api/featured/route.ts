@@ -4,7 +4,9 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const featured = await prisma.image.findFirst({ where: { isFeatured: true }, orderBy: { createdAt: 'desc' }, include: { creator: true } });
-    return NextResponse.json({ success: true, featured });
+    const res = NextResponse.json({ success: true, featured });
+    res.headers.set('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=60');
+    return res;
   } catch (error) {
     console.error('Featured fetch failed:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch featured' }, { status: 500 });

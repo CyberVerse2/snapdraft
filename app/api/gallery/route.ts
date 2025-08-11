@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
       take: 100,
       include: { creator: true }
     });
-    return NextResponse.json({ success: true, images });
+    const res = NextResponse.json({ success: true, images });
+    res.headers.set('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=60');
+    return res;
   } catch (error) {
     console.error('Gallery fetch failed:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch gallery' }, { status: 500 });
