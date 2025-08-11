@@ -427,9 +427,10 @@ export default function Home() {
               <p className="text-sm font-bold text-black/80">
                 Transform your photos into stunning AI-styled artwork in seconds.
               </p>
-              {/* Redesigned steps: cleaner, bolder */}
-              <div className="w-full max-w-md mx-auto mt-2">
-                <div className="grid grid-cols-4 gap-2">
+              {/* Redesigned steps: cleaner, bolder with connecting line */}
+              <div className="w-full max-w-md mx-auto mt-2 relative">
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-2 bg-yellow-300 border-4 border-black rounded-full z-0" />
+                <div className="grid grid-cols-4 gap-2 relative z-10">
                   {[
                     { n: 1, label: 'Upload' },
                     { n: 2, label: 'Style' },
@@ -444,7 +445,6 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-3 w-full h-2 bg-yellow-300 border-4 border-black rounded-full" />
               </div>
               {/* Add Mini App button */}
               <button
