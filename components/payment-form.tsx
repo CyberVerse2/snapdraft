@@ -19,6 +19,8 @@ interface PaymentFormProps {
   onStyledImageGenerated: (imageUrl: string) => void;
   credits: number;
   onShowTopUpModal: () => void;
+  onBackToUpload: () => void;
+  onBackToStyle: () => void;
 }
 
 const styleNames = {
@@ -44,7 +46,9 @@ export function PaymentForm({
   onPaymentSuccess,
   onStyledImageGenerated,
   credits,
-  onShowTopUpModal
+  onShowTopUpModal,
+  onBackToUpload,
+  onBackToStyle
 }: PaymentFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +73,9 @@ export function PaymentForm({
   // Guards to prevent duplicate generations (StrictMode and rapid re-renders)
   const generationInFlightRef = useRef<boolean>(false);
   const lastGenerationKeyRef = useRef<string | null>(null);
+  // Feedback states
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Move Wagmi hooks here
   const { isConnected, address } = useAccount();
@@ -147,7 +154,39 @@ export function PaymentForm({
   }, []);
 
   const handleRegenerate = async () => {
-    await startGeneration();
+    if (isRegenerating || generationInFlightRef.current) {
+      setFeedbackMessage('Already regenerating! Please wait...');
+      setTimeout(() => setFeedbackMessage(null), 2000);
+      try {
+        navigator.vibrate?.(10);
+      } catch {}
+      return;
+    }
+    
+    setIsRegenerating(true);
+    setFeedbackMessage('Regenerating preview...');
+    
+    try {
+      // Reset generation state
+      setGenerationProgress(0);
+      setGeneratedUrl(null);
+      hasNotifiedRef.current = false;
+      
+      // Clear any existing progress interval
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      
+      await startGeneration();
+      setFeedbackMessage('Preview generation started!');
+      setTimeout(() => setFeedbackMessage(null), 2000);
+    } catch (error) {
+      setFeedbackMessage('Failed to regenerate. Please try again.');
+      setTimeout(() => setFeedbackMessage(null), 3000);
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   // Poll for generation progress (and simulate increments if backend updates are sparse)
@@ -355,9 +394,18 @@ export function PaymentForm({
         <div className="flex flex-col gap-3 w-full mt-4 flex-shrink-0">
           <div className="flex justify-between items-center w-full">
             <span className="font-black text-lg uppercase">STYLE:</span>
-            <span className="bg-yellow-400 text-black px-4 py-1 border-2 border-black font-black text-lg uppercase rounded-lg">
-              {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="bg-yellow-400 text-black px-4 py-1 border-2 border-black font-black text-lg uppercase rounded-lg">
+                {styleNames[selectedStyle] || selectedStyle?.toUpperCase() || 'UNKNOWN'}
+              </span>
+              <button
+                onClick={onBackToStyle}
+                className="bg-blue-500 text-white px-3 py-1 border-2 border-black font-bold text-sm uppercase rounded hover:bg-blue-600 transition-all active:scale-95"
+                title="Change style"
+              >
+                CHANGE
+              </button>
+            </div>
           </div>
         </div>
         {/* Encouragement block from Style Preview */}
@@ -388,6 +436,12 @@ export function PaymentForm({
             {error}
           </div>
         )}
+        {/* Feedback message for regenerate actions */}
+        {feedbackMessage && (
+          <div className="bg-blue-200 border-4 border-blue-500 p-4 text-center font-bold uppercase text-blue-700 w-full max-w-md mx-auto mt-4">
+            {feedbackMessage}
+          </div>
+        )}
       </div>
       {/* Pay Button: always visible, sticky above nav */}
       <div className="fixed left-0 right-0 bottom-20 w-full px-4 z-[70]">
@@ -400,22 +454,42 @@ export function PaymentForm({
             {isProcessing || polling ? 'PROCESSING...' : `PAY ${CREDITS_PRICE} credits`}
           </button>
           <button
-            onClick={async () => {
-              if (generatedUrl) {
-                // allow re-generate after completion
-                await handleRegenerate();
-              } else {
-                // if still generating, ignore or give small feedback
+            onClick={() => {
+              if (!previewImage) {
+                setFeedbackMessage('No preview available to regenerate');
+                setTimeout(() => setFeedbackMessage(null), 2000);
                 try {
-                  navigator.vibrate?.(5);
+                  navigator.vibrate?.(10);
                 } catch {}
+                return;
               }
+              handleRegenerate();
             }}
-            className="w-14 h-[52px] bg-white text-black border-4 border-black rounded-xl hover:bg-gray-100 active:scale-95 shadow-[4px_4px_0px_0px_#000000] transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-black"
+            disabled={isRegenerating || generationInFlightRef.current || !previewImage}
+            className={`w-14 h-[52px] border-4 border-black rounded-xl transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-black ${
+              isRegenerating || generationInFlightRef.current || !previewImage
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+                : 'bg-white text-black hover:bg-gray-100 active:scale-95 shadow-[4px_4px_0px_0px_#000000]'
+            }`}
             aria-label="Regenerate preview"
-            title="Regenerate preview"
+            title={!previewImage ? "No preview to regenerate" : "Regenerate preview"}
           >
-            <RotateCw className="w-6 h-6" />
+            <RotateCw className={`w-6 h-6 ${isRegenerating ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => {
+              try {
+                navigator.vibrate?.(10);
+              } catch {}
+              onBackToUpload();
+            }}
+            className="w-14 h-[52px] bg-blue-500 text-white border-4 border-black rounded-xl hover:bg-blue-600 active:scale-95 shadow-[4px_4px_0px_0px_#000000] transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-black"
+            aria-label="Back to upload"
+            title="Back to upload page"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
           </button>
         </div>
       </div>

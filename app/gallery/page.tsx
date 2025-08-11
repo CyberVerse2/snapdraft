@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { BottomNav } from '@/components/bottom-nav';
 import { useAccount, useBalance } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
+import { FileX2Icon, ImagesIcon } from 'lucide-react';
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
 const CREDITS_PER_ETH = 42000; // align with homepage (1 ETH ≈ 42,000 credits)
@@ -71,7 +72,7 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-yellow-100">
       {/* Credits Modal */}
       {showCreditsModal && (
         <div
@@ -114,9 +115,15 @@ export default function GalleryPage() {
       )}
       {/* Sticky Header: SNAP (left), Credits (right) */}
       <header className="sticky top-0 z-40 bg-black text-white border-b-4 border-black h-16 flex flex-row items-center justify-between w-full px-2 sm:px-4 py-2">
-        <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
-          SNAP
-        </h1>
+      <div className="flex items-center gap-3">
+          <img
+            src="/icon.jpg"
+            alt="Snapdraft"
+            className="h-8 w-8 sm:h-10 sm:w-10 rounded-sm shrink-0"
+          />
+          <span className="sr-only">Snapdraft</span>
+          {/* Auto-prompt add miniapp handled on load; no manual button */}
+        </div>
         <div
           className="bg-yellow-400 text-black px-3 py-2 border-4 border-black font-black text-sm sm:text-lg uppercase rounded-lg text-center truncate min-w-[110px] cursor-pointer hover:bg-yellow-300 transition-all"
           onClick={() => setShowCreditsModal(true)}
@@ -127,7 +134,37 @@ export default function GalleryPage() {
       {/* Main Content: Gallery Grid */}
       <main className="flex-1 flex flex-col items-center w-full px-2 pt-4 pb-24">
         {gallery.length === 0 ? (
-          <div className="text-center text-lg font-bold mt-12">No images in your gallery yet.</div>
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto mt-12 space-y-6">
+            {/* Empty state illustration */}
+            <div className="w-32 h-32 bg-yellow-200 border-4 border-black rounded-full flex items-center justify-center">
+              {/* <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg> */}
+              <FileX2Icon className='size-16'/>
+            </div>
+            
+            {/* Empty state text */}
+            <div className="text-center space-y-3">
+              <h2 className="text-2xl font-black uppercase text-black">Your Gallery is Empty</h2>
+              <p className="text-base font-medium text-gray-600 leading-relaxed">
+                Start creating amazing AI-styled images to fill your gallery!
+              </p>
+            </div>
+            
+            {/* Call to action */}
+            <div className="bg-yellow-400 border-4 border-black rounded-xl p-6 text-center max-w-sm">
+              <h3 className="text-lg font-black uppercase text-black mb-3">Ready to Create?</h3>
+              <p className="text-sm font-medium text-black mb-4">
+                Upload an image, choose a style, and watch the magic happen!
+              </p>
+              <Link
+                href="/"
+                className="inline-block bg-red-500 text-white px-6 py-3 border-4 border-black font-black text-base uppercase rounded-lg hover:bg-red-600 transition-all active:scale-95 shadow-[4px_4px_0px_0px_#000000]"
+              >
+                Start Creating
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 w-full max-w-md mx-auto">
             {gallery.map((entry) => (

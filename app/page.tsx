@@ -83,12 +83,21 @@ export default function Home() {
     if (onboardingCheckedRef.current) return;
     if (!isFrameReady || !fid) return;
     onboardingCheckedRef.current = true;
+    
+    // Check if onboarding has already been shown this session
+    const onboardingShown = sessionStorage.getItem('snapdraft_onboarding_shown');
+    if (onboardingShown) return;
+    
     (async () => {
       try {
         const res = await fetch(`/api/miniappprompt?fid=${fid}`);
         const data = await res.json();
         const alreadyAdded = !!data?.frameAdded;
-        setShowOnboarding(!alreadyAdded);
+        if (!alreadyAdded) {
+          setShowOnboarding(true);
+          // Mark onboarding as shown for this session
+          sessionStorage.setItem('snapdraft_onboarding_shown', 'true');
+        }
       } catch (err) {
         console.warn('[MiniApp] Failed to fetch miniapp prompt status', err);
       }
@@ -132,7 +141,34 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   // (Optional) Live preview state was used before; now previews happen in the Preview step only
   // Recent gallery per-style images for style cards
-  const [styleImagesMap, setStyleImagesMap] = useReactState<Record<string, string[]>>({});
+  const [styleImagesMap, setStyleImagesMap] = useReactState<Record<string, string[]>>({
+    ghibli: [
+      '/hero-4.jpg',
+      '/hero-8.jpg',
+    ],
+    // Anime style - vibrant, Japanese anime aesthetic
+    anime: [
+      '/hero-10.jpg'
+    ],
+    // Watercolor style - soft, artistic, painterly
+    watercolor: [
+      '/hero-3.jpg',
+    ],
+    // Sketch style - black and white, pencil-like
+    sketch: [
+      '/hero-2.jpg',
+    ],
+    // Oil painting style - textured, classical art
+    "oil-painting": [
+      '/hero-7.jpg',
+      '/sample-hero.jpg',
+    ],
+    // Minecraft style - blocky, cubic aesthetic
+    minecraft: [
+      '/hero-9.jpg',
+      '/hero-6.jpg',
+    ]
+  });
   const [stylePreviewIndex, setStylePreviewIndex] = useReactState<Record<string, number>>({});
   const stylesScrollerRef = useReactRef<HTMLDivElement | null>(null);
   const [spinning, setSpinning] = useState(false);
@@ -150,6 +186,8 @@ export default function Home() {
   // Dismiss onboarding for this session
   const dismissOnboarding = () => {
     setShowOnboarding(false);
+    // Mark onboarding as shown for this session
+    sessionStorage.setItem('snapdraft_onboarding_shown', 'true');
   };
 
   useEffect(() => {
@@ -285,10 +323,29 @@ export default function Home() {
 
   // Featured image: show default only; do not fetch from DB
   const [featuredUrl, setFeaturedUrl] = useReactState<string | null>('/sample-hero.jpg');
-  const [featuredUser, setFeaturedUser] = useReactState<{
-    username?: string | null;
-    pfpUrl?: string | null;
-  } | null>(null);
+  const [featuredUser, setFeaturedUser] = useReactState<{ username: string; pfpUrl: string } | null>(null);
+  
+  // Slideshow state
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(true);
+  const slideshowImages = [
+    '/sample-hero.jpg',
+    '/hero-3.jpg',
+    '/hero-4.jpg',
+    '/hero-5.jpeg',
+    '/hero-6.jpg'
+  ];
+  
+  // Auto-advance slideshow
+  useEffect(() => {
+    if (!isSlideshowPlaying) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % slideshowImages.length);
+    }, 5000); // Change slide every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, [slideshowImages.length, isSlideshowPlaying]);
   const [recentImages, setRecentImages] = useReactState<
     Array<{ url: string; username?: string | null; pfpUrl?: string | null }>
   >([]);
@@ -437,7 +494,7 @@ export default function Home() {
         </div>
       )}
       {/* Sticky Header: SNAP (left), Credits (right) */}
-      <header className="fixed top-0 z-40 bg-black text-white border-b-4 border-black h-16 w-full flex flex-row items-center justify-between px-2 sm:px-4 py-2">
+      <header className="fixed top-0 z-40 bg-black text-white border-b-4 border-black h-16 w-full flex flex-row items-center justify-between px-4 py-2">
         <div className="flex items-center gap-3">
           <img
             src="/icon.jpg"
@@ -458,29 +515,31 @@ export default function Home() {
         </button>
       </header>
       {/* Spacer below fixed header (more space on style step) */}
-      <div className={state.step === 'style' ? 'h-20' : 'h-16'} />
+      <div className={state.step === 'style' ? 'h-20' : ''} />
       {/* HERO SECTION */}
       {state.step === 'upload' && (
         <>
-          <section className="w-full flex flex-col items-center justify-center bg-yellow-100 border-b-4 border-black py-6 px-4">
+          <section className="w-full flex flex-col items-center justify-center bg-yellow-100 py-6 px-4 flex-1">
             <div className="w-full max-w-md mx-auto border-8 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] mb-4 relative">
-              <Image
-                src={featuredUrl || sampleHero}
-                alt="Featured AI Styled"
-                width={400}
-                height={300}
-                className="object-cover w-full h-56 transition-opacity duration-500 cursor-pointer"
-                priority
-                onClick={() => {
-                  if (recentImages.length > 0) {
-                    const next = (recentIndex + 1) % recentImages.length;
-                    setRecentIndex(next);
-                    const nextImg = recentImages[next];
-                    setFeaturedUrl(nextImg.url);
-                    setFeaturedUser({ username: nextImg.username, pfpUrl: nextImg.pfpUrl });
-                  }
-                }}
-              />
+              <div className="relative w-full h-56">
+                {slideshowImages.map((image, index) => (
+                  <Image
+                    key={image}
+                    src={image}
+                    alt={`Featured AI Styled ${index + 1}`}
+                    width={400}
+                    height={300}
+                    className={`absolute inset-0 object-cover w-full h-full transition-opacity duration-1000 ${
+                      index === currentSlideIndex ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    priority={index === 0}
+                    onClick={() => {
+                      // Manual advance on click
+                      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % slideshowImages.length);
+                    }}
+                  />
+                ))}
+              </div>
               {featuredUser?.username && (
                 <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
                   {featuredUser.pfpUrl && (
@@ -514,7 +573,7 @@ export default function Home() {
               </div>
             )}
             {/* <p className="text-lg text-center font-bold text-black/80 mb-2">Upload a photo, pick a style, and get a stunning AI creation in seconds.</p> */}
-            <div className="w-full max-w-md mx-auto mt-2 mb-2 flex gap-3 justify-center px-2">
+            <div className="w-full max-w-md mx-auto mt-2 mb-2 flex flex-col md:flex-row gap-3 justify-center px-2">
               <button
                 className="flex-1 bg-purple-600 text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-purple-500 active:scale-[0.98] transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 onClick={() => {
@@ -565,8 +624,8 @@ export default function Home() {
         </>
       )}
       {/* Main Content: Direct, centered, mobile-first layout */}
-      <main
-        className={`flex-1 flex flex-col items-center ${
+      <section
+        className={`flex flex-col items-center ${
           state.step === 'style' ? 'justify-start' : 'justify-center'
         } w-full px-4 pb-0 overflow-hidden`}
       >
@@ -602,7 +661,7 @@ export default function Home() {
                     aria-pressed={state.selectedStyle === style.id}
                   >
                     <img
-                      src={main}
+                      src={imgs[0]}
                       alt={style.name}
                       className="w-full h-[36vh] object-cover border-b-4 border-black"
                     />
@@ -643,7 +702,7 @@ export default function Home() {
             </div>
             {/* Guidance */}
             <div className="text-center text-[11px] font-bold text-black/70">
-              Tap a card to select · Press Spin to auto-pick a style
+              Tap a card to select · Click 'Suprise Me' for a random style.
             </div>
             {/* Preview Button */}
             <button
@@ -730,6 +789,8 @@ export default function Home() {
             onStyledImageGenerated={handleStyledImageGenerated}
             credits={credits}
             onShowTopUpModal={() => setShowCreditsModal(true)}
+            onBackToUpload={() => setStep('upload')}
+            onBackToStyle={() => setStep('style')}
           />
         )}
         {/* Result Step */}
@@ -747,7 +808,7 @@ export default function Home() {
             )}
           </div>
         )}
-      </main>
+      </section>
       {/* Bottom Navigation (hidden during onboarding) */}
       {!showOnboarding && <BottomNav />}
     </div>
