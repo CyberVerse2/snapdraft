@@ -7,7 +7,7 @@ import { useAccount, useBalance } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
-const CREDITS_PER_ETH = 420000; // align with homepage (1 ETH = 420,000 credits)
+const CREDITS_PER_ETH = 42000; // align with homepage (1 ETH ≈ 42,000 credits)
 
 interface GalleryEntry {
   id: string;

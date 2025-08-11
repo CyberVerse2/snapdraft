@@ -8,8 +8,8 @@ import { useFarcasterContext } from '@/hooks/use-farcaster-context';
 import { RotateCw } from 'lucide-react';
 
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
-const CREDITS_PRICE = 30; // 30 credits per image
-const CREDITS_PER_ETH = 420000; // 1 ETH = 420k credits (ETH ~$4200, 1 credit ~= $0.01)
+const CREDITS_PRICE = 3; // 30 credits per image
+const CREDITS_PER_ETH = 42000; // 1 ETH ≈ 42,000 credits (ETH ~$4200, 1 credit ≈ $0.10)
 
 interface PaymentFormProps {
   originalImage: string;
