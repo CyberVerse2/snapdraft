@@ -13,7 +13,11 @@ import { useAccount, useConnect, useBalance } from 'wagmi';
 import Link from 'next/link';
 import Image from 'next/image';
 import sampleHero from '/public/sample-hero.jpg'; // Add a sample image to public/ if not present
-import { useEffect as useReactEffect, useState as useReactState } from 'react';
+import {
+  useEffect as useReactEffect,
+  useState as useReactState,
+  useRef as useReactRef
+} from 'react';
 import { Upload } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
 
@@ -127,6 +131,13 @@ export default function Home() {
   const [showUpload, setShowUpload] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // Live style preview state (Style step)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewProgress, setPreviewProgress] = useState<number>(0);
+  const [previewRequestId, setPreviewRequestId] = useState<string | null>(null);
+  const [showCompare, setShowCompare] = useState<boolean>(false);
+  const previewCacheRef = useReactRef<Record<string, string>>({});
+  const previewInFlightRef = useReactRef<boolean>(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkWidth = () => setShowUpload(window.innerWidth >= 400);
@@ -207,8 +218,7 @@ export default function Home() {
   const handleStyleSelect = (style: StyleType) => {
     setState((prev) => ({
       ...prev,
-      selectedStyle: style,
-      step: 'payment'
+      selectedStyle: style
     }));
   };
 
@@ -387,6 +397,49 @@ export default function Home() {
       ignore = true;
     };
   }, [gallery.length]);
+
+  // Default a style when entering style step
+  useEffect(() => {
+    if (state.step === 'style' && !state.selectedStyle) {
+      setState((prev) => ({ ...prev, selectedStyle: 'ghibli' }));
+    }
+  }, [state.step, state.selectedStyle]);
+
+  // Generate live preview when style changes (cache per style)
+  useEffect(() => {
+    const run = async () => {
+      if (state.step !== 'style' || !state.originalImage || !state.selectedStyle) return;
+      const cacheKey = `${state.selectedStyle}`;
+      if (previewCacheRef.current[cacheKey]) {
+        setPreviewUrl(previewCacheRef.current[cacheKey]);
+        setPreviewProgress(100);
+        return;
+      }
+      if (previewInFlightRef.current) return;
+      previewInFlightRef.current = true;
+      setPreviewUrl(null);
+      setPreviewProgress(0);
+      setPreviewRequestId(null);
+      try {
+        const res = await fetch('/api/generate-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: state.originalImage, style: state.selectedStyle })
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.previewImageUrl) throw new Error(data.error || 'Preview failed');
+        setPreviewUrl(data.previewImageUrl as string);
+        setPreviewRequestId(data.requestId as string);
+        previewCacheRef.current[cacheKey] = data.previewImageUrl as string;
+        setPreviewProgress(100);
+      } catch {
+        // ignore
+      } finally {
+        previewInFlightRef.current = false;
+      }
+    };
+    run();
+  }, [state.step, state.originalImage, state.selectedStyle]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const handleSimpleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -645,18 +698,47 @@ export default function Home() {
         </>
       )}
       {/* Main Content: Direct, centered, mobile-first layout */}
-      <main className="flex-1 flex flex-col items-center justify-center w-full px-4 pb-0 overflow-hidden">
+      <main
+        className={`flex-1 flex flex-col items-center justify-center w-full px-4 ${
+          state.step === 'style' ? 'pb-24 overflow-y-auto' : 'pb-0 overflow-hidden'
+        }`}
+      >
         {/* Style Selection Step */}
         {state.step === 'style' && (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-6">
-            <h2 className="text-2xl font-black uppercase text-center mb-2">Choose Style</h2>
-            <div className="w-full overflow-x-auto flex flex-row gap-4 pb-2 snap-x snap-mandatory">
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-4">
+            {/* Live preview hero with compare toggle */}
+            <div className="w-full max-w-md mx-auto border-8 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] relative">
+              <img
+                src={
+                  showCompare ? state.originalImage || '' : previewUrl || state.originalImage || ''
+                }
+                alt="Style preview"
+                className="w-full h-64 object-cover"
+              />
+              {!previewUrl && (
+                <div className="absolute inset-0 bg-black/50 text-white font-black flex items-center justify-center">
+                  {previewProgress > 0 ? `PREVIEW ${previewProgress}%` : 'PREPARING PREVIEW...'}
+                </div>
+              )}
+              <button
+                className="absolute top-2 right-2 bg-white text-black px-2 py-1 border-2 border-black font-black text-xs uppercase rounded-lg"
+                onClick={() => setShowCompare((v) => !v)}
+                aria-pressed={showCompare}
+              >
+                {showCompare ? 'Styled' : 'Compare'}
+              </button>
+              <div className="absolute bottom-2 left-2 bg-yellow-400 text-black px-2 py-1 border-2 border-black font-black text-xs uppercase rounded-lg">
+                {state.selectedStyle?.toUpperCase()}
+              </div>
+            </div>
+            {/* Style grid: two columns */}
+            <div className="grid grid-cols-2 gap-3 w-full">
               {styles.map((style) => (
                 <button
                   key={style.id}
-                  className={`min-w-[140px] max-w-[180px] snap-center flex-shrink-0 bg-gray-100 border-4 border-black rounded-xl p-3 flex flex-col items-center justify-center gap-2 shadow-md ${
+                  className={`bg-white border-4 border-black rounded-xl p-2 flex flex-col items-center gap-2 shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-100 transition-all focus:outline-none focus:ring-2 focus:ring-black ${
                     state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
-                  } min-h-[56px] hover:bg-yellow-200 transition-all`}
+                  }`}
                   onClick={() => handleStyleSelect(style.id as StyleType)}
                 >
                   <img
@@ -664,16 +746,31 @@ export default function Home() {
                     alt={style.name}
                     className="w-full h-24 object-cover rounded-md border-2 border-black"
                   />
-                  <span className="text-lg font-black uppercase">{style.name}</span>
-                  <span className="text-xs text-gray-500">{style.description}</span>
+                  <div className="flex flex-col items-center text-center">
+                    <span className="text-sm font-black uppercase">{style.name}</span>
+                    <span className="text-[10px] text-gray-600 leading-tight">
+                      {style.description}
+                    </span>
+                  </div>
                   {style.popular && (
-                    <span className="text-xs bg-yellow-300 text-black px-2 py-1 rounded font-bold mt-1">
+                    <span className="text-[10px] bg-yellow-300 text-black px-2 py-0.5 rounded font-bold">
                       POPULAR
                     </span>
                   )}
                 </button>
               ))}
             </div>
+            {/* Guidance */}
+            <div className="text-center text-[11px] font-bold text-black/70">
+              Estimated preview time: ~5–10s · Top picks load faster
+            </div>
+            <button
+              className="w-full bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all"
+              onClick={handleProceedToPayment}
+              disabled={!state.selectedStyle || !previewUrl}
+            >
+              Continue
+            </button>
           </div>
         )}
         {/* Payment Step */}
