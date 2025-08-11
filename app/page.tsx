@@ -138,6 +138,11 @@ export default function Home() {
   const [showCompare, setShowCompare] = useState<boolean>(false);
   const previewCacheRef = useReactRef<Record<string, string>>({});
   const previewInFlightRef = useReactRef<boolean>(false);
+  // Recent gallery per-style images for style cards
+  const [styleImagesMap, setStyleImagesMap] = useReactState<Record<string, string[]>>({});
+  const [stylePreviewIndex, setStylePreviewIndex] = useReactState<Record<string, number>>({});
+  const stylesScrollerRef = useReactRef<HTMLDivElement | null>(null);
+  const [spinning, setSpinning] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkWidth = () => setShowUpload(window.innerWidth >= 400);
@@ -388,6 +393,14 @@ export default function Home() {
           }));
           setRecentImages(mapped);
           setRecentIndex(0);
+          // Build style -> images map (limit per style)
+          const byStyle: Record<string, string[]> = {};
+          for (const img of data2.images as any[]) {
+            const s = (img.style as string) || 'unknown';
+            byStyle[s] = byStyle[s] || [];
+            if (byStyle[s].length < 12) byStyle[s].push(img.url as string);
+          }
+          setStyleImagesMap(byStyle);
         }
       } catch {
         if (!ignore && gallery.length > 0) setFeaturedUrl(gallery[0].url);
@@ -706,70 +719,125 @@ export default function Home() {
         {/* Style Selection Step */}
         {state.step === 'style' && (
           <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-4">
-            {/* Live preview hero with compare toggle */}
-            <div className="w-full max-w-md mx-auto border-8 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] relative">
-              <img
-                src={
-                  showCompare ? state.originalImage || '' : previewUrl || state.originalImage || ''
-                }
-                alt="Style preview"
-                className="w-full h-64 object-cover"
-              />
-              {!previewUrl && (
-                <div className="absolute inset-0 bg-black/50 text-white font-black flex items-center justify-center">
-                  {previewProgress > 0 ? `PREVIEW ${previewProgress}%` : 'PREPARING PREVIEW...'}
-                </div>
-              )}
-              <button
-                className="absolute top-2 right-2 bg-white text-black px-2 py-1 border-2 border-black font-black text-xs uppercase rounded-lg"
-                onClick={() => setShowCompare((v) => !v)}
-                aria-pressed={showCompare}
-              >
-                {showCompare ? 'Styled' : 'Compare'}
-              </button>
-              <div className="absolute bottom-2 left-2 bg-yellow-400 text-black px-2 py-1 border-2 border-black font-black text-xs uppercase rounded-lg">
-                {state.selectedStyle?.toUpperCase()}
-              </div>
-            </div>
-            {/* Style grid: two columns */}
-            <div className="grid grid-cols-2 gap-3 w-full">
-              {styles.map((style) => (
-                <button
-                  key={style.id}
-                  className={`bg-white border-4 border-black rounded-xl p-2 flex flex-col items-center gap-2 shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-100 transition-all focus:outline-none focus:ring-2 focus:ring-black ${
-                    state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
-                  }`}
-                  onClick={() => handleStyleSelect(style.id as StyleType)}
-                >
-                  <img
-                    src={style.thumbnail}
-                    alt={style.name}
-                    className="w-full h-24 object-cover rounded-md border-2 border-black"
-                  />
-                  <div className="flex flex-col items-center text-center">
-                    <span className="text-sm font-black uppercase">{style.name}</span>
-                    <span className="text-[10px] text-gray-600 leading-tight">
-                      {style.description}
-                    </span>
+            {/* Style cards horizontally (45vh height) */}
+            <div
+              ref={stylesScrollerRef}
+              className="w-full h-[60vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-2"
+              aria-label="Style selector"
+            >
+              {styles.map((style) => {
+                const imgs =
+                  styleImagesMap[style.id] && styleImagesMap[style.id].length > 0
+                    ? styleImagesMap[style.id]
+                    : [style.thumbnail];
+                const idx = stylePreviewIndex[style.id] || 0;
+                const main = imgs[Math.min(idx, imgs.length - 1)];
+                return (
+                  <div
+                    key={style.id}
+                    className={`snap-center flex-shrink-0 w-[85%] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] ${
+                      state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleStyleSelect(style.id as StyleType)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ')
+                        handleStyleSelect(style.id as StyleType);
+                    }}
+                    aria-pressed={state.selectedStyle === style.id}
+                  >
+                    <img
+                      src={main}
+                      alt={style.name}
+                      className="w-full h-[40vh] object-cover border-b-4 border-black"
+                    />
+                    <div className="p-2 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-black uppercase">{style.name}</span>
+                        {style.popular && (
+                          <span className="text-[10px] bg-yellow-300 text-black px-2 py-0.5 rounded font-bold">
+                            POPULAR
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-gray-600 leading-snug whitespace-normal break-words">
+                        {style.description}
+                      </span>
+                      {/* Mini previews */}
+                      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                        {imgs.slice(0, 8).map((u, i) => (
+                          <button
+                            key={`${style.id}-${i}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setStylePreviewIndex((prev) => ({ ...prev, [style.id]: i }));
+                            }}
+                            className={`border-2 ${
+                              i === idx ? 'border-black' : 'border-gray-300'
+                            } rounded-md overflow-hidden`}
+                            aria-label={`Preview ${style.name} ${i + 1}`}
+                          >
+                            <img src={u} alt="preview" className="h-10 w-10 object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  {style.popular && (
-                    <span className="text-[10px] bg-yellow-300 text-black px-2 py-0.5 rounded font-bold">
-                      POPULAR
-                    </span>
-                  )}
-                </button>
-              ))}
+                );
+              })}
             </div>
             {/* Guidance */}
             <div className="text-center text-[11px] font-bold text-black/70">
-              Estimated preview time: ~5–10s · Top picks load faster
+              Tap a card to select · Press Spin to auto-pick a style
             </div>
+            {/* Jackpot Spin Button */}
             <button
-              className="w-full bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all"
-              onClick={handleProceedToPayment}
-              disabled={!state.selectedStyle || !previewUrl}
+              className="w-full bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all disabled:opacity-60"
+              onClick={async () => {
+                if (spinning || styles.length === 0) return;
+                setSpinning(true);
+                const container = stylesScrollerRef.current;
+                if (!container) {
+                  setSpinning(false);
+                  return;
+                }
+                const targetIndex = Math.floor(Math.random() * styles.length);
+                // Spin effect: quick scrolls then decelerate
+                let elapsed = 0;
+                const duration = 1800;
+                const start = performance.now();
+                const baseSpeed = 12;
+                const spin = (now: number) => {
+                  elapsed = now - start;
+                  const t = Math.min(1, elapsed / duration);
+                  const speed = baseSpeed * (1 - t) + 2; // decelerate
+                  container.scrollLeft += speed;
+                  if (elapsed < duration) {
+                    requestAnimationFrame(spin);
+                  } else {
+                    // Snap to target card
+                    const card = container.children[targetIndex] as HTMLElement | undefined;
+                    if (card) {
+                      const left = Math.max(
+                        0,
+                        card.offsetLeft - (container.clientWidth - card.offsetWidth) / 2
+                      );
+                      container.scrollTo({ left, behavior: 'smooth' });
+                    }
+                    const picked = styles[targetIndex].id as StyleType;
+                    setState((prev) => ({ ...prev, selectedStyle: picked }));
+                    setTimeout(() => {
+                      handleProceedToPayment();
+                      setSpinning(false);
+                    }, 2000);
+                  }
+                };
+                requestAnimationFrame(spin);
+              }}
+              disabled={spinning}
             >
-              Continue
+              {spinning ? 'SPINNING...' : 'SPIN & PICK'}
             </button>
           </div>
         )}
