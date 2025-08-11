@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { StyleType } from '@/app/page';
-import { Download, Twitter, RefreshCw, Share2 } from 'lucide-react';
+import { Download, Twitter, RefreshCw, Share2, Home } from 'lucide-react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import Image from 'next/image';
 
@@ -125,9 +125,10 @@ export function ResultDisplay({
         <button
           onClick={onReset}
           className="flex-[0.7] bg-yellow-400 text-black py-4 border-4 border-black font-black text-lg uppercase rounded-xl hover:bg-yellow-300 shadow-[2px_2px_0px_0px_#000000] transition-all"
-          aria-label="Generate Another"
+          aria-label="Back to Home"
+          title="Back to Home"
         >
-          <RefreshCw className="inline-block" />
+          <Home className="inline-block" />
         </button>
       </div>
       {/* Removed fourth button */}

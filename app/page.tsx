@@ -14,6 +14,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import sampleHero from '/public/sample-hero.jpg'; // Add a sample image to public/ if not present
 import { useEffect as useReactEffect, useState as useReactState } from 'react';
+import { Upload } from 'lucide-react';
 
 export type StyleType =
   | 'ghibli'
@@ -124,6 +125,7 @@ export default function Home() {
   const [galleryPage, setGalleryPage] = useState(false);
   const [showUpload, setShowUpload] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkWidth = () => setShowUpload(window.innerWidth >= 400);
@@ -135,6 +137,20 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
   }, []);
+  // First-time onboarding modal (shown once)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const seen = localStorage.getItem('snapdraft_onboarding_seen');
+      if (!seen) setShowOnboarding(true);
+    } catch {}
+  }, []);
+  const dismissOnboarding = () => {
+    try {
+      localStorage.setItem('snapdraft_onboarding_seen', '1');
+    } catch {}
+    setShowOnboarding(false);
+  };
 
   useEffect(() => {
     localStorage.setItem('snapdraft_credits', credits.toString());
@@ -429,6 +445,82 @@ export default function Home() {
           </div>
         </div>
       )}
+      {/* Onboarding Modal (bottom sheet, 75% height) */}
+      {showOnboarding && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50" onClick={dismissOnboarding} />
+          <div className="absolute left-0 right-0 bottom-0 h-[75vh] bg-white border-t-8 border-black rounded-t-2xl shadow-[0_-8px_0_0_#000000]">
+            <div className="h-1 w-16 bg-black rounded-full mx-auto mt-2" />
+            <div className="p-4 flex flex-col items-center text-center gap-3">
+              <h3 className="font-display text-2xl font-black uppercase">Welcome to Snapdraft</h3>
+              <p className="text-sm font-bold text-black/80">
+                Transform your photos into stunning AI-styled artwork in seconds.
+              </p>
+              <div className="w-full max-w-sm mx-auto mt-2 grid grid-cols-4 gap-3">
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl">
+                    1
+                  </div>
+                  <span className="text-[10px] font-bold uppercase mt-1">Upload</span>
+                </div>
+                <div className="flex items-center justify-center font-black text-xl">→</div>
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl">
+                    2
+                  </div>
+                  <span className="text-[10px] font-bold uppercase mt-1">Style</span>
+                </div>
+                <div className="flex items-center justify-center font-black text-xl">→</div>
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl">
+                    3
+                  </div>
+                  <span className="text-[10px] font-bold uppercase mt-1">Pay</span>
+                </div>
+                <div className="flex items-center justify-center font-black text-xl">→</div>
+                <div className="flex flex-col items-center col-span-1">
+                  <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl">
+                    4
+                  </div>
+                  <span className="text-[10px] font-bold uppercase mt-1">Download</span>
+                </div>
+              </div>
+              <div className="mt-3 w-full max-w-sm grid grid-cols-2 gap-3">
+                <button
+                  className="bg-purple-600 text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-purple-500 active:scale-[0.98] transition-all text-sm"
+                  onClick={() => {
+                    try {
+                      navigator.vibrate?.(10);
+                    } catch {}
+                    dismissOnboarding();
+                    if (pfpUrl) handleImageUpload(pfpUrl);
+                  }}
+                >
+                  Use Profile Photo
+                </button>
+                <button
+                  className="bg-black text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-400 hover:text-black active:scale-[0.98] transition-all text-sm"
+                  onClick={() => {
+                    try {
+                      navigator.vibrate?.(10);
+                    } catch {}
+                    dismissOnboarding();
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  Upload Photo
+                </button>
+              </div>
+              <button
+                className="mt-2 text-xs font-bold uppercase underline"
+                onClick={dismissOnboarding}
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Sticky Header: SNAP (left), Credits (right) */}
       <header className="fixed top-0 z-40 bg-black text-white border-b-4 border-black h-16 w-full flex flex-row items-center justify-between px-2 sm:px-4 py-2">
         <div className="flex items-center gap-3">
@@ -484,10 +576,26 @@ export default function Home() {
             <h2 className="text-2xl sm:text-3xl font-black uppercase text-center mb-2">
               Your Photos Reimagined in Seconds.
             </h2>
+            {/* Community strip: recent creations */}
+            {recentImages.length > 0 && (
+              <div className="w-full max-w-md mx-auto px-2 mb-2">
+                <div className="flex overflow-x-auto gap-2 py-1">
+                  {recentImages.slice(0, 12).map((img, idx) => (
+                    <div key={`${img.url}-${idx}`} className="flex-shrink-0">
+                      <img
+                        src={img.url}
+                        alt={img.username || 'Recent'}
+                        className="h-16 w-16 object-cover rounded-md border-2 border-black"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* <p className="text-lg text-center font-bold text-black/80 mb-2">Upload a photo, pick a style, and get a stunning AI creation in seconds.</p> */}
             <div className="w-full max-w-md mx-auto mt-2 mb-2 flex gap-3 justify-center px-2">
               <button
-                className="flex-1 bg-purple-600 text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-purple-500 active:scale-[0.98] transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex-1 bg-purple-600 text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-purple-500 active:scale-[0.98] transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 onClick={() => {
                   if (pfpUrl) {
                     try {
@@ -502,10 +610,17 @@ export default function Home() {
                 }}
                 disabled={!pfpUrl}
               >
-                Use Profile Photo
+                {pfpUrl && (
+                  <img
+                    src={pfpUrl}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full border-2 border-black bg-white"
+                  />
+                )}
+                <span>Use Profile Photo</span>
               </button>
               <button
-                className="flex-1 bg-black text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-400 hover:text-black active:scale-[0.98] transition-all text-sm"
+                className="flex-1 bg-black text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-400 hover:text-black active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2"
                 onClick={() => {
                   try {
                     navigator.vibrate?.(10);
@@ -513,7 +628,8 @@ export default function Home() {
                   fileInputRef.current?.click();
                 }}
               >
-                Upload Photo
+                <Upload className="w-5 h-5" />
+                <span>Upload Photo</span>
               </button>
               <input
                 ref={fileInputRef}
@@ -524,38 +640,7 @@ export default function Home() {
               />
             </div>
           </section>
-          {/* HOW IT WORKS */}
-          <section className="w-full flex flex-col items-center justify-center py-4 px-4 bg-white border-b-4 border-black">
-            <div className="flex flex-row items-center justify-center gap-4 max-w-md mx-auto">
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl mb-1">
-                  1
-                </div>
-                <span className="text-xs font-bold uppercase text-black">UPLOAD</span>
-              </div>
-              <span className="font-black text-xl">→</span>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl mb-1">
-                  2
-                </div>
-                <span className="text-xs font-bold uppercase text-black">STYLE</span>
-              </div>
-              <span className="font-black text-xl">→</span>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl mb-1">
-                  3
-                </div>
-                <span className="text-xs font-bold uppercase text-black">PAY</span>
-              </div>
-              <span className="font-black text-xl">→</span>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl mb-1">
-                  4
-                </div>
-                <span className="text-xs font-bold uppercase text-black">DOWNLOAD</span>
-              </div>
-            </div>
-          </section>
+          {/* Removed HOW IT WORKS section (moved into onboarding modal) */}
         </>
       )}
       {/* Main Content: Direct, centered, mobile-first layout */}
