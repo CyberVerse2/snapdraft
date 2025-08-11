@@ -416,72 +416,57 @@ export default function Home() {
           </div>
         </div>
       )}
-      {/* Onboarding Modal (bottom sheet, 75% height) */}
+      {/* Onboarding Modal (bottom sheet, 50% height) */}
       {showOnboarding && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={dismissOnboarding} />
-          <div className="absolute left-0 right-0 bottom-0 h-[75vh] bg-white border-t-8 border-black rounded-t-2xl shadow-[0_-8px_0_0_#000000]">
+          <div className="absolute left-0 right-0 bottom-0 h-[50vh] bg-white border-t-8 border-black rounded-t-2xl shadow-[0_-8px_0_0_#000000]">
             <div className="h-1 w-16 bg-black rounded-full mx-auto mt-2" />
             <div className="p-4 flex flex-col items-center text-center gap-3">
               <h3 className="font-display text-2xl font-black uppercase">Welcome to Snapdraft</h3>
               <p className="text-sm font-bold text-black/80">
                 Transform your photos into stunning AI-styled artwork in seconds.
               </p>
-              <div className="w-full max-w-sm mx-auto mt-2 grid grid-cols-4 gap-3">
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl">
-                    1
-                  </div>
-                  <span className="text-[10px] font-bold uppercase mt-1">Upload</span>
+              {/* Redesigned steps: cleaner, bolder */}
+              <div className="w-full max-w-md mx-auto mt-2">
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { n: 1, label: 'Upload' },
+                    { n: 2, label: 'Style' },
+                    { n: 3, label: 'Pay' },
+                    { n: 4, label: 'Download' }
+                  ].map((s) => (
+                    <div key={s.n} className="flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-full bg-yellow-400 border-4 border-black flex items-center justify-center font-black text-xl">
+                        {s.n}
+                      </div>
+                      <span className="text-[10px] font-black uppercase mt-1">{s.label}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center justify-center font-black text-xl">→</div>
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl">
-                    2
-                  </div>
-                  <span className="text-[10px] font-bold uppercase mt-1">Style</span>
-                </div>
-                <div className="flex items-center justify-center font-black text-xl">→</div>
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl">
-                    3
-                  </div>
-                  <span className="text-[10px] font-bold uppercase mt-1">Pay</span>
-                </div>
-                <div className="flex items-center justify-center font-black text-xl">→</div>
-                <div className="flex flex-col items-center col-span-1">
-                  <div className="w-12 h-12 bg-yellow-400 border-4 border-black rounded-sm flex items-center justify-center font-black text-xl">
-                    4
-                  </div>
-                  <span className="text-[10px] font-bold uppercase mt-1">Download</span>
-                </div>
+                <div className="mt-3 w-full h-2 bg-yellow-300 border-4 border-black rounded-full" />
               </div>
-              <div className="mt-3 w-full max-w-sm grid grid-cols-2 gap-3">
-                <button
-                  className="bg-purple-600 text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-purple-500 active:scale-[0.98] transition-all text-sm"
-                  onClick={() => {
-                    try {
-                      navigator.vibrate?.(10);
-                    } catch {}
-                    dismissOnboarding();
-                    if (pfpUrl) handleImageUpload(pfpUrl);
-                  }}
-                >
-                  Use Profile Photo
-                </button>
-                <button
-                  className="bg-black text-white font-black uppercase px-4 py-3 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-400 hover:text-black active:scale-[0.98] transition-all text-sm"
-                  onClick={() => {
-                    try {
-                      navigator.vibrate?.(10);
-                    } catch {}
-                    dismissOnboarding();
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  Upload Photo
-                </button>
-              </div>
+              {/* Add Mini App button */}
+              <button
+                className="mt-3 bg-yellow-400 text-black px-6 py-3 border-4 border-black font-black text-base uppercase rounded-lg hover:bg-yellow-300 active:scale-[0.98]"
+                onClick={async () => {
+                  try {
+                    navigator.vibrate?.(10);
+                  } catch {}
+                  try {
+                    setFrameReady();
+                    if (fid) {
+                      await fetch('/api/miniappprompt', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fid, frameAdded: true })
+                      });
+                    }
+                  } catch {}
+                }}
+              >
+                Add Mini App
+              </button>
               <button
                 className="mt-2 text-xs font-bold uppercase underline"
                 onClick={dismissOnboarding}
@@ -495,9 +480,12 @@ export default function Home() {
       {/* Sticky Header: SNAP (left), Credits (right) */}
       <header className="fixed top-0 z-40 bg-black text-white border-b-4 border-black h-16 w-full flex flex-row items-center justify-between px-2 sm:px-4 py-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl xs:text-3xl sm:text-4xl font-black uppercase tracking-tight text-left">
-            SNAP
-          </h1>
+          <img
+            src="/icon.jpg"
+            alt="Snapdraft"
+            className="h-10 w-10 sm:h-12 sm:w-12 rounded-sm shrink-0"
+          />
+          <span className="sr-only">Snapdraft</span>
           {/* Auto-prompt add miniapp handled on load; no manual button */}
         </div>
         <button
@@ -602,7 +590,7 @@ export default function Home() {
                   fileInputRef.current?.click();
                 }}
               >
-                <Upload className="w-5 h-5" />
+                <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
                 <span>Upload Photo</span>
               </button>
               <input
@@ -714,7 +702,7 @@ export default function Home() {
             </button>
             {/* Jackpot Spin Button */}
             <button
-              className="w-full bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all disabled:opacity-60"
+              className="w-full mt-2 bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all disabled:opacity-60"
               onClick={async () => {
                 if (spinning || styles.length === 0) return;
                 setSpinning(true);
