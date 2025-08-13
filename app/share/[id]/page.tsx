@@ -8,7 +8,7 @@ type PageProps = {
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL || '';
-  const appName = process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || 'Snapdraft';
+  const appName = process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || 'Snap';
   const splashImageUrl = `${URL}/icon.jpg`;
   const splashBackgroundColor = '#000000';
 
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         version: '1',
         imageUrl,
         button: {
-          title: `Open ${appName}`,
+          title: `Reimagine Yours ->`,
           action: {
             type: 'launch_frame',
             name: appName,
