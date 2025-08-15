@@ -82,33 +82,61 @@ export async function POST(request: NextRequest) {
         if (styledImageUrl) {
           progressStore[requestId] = 100;
           resultStore[requestId] = styledImageUrl;
-          // Skip DB persistence during preview generation
-          if (!preview) {
-            try {
+          try {
+            const numericFid = typeof fid === 'number' ? fid : Number(fid);
+            const creator = Number.isFinite(numericFid)
+              ? await prisma.user.upsert({
+                  where: { fid: numericFid },
+                  update: {},
+                  create: { fid: numericFid }
+                })
+              : null;
+
+            if (preview) {
+              // Ensure a preview record exists with paid=false
+              const existing = await prisma.image.findFirst({ where: { url: styledImageUrl } });
+              if (!existing) {
+                await prisma.image.create({
+                  data: {
+                    url: styledImageUrl,
+                    style: style ?? 'unknown',
+                    paid: false,
+                    isFeatured: false,
+                    creatorId: creator ? creator.id : undefined
+                  }
+                });
+              }
+            } else {
+              // Mark as featured paid image. If preview exists, upgrade it; otherwise create new
               await prisma.image.updateMany({
                 data: { isFeatured: false },
                 where: { isFeatured: true }
               });
-              const numericFid = typeof fid === 'number' ? fid : Number(fid);
-              const creator = Number.isFinite(numericFid)
-                ? await prisma.user.upsert({
-                    where: { fid: numericFid },
-                    update: {},
-                    create: { fid: numericFid }
-                  })
-                : null;
-              await prisma.image.create({
-                data: {
-                  url: styledImageUrl,
-                  style: style ?? 'unknown',
-                  paid: true,
-                  isFeatured: true,
-                  creatorId: creator ? creator.id : undefined
-                }
-              });
-            } catch (e) {
-              console.error('Failed to persist image:', e);
+              const existing = await prisma.image.findFirst({ where: { url: styledImageUrl } });
+              if (existing) {
+                await prisma.image.update({
+                  where: { id: existing.id },
+                  data: {
+                    paid: true,
+                    isFeatured: true,
+                    style: style ?? existing.style,
+                    creatorId: creator ? creator.id : existing.creatorId
+                  }
+                });
+              } else {
+                await prisma.image.create({
+                  data: {
+                    url: styledImageUrl,
+                    style: style ?? 'unknown',
+                    paid: true,
+                    isFeatured: true,
+                    creatorId: creator ? creator.id : undefined
+                  }
+                });
+              }
             }
+          } catch (e) {
+            console.error('Failed to persist image:', e);
           }
         }
       } catch (e) {

@@ -43,15 +43,31 @@ export async function POST(request: NextRequest) {
         })
       : null;
 
-    const image = await prisma.image.create({
-      data: {
-        url,
-        style: style ?? 'unknown',
-        paid: !!paid,
-        isFeatured: !!setFeatured,
-        creatorId: creator ? creator.id : undefined
-      }
-    });
+    // Upsert-like behavior keyed by url:
+    const existing = await prisma.image.findFirst({ where: { url } });
+    let image;
+    if (existing) {
+      image = await prisma.image.update({
+        where: { id: existing.id },
+        data: {
+          style: style ?? existing.style,
+          // Only ever flip paid from false->true, not true->false
+          paid: existing.paid || !!paid,
+          isFeatured: !!setFeatured,
+          creatorId: creator ? creator.id : existing.creatorId
+        }
+      });
+    } else {
+      image = await prisma.image.create({
+        data: {
+          url,
+          style: style ?? 'unknown',
+          paid: !!paid,
+          isFeatured: !!setFeatured,
+          creatorId: creator ? creator.id : undefined
+        }
+      });
+    }
     console.log('[Gallery][POST] saved', {
       id: image.id,
       paid: image.paid,
