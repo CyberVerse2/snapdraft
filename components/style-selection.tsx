@@ -24,7 +24,9 @@ export function StyleSelection({ originalImage, onStyleSelect }: StyleSelectionP
   const [page, setPage] = useState(1);
 
   // Filter and paginate styles
-  const filteredStyles = filter ? styles.filter((s) => s.category === filter) : styles;
+  const filteredStyles = (filter ? styles.filter((s) => s.category === filter) : styles).sort(
+    (a, b) => Number(b.popular) - Number(a.popular)
+  );
   const totalPages = Math.ceil(filteredStyles.length / STYLES_PER_PAGE);
   const paginatedStyles = filteredStyles.slice(
     (page - 1) * STYLES_PER_PAGE,

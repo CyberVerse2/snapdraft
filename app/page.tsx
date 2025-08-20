@@ -83,11 +83,11 @@ export default function Home() {
     if (onboardingCheckedRef.current) return;
     if (!isFrameReady || !fid) return;
     onboardingCheckedRef.current = true;
-    
+
     // Check if onboarding has already been shown this session
     const onboardingShown = sessionStorage.getItem('snapdraft_onboarding_shown');
     if (onboardingShown) return;
-    
+
     (async () => {
       try {
         const res = await fetch(`/api/miniappprompt?fid=${fid}`);
@@ -142,32 +142,17 @@ export default function Home() {
   // (Optional) Live preview state was used before; now previews happen in the Preview step only
   // Recent gallery per-style images for style cards
   const [styleImagesMap, setStyleImagesMap] = useReactState<Record<string, string[]>>({
-    ghibli: [
-      '/hero-4.jpg',
-      '/hero-8.jpg',
-    ],
+    ghibli: ['/hero-4.jpg', '/hero-8.jpg'],
     // Anime style - vibrant, Japanese anime aesthetic
-    anime: [
-      '/hero-10.jpg'
-    ],
+    anime: ['/hero-10.jpg'],
     // Watercolor style - soft, artistic, painterly
-    watercolor: [
-      '/hero-3.jpg',
-    ],
+    watercolor: ['/hero-3.jpg'],
     // Sketch style - black and white, pencil-like
-    sketch: [
-      '/hero-2.jpg',
-    ],
+    sketch: ['/hero-2.jpg'],
     // Oil painting style - textured, classical art
-    "oil-painting": [
-      '/hero-7.jpg',
-      '/sample-hero.jpg',
-    ],
+    'oil-painting': ['/hero-7.jpg', '/sample-hero.jpg'],
     // Minecraft style - blocky, cubic aesthetic
-    minecraft: [
-      '/hero-9.jpg',
-      '/hero-6.jpg',
-    ]
+    minecraft: ['/hero-9.jpg', '/hero-6.jpg']
   });
   const [stylePreviewIndex, setStylePreviewIndex] = useReactState<Record<string, number>>({});
   const stylesScrollerRef = useReactRef<HTMLDivElement | null>(null);
@@ -323,8 +308,11 @@ export default function Home() {
 
   // Featured image: show default only; do not fetch from DB
   const [featuredUrl, setFeaturedUrl] = useReactState<string | null>('/sample-hero.jpg');
-  const [featuredUser, setFeaturedUser] = useReactState<{ username: string; pfpUrl: string } | null>(null);
-  
+  const [featuredUser, setFeaturedUser] = useReactState<{
+    username: string;
+    pfpUrl: string;
+  } | null>(null);
+
   // Slideshow state
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(true);
@@ -335,15 +323,15 @@ export default function Home() {
     '/hero-5.jpeg',
     '/hero-6.jpg'
   ];
-  
+
   // Auto-advance slideshow
   useEffect(() => {
     if (!isSlideshowPlaying) return;
-    
+
     const interval = setInterval(() => {
       setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % slideshowImages.length);
     }, 5000); // Change slide every 5 seconds
-    
+
     return () => clearInterval(interval);
   }, [slideshowImages.length, isSlideshowPlaying]);
   const [recentImages, setRecentImages] = useReactState<
@@ -638,67 +626,69 @@ export default function Home() {
               className="w-full h-[54vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-1 mt-1"
               aria-label="Style selector"
             >
-              {styles.map((style) => {
-                const imgs =
-                  styleImagesMap[style.id] && styleImagesMap[style.id].length > 0
-                    ? styleImagesMap[style.id]
-                    : [style.thumbnail];
-                const idx = stylePreviewIndex[style.id] || 0;
-                const main = imgs[Math.min(idx, imgs.length - 1)];
-                return (
-                  <div
-                    key={style.id}
-                    className={`snap-center flex-shrink-0 w-[80%] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] ${
-                      state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
-                    }`}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleStyleSelect(style.id as StyleType)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ')
-                        handleStyleSelect(style.id as StyleType);
-                    }}
-                    aria-pressed={state.selectedStyle === style.id}
-                  >
-                    <img
-                      src={imgs[0]}
-                      alt={style.name}
-                      className="w-full h-[36vh] object-cover border-b-4 border-black"
-                    />
-                    <div className="p-2 flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-black uppercase">{style.name}</span>
-                        {style.popular && (
-                          <span className="text-[10px] bg-yellow-300 text-black px-2 py-0.5 rounded font-bold">
-                            POPULAR
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-gray-600 leading-snug whitespace-normal break-words">
-                        {style.description}
-                      </span>
-                      {/* Mini previews */}
-                      <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                        {imgs.slice(0, 8).map((u, i) => (
-                          <button
-                            key={`${style.id}-${i}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setStylePreviewIndex((prev) => ({ ...prev, [style.id]: i }));
-                            }}
-                            className={`border-2 ${
-                              i === idx ? 'border-black' : 'border-gray-300'
-                            } rounded-md overflow-hidden`}
-                            aria-label={`Preview ${style.name} ${i + 1}`}
-                          >
-                            <img src={u} alt="preview" className="h-10 w-10 object-cover" />
-                          </button>
-                        ))}
+              {[...styles]
+                .sort((a, b) => Number(b.popular) - Number(a.popular))
+                .map((style) => {
+                  const imgs =
+                    styleImagesMap[style.id] && styleImagesMap[style.id].length > 0
+                      ? styleImagesMap[style.id]
+                      : [style.thumbnail];
+                  const idx = stylePreviewIndex[style.id] || 0;
+                  const main = imgs[Math.min(idx, imgs.length - 1)];
+                  return (
+                    <div
+                      key={style.id}
+                      className={`snap-center flex-shrink-0 w-[80%] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] ${
+                        state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
+                      }`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleStyleSelect(style.id as StyleType)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ')
+                          handleStyleSelect(style.id as StyleType);
+                      }}
+                      aria-pressed={state.selectedStyle === style.id}
+                    >
+                      <img
+                        src={imgs[0]}
+                        alt={style.name}
+                        className="w-full h-[36vh] object-cover border-b-4 border-black"
+                      />
+                      <div className="p-2 flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-black uppercase">{style.name}</span>
+                          {style.popular && (
+                            <span className="text-[10px] bg-yellow-300 text-black px-2 py-0.5 rounded font-bold">
+                              POPULAR
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-gray-600 leading-snug whitespace-normal break-words">
+                          {style.description}
+                        </span>
+                        {/* Mini previews */}
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                          {imgs.slice(0, 8).map((u, i) => (
+                            <button
+                              key={`${style.id}-${i}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setStylePreviewIndex((prev) => ({ ...prev, [style.id]: i }));
+                              }}
+                              className={`border-2 ${
+                                i === idx ? 'border-black' : 'border-gray-300'
+                              } rounded-md overflow-hidden`}
+                              aria-label={`Preview ${style.name} ${i + 1}`}
+                            >
+                              <img src={u} alt="preview" className="h-10 w-10 object-cover" />
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
             {/* Guidance */}
             <div className="text-center text-[11px] font-bold text-black/70">
@@ -729,7 +719,10 @@ export default function Home() {
                   setSpinning(false);
                   return;
                 }
-                const targetIndex = Math.floor(Math.random() * styles.length);
+                const sortedStyles = [...styles].sort(
+                  (a, b) => Number(b.popular) - Number(a.popular)
+                );
+                const targetIndex = Math.floor(Math.random() * sortedStyles.length);
                 // Spin effect: quick scrolls then decelerate
                 let elapsed = 0;
                 const duration = 1800;
@@ -752,7 +745,7 @@ export default function Home() {
                       );
                       container.scrollTo({ left, behavior: 'smooth' });
                     }
-                    const picked = styles[targetIndex].id as StyleType;
+                    const picked = sortedStyles[targetIndex].id as StyleType;
                     setState((prev) => ({ ...prev, selectedStyle: picked }));
                     setTimeout(() => {
                       handleProceedToPayment();
