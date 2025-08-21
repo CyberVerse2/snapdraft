@@ -18,7 +18,7 @@ import {
   useState as useReactState,
   useRef as useReactRef
 } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Users } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
 import { styles } from '@/lib/styles';
 
@@ -876,38 +876,55 @@ export default function Home() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm font-bold text-black/70 leading-snug">
-                          {def?.description}
-                        </p>
-                      </div>
-                      {/* Scrollable example list (max 5) with owner overlay */}
-                      <div className="max-h-64 overflow-y-auto p-3 pt-0 space-y-2">
-                        {imgs.slice(0, 5).map((u, i) => (
-                          <div
-                            key={`example-${i}`}
-                            className="relative w-full h-36 border-2 border-black rounded-md overflow-hidden"
-                          >
-                            <img
-                              src={u}
-                              alt={`example ${i + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            {styleImageOwnerMap[u]?.username && (
-                              <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
-                                {styleImageOwnerMap[u]?.pfpUrl && (
-                                  <img
-                                    src={styleImageOwnerMap[u]?.pfpUrl || ''}
-                                    alt={styleImageOwnerMap[u]?.username || ''}
-                                    className="w-5 h-5 rounded-full border border-black"
-                                  />
-                                )}
-                                <span className="text-[10px] font-bold">
-                                  {styleImageOwnerMap[u]?.username}
-                                </span>
-                              </div>
-                            )}
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-black/70 leading-snug">
+                            {def?.description}
+                          </p>
+                          <div className="flex items-center gap-1 text-black font-bold text-xs">
+                            <Users className="w-4 h-4" />
+                            <span>
+                              {(() => {
+                                const urls = (styleImagesMap[def?.id || ''] || []).slice(0, 20);
+                                const names = urls
+                                  .map((u) => styleImageOwnerMap[u]?.username || null)
+                                  .filter(Boolean);
+                                const unique = Array.from(new Set(names));
+                                return unique.length || 0;
+                              })()}
+                            </span>
                           </div>
-                        ))}
+                        </div>
+                      </div>
+                      {/* Horizontal scrollable example list (max 5) with owner overlay */}
+                      <div className="p-3 pt-0">
+                        <div className="flex gap-3 overflow-x-auto no-scrollbar">
+                          {imgs.slice(0, 5).map((u, i) => (
+                            <div
+                              key={`example-${i}`}
+                              className="relative flex-shrink-0 w-44 h-36 border-2 border-black rounded-md overflow-hidden"
+                            >
+                              <img
+                                src={u}
+                                alt={`example ${i + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              {styleImageOwnerMap[u]?.username && (
+                                <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
+                                  {styleImageOwnerMap[u]?.pfpUrl && (
+                                    <img
+                                      src={styleImageOwnerMap[u]?.pfpUrl || ''}
+                                      alt={styleImageOwnerMap[u]?.username || ''}
+                                      className="w-5 h-5 rounded-full border border-black"
+                                    />
+                                  )}
+                                  <span className="text-[10px] font-bold">
+                                    {styleImageOwnerMap[u]?.username}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                       <div className="p-3 pt-1">
                         <button
