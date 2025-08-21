@@ -61,8 +61,12 @@ export default function GalleryPage() {
     const APP_URL =
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareText = 'Just styled an image with SNAPDRAFT AI!';
-    const encoded = encodeURIComponent(url);
-    composeCast({ text: shareText, embeds: [`${APP_URL}/share/${encoded}`] });
+    // Use composite via share page (orig not known in gallery; fall back to just gen if missing)
+    const encodedGen = encodeURIComponent(url);
+    composeCast({
+      text: shareText,
+      embeds: [`${APP_URL}/share/placeholder.jpg?gen=${encodedGen}`]
+    });
   }
 
   return (

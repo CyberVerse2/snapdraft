@@ -42,6 +42,7 @@ model Image {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt   DateTime @default(now())
   url         String
+  originalUrl String?
   style       String
   prompt      String?
   // True only for fully generated, paid images. Previews are not persisted.

@@ -6,7 +6,11 @@ type PageProps = {
   searchParams: Record<string, string | string[] | undefined>;
 };
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(props: {
+  params: { id: string };
+  searchParams?: Record<string, string | string[] | undefined>;
+}): Promise<Metadata> {
+  const { params, searchParams } = props as any;
   const URL = process.env.NEXT_PUBLIC_URL || '';
   const appName = process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || 'Snap';
   const splashImageUrl = `${URL}/icon.jpg`;
@@ -18,7 +22,22 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     decoded = decodeURIComponent(params.id || '');
   } catch {}
   const looksLikeUrl = /^https?:\/\//i.test(decoded);
-  const imageUrl = looksLikeUrl ? decoded : `${URL}/og.jpg`;
+  // Composite support via query params
+  let imageUrl = looksLikeUrl ? decoded : `${URL}/og.jpg`;
+  try {
+    const sp = (searchParams || {}) as Record<string, string | string[] | undefined>;
+    const getOne = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+    const orig = getOne(sp.orig);
+    const gen = getOne(sp.gen);
+    const label = getOne(sp.label);
+    if (orig && gen) {
+      const qs = new URLSearchParams();
+      qs.set('orig', orig);
+      qs.set('gen', gen);
+      if (label) qs.set('label', label);
+      imageUrl = `${URL}/api/share/composite?${qs.toString()}`;
+    }
+  } catch {}
 
   const miniappEmbed = {
     version: '1',
