@@ -83,8 +83,8 @@ export function PaymentForm({
   const { sendTransactionAsync } = useSendTransaction();
   const { fid } = useFarcasterContext();
 
-  // Start image generation on mount or when inputs change
-  async function startGeneration() {
+  // Start image generation (called after payment)
+  async function startGeneration(isPreview: boolean) {
     let cancelled = false;
     try {
       if (generationInFlightRef.current) {
@@ -102,10 +102,10 @@ export function PaymentForm({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageUrl: previewImage || originalImage,
+          imageUrl: originalImage,
           style: selectedStyle,
           fid,
-          preview: true
+          preview: !!isPreview
         })
       });
       const data = await res.json();
@@ -122,21 +122,7 @@ export function PaymentForm({
     };
   }
 
-  useEffect(() => {
-    const key = `${previewImage || originalImage}|${selectedStyle}`;
-    if (lastGenerationKeyRef.current === key) {
-      return;
-    }
-    lastGenerationKeyRef.current = key;
-    let cleanup: any;
-    (async () => {
-      cleanup = await startGeneration();
-    })();
-    return () => {
-      if (typeof cleanup === 'function') cleanup();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originalImage, previewImage, selectedStyle]);
+  // Remove auto-generation on mount; generation starts after payment
 
   // Horizontal infinite scroll for encouragement items
   useEffect(() => {
@@ -162,22 +148,22 @@ export function PaymentForm({
       } catch {}
       return;
     }
-    
+
     setIsRegenerating(true);
     setFeedbackMessage('Regenerating preview...');
-    
+
     try {
       // Reset generation state
       setGenerationProgress(0);
       setGeneratedUrl(null);
       hasNotifiedRef.current = false;
-      
+
       // Clear any existing progress interval
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
-      
+
       await startGeneration();
       setFeedbackMessage('Preview generation started!');
       setTimeout(() => setFeedbackMessage(null), 2000);
@@ -239,42 +225,13 @@ export function PaymentForm({
     }
   }, [generationRequestId, generatedUrl, onStyledImageGenerated]);
 
-  // If payment already completed, persist the image then navigate to result
+  // After payment and generation complete, navigate to result
   useEffect(() => {
     if (paymentComplete && generatedUrl && !hasNavigatedRef.current) {
-      (async () => {
-        try {
-          if (!hasPersistedRef.current && fid) {
-            console.log('[PaymentForm] Persisting image to gallery', {
-              url: generatedUrl,
-              style: selectedStyle,
-              fid
-            });
-            const res = await fetch('/api/gallery', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                url: generatedUrl,
-                style: selectedStyle,
-                creatorFid: fid,
-                paid: true,
-                setFeatured: true
-              })
-            });
-            if (res.ok) {
-              console.log('[PaymentForm] Gallery save OK');
-              hasPersistedRef.current = true;
-            } else {
-              const errText = await res.text();
-              console.error('[PaymentForm] Gallery save failed', res.status, errText);
-            }
-          }
-        } catch {}
-        hasNavigatedRef.current = true;
-        onPaymentSuccess();
-      })();
+      hasNavigatedRef.current = true;
+      onPaymentSuccess();
     }
-  }, [paymentComplete, generatedUrl, selectedStyle, fid, onPaymentSuccess]);
+  }, [paymentComplete, generatedUrl, onPaymentSuccess]);
 
   async function sendEthPayment(): Promise<boolean> {
     try {
@@ -316,7 +273,9 @@ export function PaymentForm({
       setPolling(false);
       console.log('[Payment] ETH payment success');
       setPaymentComplete(true);
-      // Navigation happens after persistence in effect
+      // Start paid generation (server will persist)
+      await startGeneration(false);
+      // Navigation happens after generation completes via effect
     }
   };
 
@@ -455,8 +414,8 @@ export function PaymentForm({
           </button>
           <button
             onClick={() => {
-              if (!previewImage) {
-                setFeedbackMessage('No preview available to regenerate');
+              if (!paymentComplete) {
+                setFeedbackMessage('Pay first to generate');
                 setTimeout(() => setFeedbackMessage(null), 2000);
                 try {
                   navigator.vibrate?.(10);
@@ -465,14 +424,14 @@ export function PaymentForm({
               }
               handleRegenerate();
             }}
-            disabled={isRegenerating || generationInFlightRef.current || !previewImage}
+            disabled={isRegenerating || generationInFlightRef.current || !paymentComplete}
             className={`w-14 h-[52px] border-4 border-black rounded-xl transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-black ${
-              isRegenerating || generationInFlightRef.current || !previewImage
+              isRegenerating || generationInFlightRef.current || !paymentComplete
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
                 : 'bg-white text-black hover:bg-gray-100 active:scale-95 shadow-[4px_4px_0px_0px_#000000]'
             }`}
             aria-label="Regenerate preview"
-            title={!previewImage ? "No preview to regenerate" : "Regenerate preview"}
+            title={!paymentComplete ? 'Pay first to generate' : 'Regenerate'}
           >
             <RotateCw className={`w-6 h-6 ${isRegenerating ? 'animate-spin' : ''}`} />
           </button>
@@ -488,7 +447,12 @@ export function PaymentForm({
             title="Back to upload page"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
           </button>
         </div>

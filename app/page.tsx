@@ -594,7 +594,7 @@ export default function Home() {
         </button>
       </header>
       {/* Spacer below fixed header (more space on style step) */}
-      <div className={state.step === 'style' ? 'h-8' : ''} />
+      <div className={state.step === 'style' ? 'h-8' : 'h-16'} />
       {/* HERO SECTION */}
       {state.step === 'upload' && (
         <>
@@ -703,7 +703,7 @@ export default function Home() {
             {/* Style cards horizontally */}
             <div
               ref={stylesScrollerRef}
-              className="w-full h-[52vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-1 mt-1"
+              className="w-full h-[66vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-1 mt-1"
               aria-label="Style selector"
             >
               {sortedStyles.map((style) => {
@@ -716,7 +716,7 @@ export default function Home() {
                 return (
                   <div
                     key={style.id}
-                    className={`snap-center flex-shrink-0 w-[80%] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] ${
+                    className={`snap-center flex-shrink-0 w-[80%] min-h-[62vh] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] mb-3 ${
                       state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
                     }`}
                     role="button"
@@ -733,7 +733,7 @@ export default function Home() {
                     }}
                     aria-pressed={state.selectedStyle === style.id}
                   >
-                    <div className="relative w-full h-[36vh] border-b-4 border-black">
+                    <div className="relative w-full h-[40vh] border-b-4 border-black">
                       <img src={main} alt={style.name} className="w-full h-full object-cover" />
                       {styleImageOwnerMap[imgs[0]]?.username && (
                         <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
@@ -750,7 +750,7 @@ export default function Home() {
                         </div>
                       )}
                     </div>
-                    <div className="p-2 flex flex-col gap-2">
+                    <div className="p-3 pb-5 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-black uppercase">{style.name}</span>
                         {style.id === mostPopularStyleId && (
@@ -763,7 +763,7 @@ export default function Home() {
                         {style.description}
                       </span>
                       {/* Mini previews (max 5, prefer different users) */}
-                      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                      <div className="flex gap-3 overflow-x-auto no-scrollbar">
                         {(() => {
                           const all = imgs.slice();
                           const seenUsers = new Set<string>();
@@ -800,7 +800,7 @@ export default function Home() {
                                 } rounded-md overflow-hidden`}
                                 aria-label={`Preview ${style.name} ${i + 1}`}
                               >
-                                <img src={u} alt="preview" className="h-12 w-12 object-cover" />
+                                <img src={u} alt="preview" className="h-14 w-14 object-cover" />
                               </button>
                             );
                           });
