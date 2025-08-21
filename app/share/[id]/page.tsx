@@ -22,18 +22,18 @@ export async function generateMetadata(props: {
     decoded = decodeURIComponent(params.id || '');
   } catch {}
   const looksLikeUrl = /^https?:\/\//i.test(decoded);
-  // Composite support via query params
+  // Composite support via query params (default to composite using gen for both halves)
   let imageUrl = looksLikeUrl ? decoded : `${URL}/og.jpg`;
   try {
     const sp = (searchParams || {}) as Record<string, string | string[] | undefined>;
     const getOne = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-    const orig = getOne(sp.orig);
     // gen can come from query (?gen=...) OR from the path param (decoded above)
     const gen = getOne(sp.gen) || (looksLikeUrl ? decoded : undefined);
+    const orig = getOne(sp.orig) || gen || undefined;
     const label = getOne(sp.label);
-    if (orig && gen) {
+    if (gen) {
       const qs = new URLSearchParams();
-      qs.set('orig', orig);
+      qs.set('orig', orig || '');
       qs.set('gen', gen);
       if (label) qs.set('label', label);
       imageUrl = `${URL}/api/share/composite?${qs.toString()}`;

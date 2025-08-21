@@ -46,6 +46,15 @@ export function ResultDisplay({
   const imageToShow = showOriginal ? originalImage : styledImage;
   const safeImageToShow = imageToShow || '/placeholder.svg';
 
+  function buildShareUrl(baseUrl: string, genUrl: string, origUrl?: string, label?: string) {
+    const params: string[] = [];
+    if (origUrl) params.push(`orig=${encodeURIComponent(origUrl)}`);
+    if (label) params.push(`label=${encodeURIComponent(label)}`);
+    return `${baseUrl}/share/${encodeURIComponent(genUrl)}${
+      params.length ? `?${params.join('&')}` : ''
+    }`;
+  }
+
   // When a new styled image arrives, ensure we display it (not the placeholder or original)
   useEffect(() => {
     if (styledImage) {
@@ -73,15 +82,7 @@ export function ResultDisplay({
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareText = 'Just reimagined my photo with Snap, You can do yours too🔥';
     if (!styledImage) return;
-    const gen = encodeURIComponent(styledImage);
-    const orig = encodeURIComponent(originalImage);
-    const label = encodeURIComponent(styleLabel);
-    // Unify on /share/<gen>?orig=...&label=...
-    const shareUrl = `${APP_URL}/share/${gen}?orig=${orig}&label=${label}`;
-    try {
-      // Log the exact URL being shared from the result page
-      console.log('[Share][ResultDisplay] Composing cast with URL:', shareUrl);
-    } catch {}
+    const shareUrl = buildShareUrl(APP_URL, styledImage, originalImage, styleLabel);
     composeCast({ text: shareText, embeds: [shareUrl] });
   };
 
