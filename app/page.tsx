@@ -181,7 +181,7 @@ export default function Home() {
   const [stylePreviewIndex, setStylePreviewIndex] = useReactState<Record<string, number>>({});
   const stylesScrollerRef = useReactRef<HTMLDivElement | null>(null);
   const [styleImageOwnerMap, setStyleImageOwnerMap] = useReactState<
-    Record<string, { username?: string | null; pfpUrl?: string | null }>
+    Record<string, { username?: string | null; pfpUrl?: string | null; fid?: number | null }>
   >({});
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -381,21 +381,26 @@ export default function Home() {
           const items = data.images.map((img: any) => ({
             url: img.url,
             username: img.creator?.username || null,
-            pfpUrl: img.creator?.pfpUrl || null
+            pfpUrl: img.creator?.pfpUrl || null,
+            fid: img.creator?.fid || null
           }));
           if (items.length > 0) {
             setSlideshowItems(items.slice(0, 10));
             setRecentImages(items);
           }
           const byStyle: Record<string, string[]> = {};
-          const ownerMap: Record<string, { username?: string | null; pfpUrl?: string | null }> = {};
+          const ownerMap: Record<
+            string,
+            { username?: string | null; pfpUrl?: string | null; fid?: number | null }
+          > = {};
           for (const img of data.images as any[]) {
             const styleId = img.style || 'unknown';
             if (!byStyle[styleId]) byStyle[styleId] = [];
             byStyle[styleId].push(img.url);
             ownerMap[img.url] = {
               username: img.creator?.username || null,
-              pfpUrl: img.creator?.pfpUrl || null
+              pfpUrl: img.creator?.pfpUrl || null,
+              fid: img.creator?.fid || null
             };
           }
           setStyleImagesMap((prev) => ({ ...prev, ...byStyle }));
@@ -884,12 +889,8 @@ export default function Home() {
                             <Users className="w-4 h-4" />
                             <span>
                               {(() => {
-                                const urls = (styleImagesMap[def?.id || ''] || []).slice(0, 20);
-                                const names = urls
-                                  .map((u) => styleImageOwnerMap[u]?.username || null)
-                                  .filter(Boolean);
-                                const unique = Array.from(new Set(names));
-                                return unique.length || 0;
+                                const urls = styleImagesMap[def?.id || ''] || [];
+                                return urls.length;
                               })()}
                             </span>
                           </div>
@@ -898,32 +899,53 @@ export default function Home() {
                       {/* Horizontal scrollable example list (max 5) with owner overlay */}
                       <div className="p-3 pt-0">
                         <div className="flex gap-3 overflow-x-auto no-scrollbar">
-                          {imgs.slice(0, 5).map((u, i) => (
-                            <div
-                              key={`example-${i}`}
-                              className="relative flex-shrink-0 w-44 h-36 border-2 border-black rounded-md overflow-hidden"
-                            >
-                              <img
-                                src={u}
-                                alt={`example ${i + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                              {styleImageOwnerMap[u]?.username && (
-                                <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
-                                  {styleImageOwnerMap[u]?.pfpUrl && (
-                                    <img
-                                      src={styleImageOwnerMap[u]?.pfpUrl || ''}
-                                      alt={styleImageOwnerMap[u]?.username || ''}
-                                      className="w-5 h-5 rounded-full border border-black"
-                                    />
-                                  )}
-                                  <span className="text-[10px] font-bold">
-                                    {styleImageOwnerMap[u]?.username}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                          {(() => {
+                            // Prioritize different users first: take one image per user up to 5
+                            const all = imgs.slice();
+                            const seenUsers = new Set<string>();
+                            const uniqueUserImages: string[] = [];
+                            const sameUserPool: string[] = [];
+                            for (const u of all) {
+                              const fidKey = String(styleImageOwnerMap[u]?.fid || 'anon');
+                              if (!seenUsers.has(fidKey) && uniqueUserImages.length < 5) {
+                                seenUsers.add(fidKey);
+                                uniqueUserImages.push(u);
+                              } else {
+                                sameUserPool.push(u);
+                              }
+                            }
+                            // Fill remaining slots from same-user pool
+                            while (uniqueUserImages.length < 5 && sameUserPool.length > 0) {
+                              uniqueUserImages.push(sameUserPool.shift() as string);
+                            }
+                            const finalList = uniqueUserImages.slice(0, 5);
+                            return finalList.map((u, i) => (
+                              <div
+                                key={`example-${i}`}
+                                className="relative flex-shrink-0 w-44 h-36 border-2 border-black rounded-md overflow-hidden"
+                              >
+                                <img
+                                  src={u}
+                                  alt={`example ${i + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                {styleImageOwnerMap[u]?.username && (
+                                  <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
+                                    {styleImageOwnerMap[u]?.pfpUrl && (
+                                      <img
+                                        src={styleImageOwnerMap[u]?.pfpUrl || ''}
+                                        alt={styleImageOwnerMap[u]?.username || ''}
+                                        className="w-5 h-5 rounded-full border border-black"
+                                      />
+                                    )}
+                                    <span className="text-[10px] font-bold">
+                                      {styleImageOwnerMap[u]?.username}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            ));
+                          })()}
                         </div>
                       </div>
                       <div className="p-3 pt-1">
