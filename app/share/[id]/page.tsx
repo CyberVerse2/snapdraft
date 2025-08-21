@@ -6,39 +6,38 @@ type PageProps = {
   searchParams: Record<string, string | string[] | undefined>;
 };
 
-export async function generateMetadata(props: {
-  params: { id: string };
-  searchParams?: Record<string, string | string[] | undefined>;
-}): Promise<Metadata> {
-  const { params, searchParams } = props as any;
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL || '';
   const appName = process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || 'Snap';
   const splashImageUrl = `${URL}/icon.jpg`;
   const splashBackgroundColor = '#000000';
 
-  // Try to derive an image URL from the path param if it looks like an encoded URL
-  let decoded = '';
-  try {
-    decoded = decodeURIComponent(params.id || '');
-  } catch {}
-  const looksLikeUrl = /^https?:\/\//i.test(decoded);
-  // Composite support via query params (default to composite using gen for both halves)
-  let imageUrl = looksLikeUrl ? decoded : `${URL}/og.jpg`;
-  try {
-    const sp = (searchParams || {}) as Record<string, string | string[] | undefined>;
-    const getOne = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-    // gen can come from query (?gen=...) OR from the path param (decoded above)
-    const gen = getOne(sp.gen) || (looksLikeUrl ? decoded : undefined);
-    const orig = getOne(sp.orig) || gen || undefined;
-    const label = getOne(sp.label);
-    if (gen) {
-      const qs = new URLSearchParams();
-      qs.set('orig', orig || '');
-      qs.set('gen', gen);
-      if (label) qs.set('label', label);
-      imageUrl = `${URL}/api/share/composite?${qs.toString()}`;
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(params.id || '');
+    } catch {
+      return '';
     }
-  } catch {}
+  })();
+  const fromPath = /^https?:\/\//i.test(decoded) ? decoded : undefined;
+
+  const get = (k: string) => {
+    const v = searchParams?.[k];
+    return Array.isArray(v) ? v[0] : v;
+  };
+
+  const gen = get('gen') || fromPath;
+  const orig = get('orig') || gen;
+  const label = get('label');
+
+  const imageUrl = (() => {
+    if (!gen) return `${URL}/og.jpg`;
+    const qs = new URLSearchParams();
+    qs.set('gen', gen);
+    qs.set('orig', orig || gen);
+    if (label) qs.set('label', label);
+    return `${URL}/api/share/composite?${qs.toString()}`;
+  })();
 
   const miniappEmbed = {
     version: '1',
