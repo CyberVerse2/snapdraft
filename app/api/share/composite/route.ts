@@ -20,9 +20,8 @@ export async function GET(req: NextRequest) {
     const sharp = (await import('sharp')).default;
     const oImg = sharp(oBuf).jpeg();
     const gImg = sharp(gBuf).jpeg();
-    const oMeta = await oImg.metadata();
-    const gMeta = await gImg.metadata();
-    const height = 630;
+    // Produce a strict 3:2 aspect ratio (e.g., 1200x800)
+    const height = 800;
     const width = 1200;
     const half = Math.floor(width / 2);
     const left = await oImg.resize({ height, width: half, fit: 'cover' }).toBuffer();
