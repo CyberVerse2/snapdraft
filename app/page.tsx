@@ -156,7 +156,6 @@ export default function Home() {
   });
   const [stylePreviewIndex, setStylePreviewIndex] = useReactState<Record<string, number>>({});
   const stylesScrollerRef = useReactRef<HTMLDivElement | null>(null);
-  const [spinning, setSpinning] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkWidth = () => setShowUpload(window.innerWidth >= 400);
@@ -692,7 +691,7 @@ export default function Home() {
             </div>
             {/* Guidance */}
             <div className="text-center text-[11px] font-bold text-black/70">
-              Tap a card to select · Click 'Suprise Me' for a random style.
+              Tap a card to select your style.
             </div>
             {/* Preview Button */}
             <button
@@ -708,57 +707,7 @@ export default function Home() {
             >
               Preview
             </button>
-            {/* Jackpot Spin Button */}
-            <button
-              className="w-full mt-2 bg-red-500 text-white py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-red-600 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all disabled:opacity-60"
-              onClick={async () => {
-                if (spinning || styles.length === 0) return;
-                setSpinning(true);
-                const container = stylesScrollerRef.current;
-                if (!container) {
-                  setSpinning(false);
-                  return;
-                }
-                const sortedStyles = [...styles].sort(
-                  (a, b) => Number(b.popular) - Number(a.popular)
-                );
-                const targetIndex = Math.floor(Math.random() * sortedStyles.length);
-                // Spin effect: quick scrolls then decelerate
-                let elapsed = 0;
-                const duration = 1800;
-                const start = performance.now();
-                const baseSpeed = 12;
-                const spin = (now: number) => {
-                  elapsed = now - start;
-                  const t = Math.min(1, elapsed / duration);
-                  const speed = baseSpeed * (1 - t) + 2; // decelerate
-                  container.scrollLeft += speed;
-                  if (elapsed < duration) {
-                    requestAnimationFrame(spin);
-                  } else {
-                    // Snap to target card
-                    const card = container.children[targetIndex] as HTMLElement | undefined;
-                    if (card) {
-                      const left = Math.max(
-                        0,
-                        card.offsetLeft - (container.clientWidth - card.offsetWidth) / 2
-                      );
-                      container.scrollTo({ left, behavior: 'smooth' });
-                    }
-                    const picked = sortedStyles[targetIndex].id as StyleType;
-                    setState((prev) => ({ ...prev, selectedStyle: picked }));
-                    setTimeout(() => {
-                      handleProceedToPayment();
-                      setSpinning(false);
-                    }, 2000);
-                  }
-                };
-                requestAnimationFrame(spin);
-              }}
-              disabled={spinning}
-            >
-              {spinning ? 'SPINNING...' : 'Surprise me'}
-            </button>
+            {/* Jackpot Spin Button removed */}
           </div>
         )}
         {state.step === 'preview' && state.originalImage && state.selectedStyle && (

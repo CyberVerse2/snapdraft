@@ -18,6 +18,7 @@ export async function GET(_req: NextRequest) {
       heroImageUrl: 'https://snapdraft-murex.vercel.app/og.jpg',
       splashImageUrl: 'https://snapdraft-murex.vercel.app/icon.jpg',
       primaryCategory: 'art-creativity',
+      tags: ['snap', 'photo', 'ai', 'art', 'gif'],
       splashBackgroundColor: '#FEF3C7'
     },
     accountAssociation: {
