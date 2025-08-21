@@ -918,18 +918,19 @@ export default function Home() {
                             while (uniqueUserImages.length < 5 && sameUserPool.length > 0) {
                               uniqueUserImages.push(sameUserPool.shift() as string);
                             }
+                            // Build final list (examples only; original will be shown near CTA)
                             const finalList = uniqueUserImages.slice(0, 5);
                             return finalList.map((u, i) => (
                               <div
                                 key={`example-${i}`}
-                                className="relative flex-shrink-0 w-44 h-36 border-2 border-black rounded-md overflow-hidden"
+                                className="relative flex-shrink-0 w-56 h-44 border-2 border-black rounded-md overflow-hidden shadow-[6px_6px_0px_0px_#000000]"
                               >
                                 <img
                                   src={u}
                                   alt={`example ${i + 1}`}
                                   className="w-full h-full object-cover"
                                 />
-                                {styleImageOwnerMap[u]?.username && (
+                                {styleImageOwnerMap[u]?.username ? (
                                   <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
                                     {styleImageOwnerMap[u]?.pfpUrl && (
                                       <img
@@ -942,7 +943,7 @@ export default function Home() {
                                       {styleImageOwnerMap[u]?.username}
                                     </span>
                                   </div>
-                                )}
+                                ) : null}
                               </div>
                             ));
                           })()}
