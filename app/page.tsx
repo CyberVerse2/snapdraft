@@ -715,11 +715,7 @@ export default function Home() {
                       aria-pressed={state.selectedStyle === style.id}
                     >
                       <div className="relative w-full h-[36vh] border-b-4 border-black">
-                        <img
-                          src={imgs[0]}
-                          alt={style.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={main} alt={style.name} className="w-full h-full object-cover" />
                         {styleImageOwnerMap[imgs[0]]?.username && (
                           <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
                             {styleImageOwnerMap[imgs[0]]?.pfpUrl && (
@@ -747,23 +743,49 @@ export default function Home() {
                         <span className="text-[11px] text-gray-600 leading-snug whitespace-normal break-words">
                           {style.description}
                         </span>
-                        {/* Mini previews */}
+                        {/* Mini previews (max 5, prefer different users) */}
                         <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                          {imgs.slice(0, 8).map((u, i) => (
-                            <button
-                              key={`${style.id}-${i}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setStylePreviewIndex((prev) => ({ ...prev, [style.id]: i }));
-                              }}
-                              className={`border-2 ${
-                                i === idx ? 'border-black' : 'border-gray-300'
-                              } rounded-md overflow-hidden`}
-                              aria-label={`Preview ${style.name} ${i + 1}`}
-                            >
-                              <img src={u} alt="preview" className="h-10 w-10 object-cover" />
-                            </button>
-                          ))}
+                          {(() => {
+                            const all = imgs.slice();
+                            const seenUsers = new Set<string>();
+                            const uniqueUserImages: string[] = [];
+                            const sameUserPool: string[] = [];
+                            for (const u of all) {
+                              const fidKey = String(styleImageOwnerMap[u]?.fid || 'anon');
+                              if (!seenUsers.has(fidKey) && uniqueUserImages.length < 5) {
+                                seenUsers.add(fidKey);
+                                uniqueUserImages.push(u);
+                              } else {
+                                sameUserPool.push(u);
+                              }
+                            }
+                            while (uniqueUserImages.length < 5 && sameUserPool.length > 0) {
+                              uniqueUserImages.push(sameUserPool.shift() as string);
+                            }
+                            const finalPreviews = uniqueUserImages.slice(0, 5);
+                            return finalPreviews.map((u, i) => {
+                              const realIndex = imgs.indexOf(u);
+                              const isActive = realIndex === idx;
+                              return (
+                                <button
+                                  key={`${style.id}-${i}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setStylePreviewIndex((prev) => ({
+                                      ...prev,
+                                      [style.id]: realIndex
+                                    }));
+                                  }}
+                                  className={`border-2 ${
+                                    isActive ? 'border-black' : 'border-gray-300'
+                                  } rounded-md overflow-hidden`}
+                                  aria-label={`Preview ${style.name} ${i + 1}`}
+                                >
+                                  <img src={u} alt="preview" className="h-12 w-12 object-cover" />
+                                </button>
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
                     </div>
