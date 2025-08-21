@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
         .toBuffer();
     }
 
+    console.log('composite', composite);
     const res = new Response(composite, {
       status: 200,
       headers: {

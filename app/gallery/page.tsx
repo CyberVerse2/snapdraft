@@ -62,14 +62,14 @@ export default function GalleryPage() {
     const APP_URL =
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareText = 'Just styled an image with SNAPDRAFT AI!';
-    // Use composite via share page; include original if available
+    // Unified share URL: /share/<gen>?orig=...&label=...
     const entry = gallery.find((g) => g.id === id);
     const gen = encodeURIComponent(url);
-    const orig = entry?.originalUrl ? `&orig=${encodeURIComponent(entry.originalUrl)}` : '';
-    composeCast({
-      text: shareText,
-      embeds: [`${APP_URL}/share/placeholder.jpg?gen=${gen}${orig}`]
-    });
+    const params = new URLSearchParams();
+    if (entry?.originalUrl) params.set('orig', entry.originalUrl);
+    if (entry?.style || '') params.set('label', entry?.style || '');
+    const shareUrl = `${APP_URL}/share/${gen}${params.toString() ? `?${params.toString()}` : ''}`;
+    composeCast({ text: shareText, embeds: [shareUrl] });
   }
 
   return (
