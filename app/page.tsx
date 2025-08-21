@@ -9,7 +9,8 @@ import { ResultDisplay } from '@/components/result-display';
 // import { StylePreview } from '@/components/style-preview';
 import { useMiniKit, useAddFrame } from '@coinbase/onchainkit/minikit';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
-import { useAccount, useConnect, useBalance } from 'wagmi';
+import { useAccount, useConnect, useBalance, useSendTransaction } from 'wagmi';
+import { parseEther } from 'viem';
 import Link from 'next/link';
 import Image from 'next/image';
 import sampleHero from '/public/sample-hero.jpg'; // Add a sample image to public/ if not present
@@ -65,6 +66,7 @@ function saveToGallery(entry: GalleryEntry) {
 const RECIPIENT_ADDRESS = '0xd09e70C83185E9b5A2Abd365146b58Ef0ebb8B7B';
 // Credits are now denominated in ETH
 const CREDITS_PER_ETH = 42000; // 1 ETH ≈ 42,000 credits (ETH ~$4200, 1 credit ≈ $0.10)
+const CREDITS_PRICE = 3;
 
 export default function Home() {
   const miniKit = useMiniKit() as any;
@@ -126,6 +128,7 @@ export default function Home() {
   // Credits state
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
+  const { sendTransactionAsync } = useSendTransaction();
   const { data: ethBalance, isLoading: isBalanceLoading } = useBalance({ address });
   let credits = 0;
   if (ethBalance && typeof ethBalance.formatted === 'string') {
@@ -144,6 +147,8 @@ export default function Home() {
   const [dragOffsetY, setDragOffsetY] = useState<number>(0);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetSnap, setSheetSnap] = useState<'half' | 'full'>('half');
+  // Result loading simulation
+  const [resultProgress, setResultProgress] = useState<number>(0);
 
   // Animate sheet on open/close
   useEffect(() => {
@@ -322,6 +327,88 @@ export default function Home() {
     window.addEventListener('snapdraft:go-upload' as any, handler as any);
     return () => window.removeEventListener('snapdraft:go-upload' as any, handler as any);
   }, []);
+
+  // Pay and generate from Style sheet
+  const payAndGenerate = async () => {
+    try {
+      navigator.vibrate?.(10);
+    } catch {}
+    if (credits < CREDITS_PRICE) {
+      setShowCreditsModal(true);
+      return;
+    }
+    try {
+      if (!isConnected && connectors && connectors.length > 0) {
+        await connect({ connector: connectors[0] });
+      }
+      const ethAmount = (CREDITS_PRICE / CREDITS_PER_ETH).toFixed(18);
+      await sendTransactionAsync({
+        to: RECIPIENT_ADDRESS as `0x${string}`,
+        value: parseEther(ethAmount)
+      });
+      // Start paid generation on server
+      const res = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: state.originalImage,
+          style: state.selectedStyle,
+          fid,
+          preview: false
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.requestId) {
+        throw new Error(data?.error || 'Failed to start generation');
+      }
+      setShowStyleSheet(false);
+      // Show result page loader while we poll
+      setState((prev) => ({ ...prev, step: 'result', styledImage: null }));
+      const requestId = data.requestId as string;
+      // Poll for image
+      let done = false;
+      const start = Date.now();
+      while (!done && Date.now() - start < 120000) {
+        try {
+          const pr = await fetch(`/api/generate-image?id=${requestId}`);
+          const pd = await pr.json();
+          if (typeof pd?.progress === 'number') {
+            setResultProgress((prev) => Math.max(prev, pd.progress as number));
+          }
+          if (pd?.styledImageUrl) {
+            setState((prev) => ({ ...prev, styledImage: pd.styledImageUrl }));
+            setResultProgress(100);
+            done = true;
+            break;
+          }
+        } catch {}
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    } catch (e) {
+      console.error('[PayAndGenerate] failed', e);
+    }
+  };
+
+  // Simulated progress while waiting on result
+  useEffect(() => {
+    if (state.step !== 'result' || state.styledImage) return;
+    setResultProgress((p) => (p > 0 ? p : 1));
+    let lastTick = Date.now();
+    const id = setInterval(() => {
+      if (state.styledImage) return; // will be cleared on cleanup
+      const now = Date.now();
+      if (now - lastTick > 900) {
+        lastTick = now;
+        setResultProgress((prev) => {
+          if (prev >= 97) return prev;
+          const boost = Math.max(1, Math.round((100 - prev) * 0.08));
+          return Math.min(97, prev + boost);
+        });
+      }
+    }, 500);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.step, state.styledImage]);
 
   const setStep = (newStep: AppState['step']) => {
     const currentStepIndex = ['upload', 'style', 'preview', 'payment', 'result'].indexOf(
@@ -843,7 +930,32 @@ export default function Home() {
                 onReset={() => setStep('upload')}
               />
             ) : (
-              <div className="text-sm font-bold uppercase text-black">Preparing your image...</div>
+              <div className="w-full max-w-md mx-auto mt-8">
+                <div className="relative w-full h-48 border-8 border-black bg-white shadow-[8px_8px_0px_0px_#000000] flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
+                      {`${Math.max(
+                        0,
+                        Math.min(
+                          99,
+                          Math.floor(
+                            Number.isFinite(resultProgress as number)
+                              ? (resultProgress as number)
+                              : 0
+                          )
+                        )
+                      )}%`}
+                    </div>
+                  </div>
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: `conic-gradient(#fde047 ${resultProgress}%, #fff 0)` }}
+                  />
+                </div>
+                <p className="text-center mt-3 text-sm font-bold uppercase">
+                  Generating your image — hold tight!
+                </p>
+              </div>
             )}
           </div>
         )}
@@ -1003,13 +1115,7 @@ export default function Home() {
                           )}
                           <button
                             className="flex-1 bg-yellow-400 text-black py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-yellow-300 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all"
-                            onClick={() => {
-                              try {
-                                navigator.vibrate?.(10);
-                              } catch {}
-                              closeSheet();
-                              handleProceedToPayment();
-                            }}
+                            onClick={payAndGenerate}
                           >
                             Reimagine
                           </button>
