@@ -29,6 +29,9 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const gen = get('gen') || fromPath;
   const orig = get('orig') || gen;
   const label = get('label');
+  console.log('gen', gen);
+  console.log('orig', orig);
+  console.log('label', label);
 
   const imageUrl = (() => {
     if (!gen) return `${URL}/og.jpg`;
