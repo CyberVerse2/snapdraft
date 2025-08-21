@@ -16,6 +16,7 @@ interface GalleryEntry {
   url: string;
   style: string | null;
   createdAt: string;
+  originalUrl?: string | null;
 }
 
 export default function GalleryPage() {
@@ -61,11 +62,13 @@ export default function GalleryPage() {
     const APP_URL =
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareText = 'Just styled an image with SNAPDRAFT AI!';
-    // Use composite via share page (orig not known in gallery; fall back to just gen if missing)
-    const encodedGen = encodeURIComponent(url);
+    // Use composite via share page; include original if available
+    const entry = gallery.find((g) => g.id === id);
+    const gen = encodeURIComponent(url);
+    const orig = entry?.originalUrl ? `&orig=${encodeURIComponent(entry.originalUrl)}` : '';
     composeCast({
       text: shareText,
-      embeds: [`${APP_URL}/share/placeholder.jpg?gen=${encodedGen}`]
+      embeds: [`${APP_URL}/share/placeholder.jpg?gen=${gen}${orig}`]
     });
   }
 

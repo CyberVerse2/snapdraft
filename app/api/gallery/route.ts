@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
       take: 100,
       include: { creator: true }
     });
+    // originalUrl is already part of the model; it will be serialized automatically
     const res = NextResponse.json({ success: true, images });
     res.headers.set('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=60');
     return res;

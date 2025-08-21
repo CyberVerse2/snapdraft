@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
                 await prisma.image.create({
                   data: {
                     url: styledImageUrl,
+                    originalUrl: imageUrl,
                     style: style ?? 'unknown',
                     paid: false,
                     isFeatured: false,
@@ -120,13 +121,15 @@ export async function POST(request: NextRequest) {
                     paid: true,
                     isFeatured: true,
                     style: style ?? existing.style,
-                    creatorId: creator ? creator.id : existing.creatorId
+                    creatorId: creator ? creator.id : existing.creatorId,
+                    originalUrl: imageUrl
                   }
                 });
               } else {
                 await prisma.image.create({
                   data: {
                     url: styledImageUrl,
+                    originalUrl: imageUrl,
                     style: style ?? 'unknown',
                     paid: true,
                     isFeatured: true,
