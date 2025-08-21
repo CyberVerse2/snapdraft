@@ -73,10 +73,12 @@ export function ResultDisplay({
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareText = 'Just reimagined my photo with Snap, You can do yours too🔥';
     if (!styledImage) return;
-    const encodedImage = encodeURIComponent(styledImage);
+    const composite = `${APP_URL}/api/share/composite?orig=${encodeURIComponent(
+      originalImage
+    )}&gen=${encodeURIComponent(styledImage)}&label=${encodeURIComponent(styleLabel)}`;
     composeCast({
       text: shareText,
-      embeds: [`${APP_URL}/share/${encodedImage}`]
+      embeds: [composite]
     });
   };
 
