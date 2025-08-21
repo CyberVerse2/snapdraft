@@ -96,16 +96,28 @@ export async function POST(request: NextRequest) {
               // Ensure a preview record exists with paid=false
               const existing = await prisma.image.findFirst({ where: { url: styledImageUrl } });
               if (!existing) {
-                await prisma.image.create({
-                  data: {
-                    url: styledImageUrl,
-                    originalUrl: imageUrl,
-                    style: style ?? 'unknown',
-                    paid: false,
-                    isFeatured: false,
-                    creatorId: creator ? creator.id : undefined
+                const previewData: any = {
+                  url: styledImageUrl,
+                  originalUrl: imageUrl,
+                  style: style ?? 'unknown',
+                  paid: false,
+                  isFeatured: false,
+                  creatorId: creator ? creator.id : undefined
+                };
+                try {
+                  await prisma.image.create({ data: previewData });
+                } catch (e: any) {
+                  // Fallback for environments where Prisma Client isn't regenerated yet
+                  if (
+                    typeof e?.message === 'string' &&
+                    e.message.includes('Unknown argument `originalUrl`')
+                  ) {
+                    delete previewData.originalUrl;
+                    await prisma.image.create({ data: previewData });
+                  } else {
+                    throw e;
                   }
-                });
+                }
               }
             } else {
               // Mark as featured paid image. If preview exists, upgrade it; otherwise create new
@@ -115,27 +127,48 @@ export async function POST(request: NextRequest) {
               });
               const existing = await prisma.image.findFirst({ where: { url: styledImageUrl } });
               if (existing) {
-                await prisma.image.update({
-                  where: { id: existing.id },
-                  data: {
-                    paid: true,
-                    isFeatured: true,
-                    style: style ?? existing.style,
-                    creatorId: creator ? creator.id : existing.creatorId,
-                    originalUrl: imageUrl
+                const updateData: any = {
+                  paid: true,
+                  isFeatured: true,
+                  style: style ?? existing.style,
+                  creatorId: creator ? creator.id : existing.creatorId,
+                  originalUrl: imageUrl
+                };
+                try {
+                  await prisma.image.update({ where: { id: existing.id }, data: updateData });
+                } catch (e: any) {
+                  if (
+                    typeof e?.message === 'string' &&
+                    e.message.includes('Unknown argument `originalUrl`')
+                  ) {
+                    delete updateData.originalUrl;
+                    await prisma.image.update({ where: { id: existing.id }, data: updateData });
+                  } else {
+                    throw e;
                   }
-                });
+                }
               } else {
-                await prisma.image.create({
-                  data: {
-                    url: styledImageUrl,
-                    originalUrl: imageUrl,
-                    style: style ?? 'unknown',
-                    paid: true,
-                    isFeatured: true,
-                    creatorId: creator ? creator.id : undefined
+                const createData: any = {
+                  url: styledImageUrl,
+                  originalUrl: imageUrl,
+                  style: style ?? 'unknown',
+                  paid: true,
+                  isFeatured: true,
+                  creatorId: creator ? creator.id : undefined
+                };
+                try {
+                  await prisma.image.create({ data: createData });
+                } catch (e: any) {
+                  if (
+                    typeof e?.message === 'string' &&
+                    e.message.includes('Unknown argument `originalUrl`')
+                  ) {
+                    delete createData.originalUrl;
+                    await prisma.image.create({ data: createData });
+                  } else {
+                    throw e;
                   }
-                });
+                }
               }
             }
           } catch (e) {
