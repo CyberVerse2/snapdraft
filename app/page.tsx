@@ -6,7 +6,7 @@ import { ImageUpload } from '@/components/image-upload';
 import { StyleSelection } from '@/components/style-selection';
 import { PaymentForm } from '@/components/payment-form';
 import { ResultDisplay } from '@/components/result-display';
-import { StylePreview } from '@/components/style-preview';
+// import { StylePreview } from '@/components/style-preview';
 import { useMiniKit, useAddFrame } from '@coinbase/onchainkit/minikit';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
 import { useAccount, useConnect, useBalance } from 'wagmi';
@@ -139,6 +139,30 @@ export default function Home() {
   const [showUpload, setShowUpload] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showStyleSheet, setShowStyleSheet] = useState(false);
+  const [dragStartY, setDragStartY] = useState<number | null>(null);
+  const [dragOffsetY, setDragOffsetY] = useState<number>(0);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetSnap, setSheetSnap] = useState<'half' | 'full'>('half');
+
+  // Animate sheet on open/close
+  useEffect(() => {
+    if (showStyleSheet) {
+      setSheetOpen(false);
+      setSheetSnap('full');
+      const id = requestAnimationFrame(() => setSheetOpen(true));
+      return () => cancelAnimationFrame(id);
+    } else {
+      setSheetOpen(false);
+      setDragStartY(null);
+      setDragOffsetY(0);
+    }
+  }, [showStyleSheet]);
+
+  const closeSheet = () => {
+    setSheetOpen(false);
+    setTimeout(() => setShowStyleSheet(false), 250);
+  };
   // (Optional) Live preview state was used before; now previews happen in the Preview step only
   // Recent gallery per-style images for style cards
   const [styleImagesMap, setStyleImagesMap] = useReactState<Record<string, string[]>>({
@@ -617,7 +641,7 @@ export default function Home() {
       {/* Main Content: Direct, centered, mobile-first layout */}
       <section
         className={`flex flex-col items-center ${
-          state.step === 'style' ? 'justify-start' : 'justify-center'
+          state.step === 'style' ? 'justify-center' : 'justify-center'
         } w-full px-4 pb-0 overflow-hidden`}
       >
         {/* Style Selection Step */}
@@ -626,7 +650,7 @@ export default function Home() {
             {/* Style cards horizontally */}
             <div
               ref={stylesScrollerRef}
-              className="w-full h-[54vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-1 mt-1"
+              className="w-full h-[58vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-1 mt-1"
               aria-label="Style selector"
             >
               {[...styles]
@@ -646,10 +670,15 @@ export default function Home() {
                       }`}
                       role="button"
                       tabIndex={0}
-                      onClick={() => handleStyleSelect(style.id as StyleType)}
+                      onClick={() => {
+                        handleStyleSelect(style.id as StyleType);
+                        setShowStyleSheet(true);
+                      }}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ')
+                        if (e.key === 'Enter' || e.key === ' ') {
                           handleStyleSelect(style.id as StyleType);
+                          setShowStyleSheet(true);
+                        }
                       }}
                       aria-pressed={state.selectedStyle === style.id}
                     >
@@ -695,36 +724,11 @@ export default function Home() {
             </div>
             {/* Guidance */}
             <div className="text-center text-[11px] font-bold text-black/70">
-              Tap a card to select your style.
+              Tap a card to view details and proceed to pay.
             </div>
-            {/* Preview Button */}
-            <button
-              className="w-full bg-yellow-400 text-black py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-yellow-300 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all disabled:opacity-60"
-              onClick={() => {
-                try {
-                  navigator.vibrate?.(10);
-                } catch {}
-                if (!state.selectedStyle) return;
-                handleProceedToPayment();
-              }}
-              disabled={!state.selectedStyle}
-            >
-              Preview
-            </button>
-            {/* Jackpot Spin Button removed */}
           </div>
         )}
-        {state.step === 'preview' && state.originalImage && state.selectedStyle && (
-          <div className="w-full max-w-md mx-auto">
-            <StylePreview
-              originalImage={state.originalImage}
-              selectedStyle={state.selectedStyle}
-              onPreviewGenerated={handlePreviewGenerated}
-              onProceedToPayment={handleProceedToPayment}
-              onBackToStyles={() => setStep('style')}
-            />
-          </div>
-        )}
+        {/* Preview step removed; flow goes from style sheet -> payment */}
         {/* Payment Step */}
         {state.step === 'payment' && (
           <PaymentForm
@@ -755,6 +759,123 @@ export default function Home() {
           </div>
         )}
       </section>
+      {/* Bottom Sheet for Style Details */}
+      {showStyleSheet && state.selectedStyle && (
+        <>
+          <div
+            className={`fixed inset-0 z-[95] transition-opacity duration-200 ${
+              sheetOpen ? 'bg-black/50 opacity-100' : 'bg-black/50 opacity-0'
+            }`}
+            onClick={closeSheet}
+          />
+          <div
+            className={`fixed left-0 right-0 bottom-0 z-[100] bg-white border-t-8 border-black rounded-t-2xl shadow-[0_-8px_0_0_#000000] transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]`}
+            style={{
+              transform: `translateY(calc(${sheetSnap === 'half' ? '40vh' : '0px'} + ${
+                dragOffsetY + (sheetOpen ? 0 : 24)
+              }px))`
+            }}
+            onTouchStart={(e) => setDragStartY(e.touches[0].clientY)}
+            onTouchMove={(e) => {
+              if (dragStartY !== null) {
+                const dy = e.touches[0].clientY - dragStartY;
+                setDragOffsetY(Math.max(0, dy));
+              }
+            }}
+            onTouchEnd={() => {
+              if (dragOffsetY > 100) {
+                closeSheet();
+              } else if (dragOffsetY > 30) {
+                setSheetSnap('half');
+              }
+              setDragStartY(null);
+              setDragOffsetY(0);
+            }}
+            onMouseDown={(e) => setDragStartY(e.clientY)}
+            onMouseMove={(e) => {
+              if (dragStartY !== null) {
+                const dy = e.clientY - dragStartY;
+                setDragOffsetY(Math.max(0, dy));
+              }
+            }}
+            onMouseUp={() => {
+              if (dragOffsetY > 100) {
+                closeSheet();
+              } else if (dragOffsetY > 30) {
+                setSheetSnap('half');
+              }
+              setDragStartY(null);
+              setDragOffsetY(0);
+            }}
+          >
+            <div className="pt-2 pb-4 px-4 max-h-[70vh] overflow-y-auto">
+              <div
+                className="h-1.5 w-16 bg-black rounded-full mx-auto mb-3"
+                onClick={() => setSheetSnap((s) => (s === 'half' ? 'full' : 'half'))}
+              />
+              {(() => {
+                const def = styles.find((s) => s.id === state.selectedStyle);
+                const imgs =
+                  def && styleImagesMap[def.id] && styleImagesMap[def.id].length > 0
+                    ? styleImagesMap[def.id]
+                    : def
+                    ? [def.thumbnail]
+                    : [];
+                return (
+                  <div className="w-full max-w-md mx-auto">
+                    <div className="bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000]">
+                      {imgs[0] && (
+                        <img
+                          src={imgs[0]}
+                          alt={def?.name || 'Style preview'}
+                          className="w-full h-48 object-cover border-b-4 border-black"
+                        />
+                      )}
+                      <div className="p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-black text-xl uppercase">{def?.name}</h3>
+                          {def?.popular && (
+                            <span className="text-[10px] bg-yellow-300 text-black px-2 py-0.5 rounded font-bold">
+                              POPULAR
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold text-black/70 leading-snug">
+                          {def?.description}
+                        </p>
+                        {imgs.length > 1 && (
+                          <div className="flex gap-2 overflow-x-auto no-scrollbar mt-1">
+                            {imgs.slice(0, 8).map((u, i) => (
+                              <img
+                                key={`mini-${i}`}
+                                src={u}
+                                alt="mini"
+                                className="h-12 w-12 object-cover border-2 border-black rounded"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          className="w-full mt-2 bg-yellow-400 text-black py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-yellow-300 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all"
+                          onClick={() => {
+                            try {
+                              navigator.vibrate?.(10);
+                            } catch {}
+                            closeSheet();
+                            handleProceedToPayment();
+                          }}
+                        >
+                          Pay and Continue
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </>
+      )}
       {/* Bottom Navigation (hidden during onboarding) */}
       {!showOnboarding && <BottomNav />}
     </div>
