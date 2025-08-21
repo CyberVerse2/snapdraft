@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
     const height = 630;
     const width = 1200;
     const half = Math.floor(width / 2);
-    const left = await oImg.resize({ height, fit: 'cover' }).toBuffer();
-    const right = await gImg.resize({ height, fit: 'cover' }).toBuffer();
+    const left = await oImg.resize({ height, width: half, fit: 'cover' }).toBuffer();
+    const right = await gImg.resize({ height, width: half, fit: 'cover' }).toBuffer();
 
     const divider = Buffer.from(
       await sharp({

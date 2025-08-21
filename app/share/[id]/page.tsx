@@ -28,7 +28,8 @@ export async function generateMetadata(props: {
     const sp = (searchParams || {}) as Record<string, string | string[] | undefined>;
     const getOne = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
     const orig = getOne(sp.orig);
-    const gen = getOne(sp.gen);
+    // gen can come from query (?gen=...) OR from the path param (decoded above)
+    const gen = getOne(sp.gen) || (looksLikeUrl ? decoded : undefined);
     const label = getOne(sp.label);
     if (orig && gen) {
       const qs = new URLSearchParams();
