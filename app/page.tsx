@@ -613,22 +613,7 @@ export default function Home() {
             <h2 className="text-2xl sm:text-3xl font-black uppercase text-center mb-2">
               Your Photos Reimagined As Art.
             </h2>
-            {/* Community strip: recent creations */}
-            {recentImages.length > 0 && (
-              <div className="w-full max-w-md mx-auto px-2 mb-2">
-                <div className="flex overflow-x-auto gap-2 py-1">
-                  {recentImages.slice(0, 12).map((img, idx) => (
-                    <div key={`${img.url}-${idx}`} className="flex-shrink-0">
-                      <img
-                        src={img.url}
-                        alt={img.username || 'Recent'}
-                        className="h-16 w-16 object-cover rounded-md border-2 border-black"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Community strip removed */}
             {/* <p className="text-lg text-center font-bold text-black/80 mb-2">Upload a photo, pick a style, and get a stunning AI creation in seconds.</p> */}
             <div className="w-full max-w-md mx-auto mt-2 mb-2 flex flex-col md:flex-row gap-3 justify-center px-2">
               <button
@@ -882,13 +867,6 @@ export default function Home() {
                 return (
                   <div className="w-full max-w-md mx-auto">
                     <div className="bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000]">
-                      {imgs[0] && (
-                        <img
-                          src={imgs[0]}
-                          alt={def?.name || 'Style preview'}
-                          className="w-full h-48 object-cover border-b-4 border-black"
-                        />
-                      )}
                       <div className="p-3 space-y-2">
                         <div className="flex items-center justify-between">
                           <h3 className="font-black text-xl uppercase">{def?.name}</h3>
@@ -901,20 +879,39 @@ export default function Home() {
                         <p className="text-sm font-bold text-black/70 leading-snug">
                           {def?.description}
                         </p>
-                        {imgs.length > 1 && (
-                          <div className="flex gap-2 overflow-x-auto no-scrollbar mt-1">
-                            {imgs.slice(0, 8).map((u, i) => (
-                              <img
-                                key={`mini-${i}`}
-                                src={u}
-                                alt="mini"
-                                className="h-12 w-12 object-cover border-2 border-black rounded"
-                              />
-                            ))}
+                      </div>
+                      {/* Scrollable example list (max 5) with owner overlay */}
+                      <div className="max-h-64 overflow-y-auto p-3 pt-0 space-y-2">
+                        {imgs.slice(0, 5).map((u, i) => (
+                          <div
+                            key={`example-${i}`}
+                            className="relative w-full h-36 border-2 border-black rounded-md overflow-hidden"
+                          >
+                            <img
+                              src={u}
+                              alt={`example ${i + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            {styleImageOwnerMap[u]?.username && (
+                              <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
+                                {styleImageOwnerMap[u]?.pfpUrl && (
+                                  <img
+                                    src={styleImageOwnerMap[u]?.pfpUrl || ''}
+                                    alt={styleImageOwnerMap[u]?.username || ''}
+                                    className="w-5 h-5 rounded-full border border-black"
+                                  />
+                                )}
+                                <span className="text-[10px] font-bold">
+                                  {styleImageOwnerMap[u]?.username}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        ))}
+                      </div>
+                      <div className="p-3 pt-1">
                         <button
-                          className="w-full mt-2 bg-yellow-400 text-black py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-yellow-300 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all"
+                          className="w-full bg-yellow-400 text-black py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-yellow-300 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all"
                           onClick={() => {
                             try {
                               navigator.vibrate?.(10);
@@ -923,7 +920,7 @@ export default function Home() {
                             handleProceedToPayment();
                           }}
                         >
-                          Pay and Continue
+                          Reimagine
                         </button>
                       </div>
                     </div>
