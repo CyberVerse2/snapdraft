@@ -183,6 +183,15 @@ export default function Home() {
   const [styleImageOwnerMap, setStyleImageOwnerMap] = useReactState<
     Record<string, { username?: string | null; pfpUrl?: string | null; fid?: number | null }>
   >({});
+  // Popularity helpers: sort by number of images per style; pick the most popular style id
+  const getStyleCount = (id: string) => (styleImagesMap[id] ? styleImagesMap[id].length : 0);
+  const sortedStyles = [...styles].sort((a, b) => {
+    const diff = getStyleCount(b.id) - getStyleCount(a.id);
+    if (diff !== 0) return diff;
+    // fallback to boolean popular flag if counts equal
+    return Number(b.popular) - Number(a.popular);
+  });
+  const mostPopularStyleId = sortedStyles.length > 0 ? sortedStyles[0].id : styles[0].id;
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkWidth = () => setShowUpload(window.innerWidth >= 400);
@@ -301,6 +310,18 @@ export default function Home() {
       paymentCompleted: false
     });
   };
+
+  // Listen for home-nav signal to go back to upload stage when already on '/'
+  useEffect(() => {
+    const handler = () => {
+      setState((prev) => ({
+        ...prev,
+        step: 'upload'
+      }));
+    };
+    window.addEventListener('snapdraft:go-upload' as any, handler as any);
+    return () => window.removeEventListener('snapdraft:go-upload' as any, handler as any);
+  }, []);
 
   const setStep = (newStep: AppState['step']) => {
     const currentStepIndex = ['upload', 'style', 'preview', 'payment', 'result'].indexOf(
@@ -573,7 +594,7 @@ export default function Home() {
         </button>
       </header>
       {/* Spacer below fixed header (more space on style step) */}
-      <div className={state.step === 'style' ? 'h-20' : ''} />
+      <div className={state.step === 'style' ? 'h-8' : ''} />
       {/* HERO SECTION */}
       {state.step === 'upload' && (
         <>
@@ -674,123 +695,121 @@ export default function Home() {
       <section
         className={`flex flex-col items-center ${
           state.step === 'style' ? 'justify-center' : 'justify-center'
-        } w-full px-4 pb-0 overflow-hidden`}
+        } w-full px-4 pb-0 overflow-hidden flex-1`}
       >
         {/* Style Selection Step */}
         {state.step === 'style' && (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-1">
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto gap-1 flex-1">
             {/* Style cards horizontally */}
             <div
               ref={stylesScrollerRef}
-              className="w-full h-[58vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-1 mt-1"
+              className="w-full h-[52vh] overflow-x-auto no-scrollbar flex flex-row gap-4 snap-x snap-mandatory pb-1 mt-1"
               aria-label="Style selector"
             >
-              {[...styles]
-                .sort((a, b) => Number(b.popular) - Number(a.popular))
-                .map((style) => {
-                  const imgs =
-                    styleImagesMap[style.id] && styleImagesMap[style.id].length > 0
-                      ? styleImagesMap[style.id]
-                      : [style.thumbnail];
-                  const idx = stylePreviewIndex[style.id] || 0;
-                  const main = imgs[Math.min(idx, imgs.length - 1)];
-                  return (
-                    <div
-                      key={style.id}
-                      className={`snap-center flex-shrink-0 w-[80%] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] ${
-                        state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
-                      }`}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
+              {sortedStyles.map((style) => {
+                const imgs =
+                  styleImagesMap[style.id] && styleImagesMap[style.id].length > 0
+                    ? styleImagesMap[style.id]
+                    : [style.thumbnail];
+                const idx = stylePreviewIndex[style.id] || 0;
+                const main = imgs[Math.min(idx, imgs.length - 1)];
+                return (
+                  <div
+                    key={style.id}
+                    className={`snap-center flex-shrink-0 w-[80%] bg-white border-4 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] ${
+                      state.selectedStyle === style.id ? 'ring-4 ring-yellow-400' : ''
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      handleStyleSelect(style.id as StyleType);
+                      setShowStyleSheet(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
                         handleStyleSelect(style.id as StyleType);
                         setShowStyleSheet(true);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          handleStyleSelect(style.id as StyleType);
-                          setShowStyleSheet(true);
-                        }
-                      }}
-                      aria-pressed={state.selectedStyle === style.id}
-                    >
-                      <div className="relative w-full h-[36vh] border-b-4 border-black">
-                        <img src={main} alt={style.name} className="w-full h-full object-cover" />
-                        {styleImageOwnerMap[imgs[0]]?.username && (
-                          <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
-                            {styleImageOwnerMap[imgs[0]]?.pfpUrl && (
-                              <img
-                                src={styleImageOwnerMap[imgs[0]]?.pfpUrl || ''}
-                                alt={styleImageOwnerMap[imgs[0]]?.username || ''}
-                                className="w-5 h-5 rounded-full border border-black"
-                              />
-                            )}
-                            <span className="text-[10px] font-bold">
-                              {styleImageOwnerMap[imgs[0]]?.username}
-                            </span>
-                          </div>
+                      }
+                    }}
+                    aria-pressed={state.selectedStyle === style.id}
+                  >
+                    <div className="relative w-full h-[36vh] border-b-4 border-black">
+                      <img src={main} alt={style.name} className="w-full h-full object-cover" />
+                      {styleImageOwnerMap[imgs[0]]?.username && (
+                        <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
+                          {styleImageOwnerMap[imgs[0]]?.pfpUrl && (
+                            <img
+                              src={styleImageOwnerMap[imgs[0]]?.pfpUrl || ''}
+                              alt={styleImageOwnerMap[imgs[0]]?.username || ''}
+                              className="w-5 h-5 rounded-full border border-black"
+                            />
+                          )}
+                          <span className="text-[10px] font-bold">
+                            {styleImageOwnerMap[imgs[0]]?.username}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-black uppercase">{style.name}</span>
+                        {style.id === mostPopularStyleId && (
+                          <span className="text-[10px] bg-yellow-300 text-black px-2 py-0.5 rounded font-bold">
+                            POPULAR
+                          </span>
                         )}
                       </div>
-                      <div className="p-2 flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-black uppercase">{style.name}</span>
-                          {style.popular && (
-                            <span className="text-[10px] bg-yellow-300 text-black px-2 py-0.5 rounded font-bold">
-                              POPULAR
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[11px] text-gray-600 leading-snug whitespace-normal break-words">
-                          {style.description}
-                        </span>
-                        {/* Mini previews (max 5, prefer different users) */}
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                          {(() => {
-                            const all = imgs.slice();
-                            const seenUsers = new Set<string>();
-                            const uniqueUserImages: string[] = [];
-                            const sameUserPool: string[] = [];
-                            for (const u of all) {
-                              const fidKey = String(styleImageOwnerMap[u]?.fid || 'anon');
-                              if (!seenUsers.has(fidKey) && uniqueUserImages.length < 5) {
-                                seenUsers.add(fidKey);
-                                uniqueUserImages.push(u);
-                              } else {
-                                sameUserPool.push(u);
-                              }
+                      <span className="text-[11px] text-gray-600 leading-snug whitespace-normal break-words">
+                        {style.description}
+                      </span>
+                      {/* Mini previews (max 5, prefer different users) */}
+                      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                        {(() => {
+                          const all = imgs.slice();
+                          const seenUsers = new Set<string>();
+                          const uniqueUserImages: string[] = [];
+                          const sameUserPool: string[] = [];
+                          for (const u of all) {
+                            const fidKey = String(styleImageOwnerMap[u]?.fid || 'anon');
+                            if (!seenUsers.has(fidKey) && uniqueUserImages.length < 5) {
+                              seenUsers.add(fidKey);
+                              uniqueUserImages.push(u);
+                            } else {
+                              sameUserPool.push(u);
                             }
-                            while (uniqueUserImages.length < 5 && sameUserPool.length > 0) {
-                              uniqueUserImages.push(sameUserPool.shift() as string);
-                            }
-                            const finalPreviews = uniqueUserImages.slice(0, 5);
-                            return finalPreviews.map((u, i) => {
-                              const realIndex = imgs.indexOf(u);
-                              const isActive = realIndex === idx;
-                              return (
-                                <button
-                                  key={`${style.id}-${i}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setStylePreviewIndex((prev) => ({
-                                      ...prev,
-                                      [style.id]: realIndex
-                                    }));
-                                  }}
-                                  className={`border-2 ${
-                                    isActive ? 'border-black' : 'border-gray-300'
-                                  } rounded-md overflow-hidden`}
-                                  aria-label={`Preview ${style.name} ${i + 1}`}
-                                >
-                                  <img src={u} alt="preview" className="h-12 w-12 object-cover" />
-                                </button>
-                              );
-                            });
-                          })()}
-                        </div>
+                          }
+                          while (uniqueUserImages.length < 5 && sameUserPool.length > 0) {
+                            uniqueUserImages.push(sameUserPool.shift() as string);
+                          }
+                          const finalPreviews = uniqueUserImages.slice(0, 5);
+                          return finalPreviews.map((u, i) => {
+                            const realIndex = imgs.indexOf(u);
+                            const isActive = realIndex === idx;
+                            return (
+                              <button
+                                key={`${style.id}-${i}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setStylePreviewIndex((prev) => ({
+                                    ...prev,
+                                    [style.id]: realIndex
+                                  }));
+                                }}
+                                className={`border-2 ${
+                                  isActive ? 'border-black' : 'border-gray-300'
+                                } rounded-md overflow-hidden`}
+                                aria-label={`Preview ${style.name} ${i + 1}`}
+                              >
+                                <img src={u} alt="preview" className="h-12 w-12 object-cover" />
+                              </button>
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
             {/* Guidance */}
             <div className="text-center text-[11px] font-bold text-black/70">
