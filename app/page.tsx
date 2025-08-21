@@ -180,6 +180,9 @@ export default function Home() {
   });
   const [stylePreviewIndex, setStylePreviewIndex] = useReactState<Record<string, number>>({});
   const stylesScrollerRef = useReactRef<HTMLDivElement | null>(null);
+  const [styleImageOwnerMap, setStyleImageOwnerMap] = useReactState<
+    Record<string, { username?: string | null; pfpUrl?: string | null }>
+  >({});
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkWidth = () => setShowUpload(window.innerWidth >= 400);
@@ -329,7 +332,7 @@ export default function Home() {
     localStorage.setItem('snapdraft_favorites', JSON.stringify(newFavs));
   }
 
-  // Featured image: show default only; do not fetch from DB
+  // Featured image: default fallback
   const [featuredUrl, setFeaturedUrl] = useReactState<string | null>('/sample-hero.jpg');
   const [featuredUser, setFeaturedUser] = useReactState<{
     username: string;
@@ -339,7 +342,7 @@ export default function Home() {
   // Slideshow state
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(true);
-  const slideshowImages = [
+  const defaultSlideshowImages = [
     '/sample-hero.jpg',
     '/hero-3.jpg',
     '/hero-4.jpg',
@@ -350,22 +353,57 @@ export default function Home() {
     '/hero-9.jpg',
     '/hero-10.jpg'
   ];
+  const [slideshowItems, setSlideshowItems] = useState<
+    Array<{ url: string; username?: string | null; pfpUrl?: string | null }>
+  >(() => defaultSlideshowImages.map((u) => ({ url: u })));
 
   // Auto-advance slideshow
   useEffect(() => {
     if (!isSlideshowPlaying) return;
 
     const interval = setInterval(() => {
-      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % slideshowImages.length);
+      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % Math.max(1, slideshowItems.length));
     }, 5000); // Change slide every 5 seconds
 
     return () => clearInterval(interval);
-  }, [slideshowImages.length, isSlideshowPlaying]);
+  }, [slideshowItems.length, isSlideshowPlaying]);
   const [recentImages, setRecentImages] = useReactState<
     Array<{ url: string; username?: string | null; pfpUrl?: string | null }>
   >([]);
   const [recentIndex, setRecentIndex] = useReactState<number>(0);
-  // Do not fetch featured or recent images; keep default only
+  // Fetch recent paid images for home and style previews
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/gallery');
+        const data = await res.json();
+        if (res.ok && data?.success && Array.isArray(data.images)) {
+          const items = data.images.map((img: any) => ({
+            url: img.url,
+            username: img.creator?.username || null,
+            pfpUrl: img.creator?.pfpUrl || null
+          }));
+          if (items.length > 0) {
+            setSlideshowItems(items.slice(0, 10));
+            setRecentImages(items);
+          }
+          const byStyle: Record<string, string[]> = {};
+          const ownerMap: Record<string, { username?: string | null; pfpUrl?: string | null }> = {};
+          for (const img of data.images as any[]) {
+            const styleId = img.style || 'unknown';
+            if (!byStyle[styleId]) byStyle[styleId] = [];
+            byStyle[styleId].push(img.url);
+            ownerMap[img.url] = {
+              username: img.creator?.username || null,
+              pfpUrl: img.creator?.pfpUrl || null
+            };
+          }
+          setStyleImagesMap((prev) => ({ ...prev, ...byStyle }));
+          setStyleImageOwnerMap(ownerMap);
+        }
+      } catch {}
+    })();
+  }, []);
 
   // Default a style when entering style step
   useEffect(() => {
@@ -537,10 +575,10 @@ export default function Home() {
           <section className="w-full flex flex-col items-center justify-center bg-yellow-100 py-6 px-4 flex-1">
             <div className="w-full max-w-md mx-auto border-8 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_#000000] mb-4 relative">
               <div className="relative w-full h-56">
-                {slideshowImages.map((image, index) => (
+                {slideshowItems.map((item, index) => (
                   <Image
-                    key={image}
-                    src={image}
+                    key={item.url}
+                    src={item.url}
                     alt={`Featured AI Styled ${index + 1}`}
                     width={400}
                     height={300}
@@ -550,23 +588,27 @@ export default function Home() {
                     priority={index === 0}
                     onClick={() => {
                       // Manual advance on click
-                      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % slideshowImages.length);
+                      setCurrentSlideIndex(
+                        (prevIndex) => (prevIndex + 1) % Math.max(1, slideshowItems.length)
+                      );
                     }}
                   />
                 ))}
+                {slideshowItems[currentSlideIndex]?.username && (
+                  <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
+                    {slideshowItems[currentSlideIndex]?.pfpUrl && (
+                      <img
+                        src={slideshowItems[currentSlideIndex]?.pfpUrl || ''}
+                        alt={slideshowItems[currentSlideIndex]?.username || ''}
+                        className="w-6 h-6 rounded-full border border-black"
+                      />
+                    )}
+                    <span className="text-xs font-bold">
+                      {slideshowItems[currentSlideIndex]?.username}
+                    </span>
+                  </div>
+                )}
               </div>
-              {featuredUser?.username && (
-                <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
-                  {featuredUser.pfpUrl && (
-                    <img
-                      src={featuredUser.pfpUrl}
-                      alt={featuredUser.username || ''}
-                      className="w-6 h-6 rounded-full border border-black"
-                    />
-                  )}
-                  <span className="text-xs font-bold">{featuredUser.username}</span>
-                </div>
-              )}
             </div>
             <h2 className="text-2xl sm:text-3xl font-black uppercase text-center mb-2">
               Your Photos Reimagined As Art.
@@ -682,11 +724,27 @@ export default function Home() {
                       }}
                       aria-pressed={state.selectedStyle === style.id}
                     >
-                      <img
-                        src={imgs[0]}
-                        alt={style.name}
-                        className="w-full h-[36vh] object-cover border-b-4 border-black"
-                      />
+                      <div className="relative w-full h-[36vh] border-b-4 border-black">
+                        <img
+                          src={imgs[0]}
+                          alt={style.name}
+                          className="w-full h-full object-cover"
+                        />
+                        {styleImageOwnerMap[imgs[0]]?.username && (
+                          <div className="absolute bottom-2 left-2 bg-white/90 border-2 border-black rounded-full px-2 py-1 flex items-center gap-2">
+                            {styleImageOwnerMap[imgs[0]]?.pfpUrl && (
+                              <img
+                                src={styleImageOwnerMap[imgs[0]]?.pfpUrl || ''}
+                                alt={styleImageOwnerMap[imgs[0]]?.username || ''}
+                                className="w-5 h-5 rounded-full border border-black"
+                              />
+                            )}
+                            <span className="text-[10px] font-bold">
+                              {styleImageOwnerMap[imgs[0]]?.username}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       <div className="p-2 flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-black uppercase">{style.name}</span>
