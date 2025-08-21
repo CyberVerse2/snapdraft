@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useComposeCast } from '@coinbase/onchainkit/minikit';
 import Link from 'next/link';
 import { BottomNav } from '@/components/bottom-nav';
+import { buildShareUrl } from '@/lib/utils';
 import { useAccount, useBalance } from 'wagmi';
 import { useFarcasterContext } from '@/hooks/use-farcaster-context';
 import { FileX2Icon, ImagesIcon } from 'lucide-react';
@@ -62,13 +63,14 @@ export default function GalleryPage() {
     const APP_URL =
       process.env.NEXT_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareText = 'Just styled an image with SNAPDRAFT AI!';
-    // Unified share URL: /share/<gen>?orig=...&label=...
+    // Unified helper across app
     const entry = gallery.find((g) => g.id === id);
-    const gen = encodeURIComponent(url);
-    const params = new URLSearchParams();
-    if (entry?.originalUrl) params.set('orig', entry.originalUrl);
-    if (entry?.style || '') params.set('label', entry?.style || '');
-    const shareUrl = `${APP_URL}/share/${gen}${params.toString() ? `?${params.toString()}` : ''}`;
+    const shareUrl = buildShareUrl(
+      APP_URL,
+      url,
+      entry?.originalUrl || undefined,
+      entry?.style || undefined
+    );
     try {
       console.log('[Share][Gallery] Composing cast with URL:', shareUrl);
     } catch {}

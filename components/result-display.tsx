@@ -5,6 +5,7 @@ import type { StyleType } from '@/app/page';
 import { Download, Twitter, RefreshCw, Share2, Home } from 'lucide-react';
 import { useComposeCast } from '@coinbase/onchainkit/minikit';
 import Image from 'next/image';
+import { buildShareUrl } from '@/lib/utils';
 interface ResultDisplayProps {
   originalImage: string;
   styledImage: string;
@@ -46,14 +47,7 @@ export function ResultDisplay({
   const imageToShow = showOriginal ? originalImage : styledImage;
   const safeImageToShow = imageToShow || '/placeholder.svg';
 
-  function buildShareUrl(baseUrl: string, genUrl: string, origUrl?: string, label?: string) {
-    const params: string[] = [];
-    if (origUrl) params.push(`orig=${encodeURIComponent(origUrl)}`);
-    if (label) params.push(`label=${encodeURIComponent(label)}`);
-    return `${baseUrl}/share/${encodeURIComponent(genUrl)}${
-      params.length ? `?${params.join('&')}` : ''
-    }`;
-  }
+  // uses shared helper in lib/utils
 
   // When a new styled image arrives, ensure we display it (not the placeholder or original)
   useEffect(() => {
