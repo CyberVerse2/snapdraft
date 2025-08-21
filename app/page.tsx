@@ -930,31 +930,37 @@ export default function Home() {
                 onReset={() => setStep('upload')}
               />
             ) : (
-              <div className="w-full max-w-md mx-auto mt-8">
-                <div className="relative w-full h-48 border-8 border-black bg-white shadow-[8px_8px_0px_0px_#000000] flex items-center justify-center">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
-                      {`${Math.max(
-                        0,
-                        Math.min(
-                          99,
-                          Math.floor(
-                            Number.isFinite(resultProgress as number)
-                              ? (resultProgress as number)
-                              : 0
-                          )
-                        )
-                      )}%`}
+              <div className="w-full max-w-md mx-auto mt-4">
+                <div className="flex flex-col items-center justify-center py-16 space-y-6">
+                  <div className="relative">
+                    <div
+                      className="rounded-full h-24 w-24 border-8 border-black"
+                      style={{ background: `conic-gradient(#fde047 ${resultProgress}%, #fff 0)` }}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-black text-white px-3 py-1 font-black text-sm uppercase">
+                          {`${Math.max(
+                            0,
+                            Math.min(
+                              99,
+                              Math.floor(
+                                Number.isFinite(resultProgress as number)
+                                  ? (resultProgress as number)
+                                  : 0
+                              )
+                            )
+                          )}%`}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: `conic-gradient(#fde047 ${resultProgress}%, #fff 0)` }}
-                  />
+                  <div className="text-center">
+                    <div className="bg-yellow-400 text-black px-6 py-3 border-4 border-black font-black text-xl uppercase mb-2">
+                      GENERATING...
+                    </div>
+                    <p className="font-bold text-lg uppercase">HOLD TIGHT!</p>
+                  </div>
                 </div>
-                <p className="text-center mt-3 text-sm font-bold uppercase">
-                  Generating your image — hold tight!
-                </p>
               </div>
             )}
           </div>

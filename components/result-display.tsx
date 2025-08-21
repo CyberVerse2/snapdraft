@@ -82,11 +82,6 @@ export function ResultDisplay({
 
   return (
     <div className="flex flex-col items-center w-full max-w-md mx-auto px-4">
-      {/* Generation Complete Banner */}
-      <div className="w-full max-w-md mx-auto bg-green-400 text-black px-3 py-1 border-4 border-black font-black text-xl uppercase text-center mt-3 mb-10 rounded-lg">
-        GENERATION COMPLETE
-      </div>
-      {/* Generated Image (toggle on click) with loader from preview */}
       <div
         className="relative w-full max-w-md mx-auto h-64 sm:h-80 border-8 border-black shadow-[8px_8px_0px_0px_#000000] mb-4 cursor-pointer overflow-hidden"
         onClick={() => setShowOriginal((v) => !v)}
