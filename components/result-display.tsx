@@ -78,6 +78,10 @@ export function ResultDisplay({
     const label = encodeURIComponent(styleLabel);
     // Unify on /share/<gen>?orig=...&label=...
     const shareUrl = `${APP_URL}/share/${gen}?orig=${orig}&label=${label}`;
+    try {
+      // Log the exact URL being shared from the result page
+      console.log('[Share][ResultDisplay] Composing cast with URL:', shareUrl);
+    } catch {}
     composeCast({ text: shareText, embeds: [shareUrl] });
   };
 

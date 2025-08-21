@@ -69,6 +69,9 @@ export default function GalleryPage() {
     if (entry?.originalUrl) params.set('orig', entry.originalUrl);
     if (entry?.style || '') params.set('label', entry?.style || '');
     const shareUrl = `${APP_URL}/share/${gen}${params.toString() ? `?${params.toString()}` : ''}`;
+    try {
+      console.log('[Share][Gallery] Composing cast with URL:', shareUrl);
+    } catch {}
     composeCast({ text: shareText, embeds: [shareUrl] });
   }
 
