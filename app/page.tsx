@@ -950,18 +950,29 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="p-3 pt-1">
-                        <button
-                          className="w-full bg-yellow-400 text-black py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-yellow-300 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all"
-                          onClick={() => {
-                            try {
-                              navigator.vibrate?.(10);
-                            } catch {}
-                            closeSheet();
-                            handleProceedToPayment();
-                          }}
-                        >
-                          Reimagine
-                        </button>
+                        <div className="flex items-center gap-3">
+                          {state.originalImage && (
+                            <div className="w-16 h-12 border-2 border-black rounded overflow-hidden flex-shrink-0 shadow-[4px_4px_0px_0px_#000000]">
+                              <img
+                                src={state.originalImage}
+                                alt="Original"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <button
+                            className="flex-1 bg-yellow-400 text-black py-3 border-4 border-black font-black text-base uppercase rounded-xl hover:bg-yellow-300 active:scale-[0.98] shadow-[4px_4px_0px_0px_#000000] transition-all"
+                            onClick={() => {
+                              try {
+                                navigator.vibrate?.(10);
+                              } catch {}
+                              closeSheet();
+                              handleProceedToPayment();
+                            }}
+                          >
+                            Reimagine
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
