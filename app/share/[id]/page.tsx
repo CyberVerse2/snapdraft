@@ -27,17 +27,18 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   };
 
   const gen = get('gen') || fromPath;
-  const orig = get('orig') || gen;
+  const origProvided = get('orig');
   const label = get('label');
   console.log('gen', gen);
-  console.log('orig', orig);
+  console.log('orig', origProvided);
   console.log('label', label);
 
   const imageUrl = (() => {
     if (!gen) return `${URL}/og.jpg`;
     const qs = new URLSearchParams();
     qs.set('gen', gen);
-    qs.set('orig', orig || gen);
+    // Only include orig when explicitly provided; otherwise the endpoint will render single image
+    if (origProvided && origProvided !== gen) qs.set('orig', origProvided);
     if (label) qs.set('label', label);
     return `${URL}/api/share/composite?${qs.toString()}`;
   })();
